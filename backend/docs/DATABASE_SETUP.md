@@ -1,27 +1,42 @@
-# 🗄️ Setup do Banco de Dados MySQL
+# 🗄️ Setup do Banco de Dados MySQL - Pipoqueiro
 
-## **🎯 Opção 1: MySQL + Workbench (Recomendado)**
+**Guia completo para configurar o MySQL do projeto Pipoqueiro**
+
+---
+
+## **🎯 Opção 1: MySQL Workbench (Recomendado)**
 
 ### **1. Instalar MySQL**
 - **Download:** https://dev.mysql.com/downloads/installer/
 - **Escolher:** MySQL Installer for Windows
-- **Configurar:** senha para usuário `root`
+- **Durante instalação:** definir senha para usuário `root`
+- **Anotar:** essa senha será usada no `.env`
 
 ### **2. Instalar MySQL Workbench**
-- Já vem no MySQL Installer
-- **Ou baixar:** https://dev.mysql.com/downloads/workbench/
+- Já vem incluído no MySQL Installer
+- **Ou baixar separado:** https://dev.mysql.com/downloads/workbench/
 
-### **3. Criar Database**
+### **3. Conectar no Workbench**
+1. Abrir MySQL Workbench
+2. Conectar em `localhost:3306`
+3. Usuário: `root`
+4. Senha: a que você definiu na instalação
+
+### **4. Executar Scripts SQL**
+**Na pasta `database/` do projeto, executar EM ORDEM:**
+
 ```sql
--- No Workbench:
-CREATE DATABASE pipoqueiro CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE pipoqueiro;
+-- 1. Criar database
+SOURCE C:/caminho/para/projeto/database/01-create-database.sql
+
+-- 2. Criar tabelas
+SOURCE C:/caminho/para/projeto/database/02-create-tables.sql
+
+-- 3. Inserir dados
+SOURCE C:/caminho/para/projeto/database/03-insert-data.sql
 ```
 
-### **4. Executar Scripts**
-**Na pasta `database/` do projeto, executar em ordem:**
-1. `createTabelas.sql` - Cria tabelas
-2. `scriptTabelas.sql` - Insere dados de exemplo
+**Ou copiar e colar cada arquivo diretamente no Workbench.**
 
 ---
 
@@ -30,179 +45,150 @@ USE pipoqueiro;
 ### **1. Conectar ao MySQL**
 ```bash
 mysql -u root -p
-# Digite sua senha
+# Digite sua senha do MySQL
 ```
 
-### **2. Criar database**
+### **2. Executar Scripts**
 ```sql
-CREATE DATABASE pipoqueiro CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-exit
-```
-
-### **3. Executar scripts**
-```bash
-# Na pasta do projeto:
-cd database/
-
-# Executar scripts (PowerShell)
-Get-Content createTabelas.sql | mysql -u root -p pipoqueiro
-Get-Content scriptTabelas.sql | mysql -u root -p pipoqueiro
+-- Dentro do MySQL CLI:
+SOURCE C:\\caminho\\para\\projeto\\database\\01-create-database.sql
+SOURCE C:\\caminho\\para\\projeto\\database\\02-create-tables.sql
+SOURCE C:\\caminho\\para\\projeto\\database\\03-insert-data.sql
 ```
 
 ---
 
-## **🎯 Opção 3: XAMPP (Mais Simples)**
+## **🎯 Opção 3: PowerShell (Windows)**
 
-### **1. Baixar XAMPP**
+### **1. Na pasta database/ do projeto:**
+```powershell
+# Executar em ordem:
+Get-Content 01-create-database.sql | mysql -u root -p
+Get-Content 02-create-tables.sql | mysql -u root -p  
+Get-Content 03-insert-data.sql | mysql -u root -p
+```
+
+---
+
+## **🎯 Opção 4: XAMPP (Mais Simples)**
+
+### **1. Instalar XAMPP**
 - **Download:** https://www.apachefriends.org/download.html
+- **Incluí:** Apache, MySQL e phpMyAdmin
 
-### **2. Iniciar MySQL**
+### **2. Iniciar MySQL no XAMPP**
 - Abrir XAMPP Control Panel
-- Clicar "Start" no MySQL
+- Start → MySQL
 
 ### **3. Acessar phpMyAdmin**
-- Clicar "Admin" no MySQL
-- Ou ir em: http://localhost/phpmyadmin
+- **URL:** http://localhost/phpmyadmin
+- **Usuário:** `root` (sem senha)
 
-### **4. Criar database**
-- Clicar "Databases"
-- Nome: `pipoqueiro`
-- Collation: `utf8mb4_unicode_ci`
-
-### **5. Importar dados**
-- Selecionar database `pipoqueiro`
-- Aba "Import"
-- Escolher arquivo `database/schemaPipoca.sql`
+### **4. Executar Scripts**
+1. Criar database: `pipoqueiro`
+2. Importar: `02-create-tables.sql`  
+3. Importar: `03-insert-data.sql`
 
 ---
 
-## **🔧 Configuração do .env**
+## **⚙️ Configuração do Backend**
 
-**Depois de configurar o MySQL, editar `.env`:**
+### **1. Criar arquivo `.env`**
+```bash
+# Na pasta backend/:
+cp .env.example .env
+```
 
-### **MySQL Standalone:**
+### **2. Configurar credenciais**
 ```env
+# MySQL Local
 DB_HOST=localhost
 DB_USER=root  
-DB_PASSWORD=sua_senha_definida
+DB_PASSWORD=sua_senha_mysql_aqui
 DB_NAME=pipoqueiro
 DB_PORT=3306
-```
 
-### **XAMPP:**
-```env
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=    # Vazio no XAMPP
-DB_NAME=pipoqueiro
-DB_PORT=3306
+# JWT
+JWT_SECRET=seu_jwt_secret_aqui_muito_seguro_123
+JWT_EXPIRES_IN=7d
+
+# CORS (para frontend)
+CORS_ORIGIN=http://localhost:3000
 ```
 
 ---
 
-## **✅ Testar Conexão**
+## **🧪 Testar Conexão**
 
-### **1. Rodar backend:**
+### **1. Iniciar Backend**
 ```bash
+cd backend/
 npm run dev
 ```
 
-### **2. Testar no navegador:**
-```
-http://localhost:3000/api/test-db
-```
+### **2. Testar Endpoints**
+```bash
+# API funcionando?
+curl http://localhost:3000/api/health
 
-### **3. Deve retornar:**
-```json
-{
-  "success": true,
-  "message": "Banco conectado!",
-  "usuarios": [{ "total": 4 }]
-}
+# Banco conectado?
+curl http://localhost:3000/api/test-db
+
+# Ver usuários de exemplo:
+curl http://localhost:3000/api/usuarios
 ```
 
 ---
 
-## **🗂️ Estrutura do Banco**
+## **🗄️ Estrutura Final**
 
-### **Tabelas:**
-- **`usuarios`** - Dados dos usuários
-- **`avaliacoes`** - Reviews de filmes  
-- **`lista_quero_ver`** - Watchlist dos usuários
+### **Tabelas Criadas:**
+- ✅ `usuarios` - Perfis e autenticação
+- ✅ `avaliacoes` - Reviews de filmes (1-5⭐)
+- ✅ `lista_quero_ver` - Watchlist dos usuários
 
-### **Views:**
-- **`estatisticas_filmes`** - Stats por filme
-- **`usuarios_ativos`** - Stats por usuário
+### **Dados de Exemplo:**
+- 4 usuários já cadastrados
+- 10+ reviews de filmes populares
+- Diversos filmes na watchlist
 
-### **Relacionamentos:**
-- `avaliacoes.usuario_id` → `usuarios.id`
-- `lista_quero_ver.usuario_id` → `usuarios.id`
-- Filmes identificados por `tmdb_id` (API externa)
-
----
-
-## **🎬 Dados de Exemplo Inclusos**
-
-### **4 Usuários:**
-1. João Cinéfilo Silva
-2. Maria Santos Crítica  
-3. Pedro Blockbuster Fan
-4. Ana Clássicos Forever
-
-### **10+ Reviews de filmes famosos:**
-- Clube da Luta
-- Forrest Gump  
-- Interestelar
-- Parasita
-- Vingadores Ultimato
-
-### **Listas "Quero Ver" populadas**
+### **Views para Estatísticas:**
+- `estatisticas_filmes` - Agregados por filme  
+- `usuarios_ativos` - Stats por usuário
 
 ---
 
-## **🐛 Problemas Comuns**
+## **❌ Troubleshooting**
 
-### **"Access denied for user 'root'"**
-- ✅ Senha do MySQL está correta?
-- ✅ Usuário `root` existe?
-- ✅ MySQL está rodando?
+### **Erro: "Access denied for user 'root'"**
+- Verificar senha no `.env`
+- Tentar resetar senha do MySQL
 
-### **"Database doesn't exist"**
-- ✅ Executou `CREATE DATABASE pipoqueiro`?
-- ✅ Nome está exato (sem maiúsculas)?
+### **Erro: "Can't connect to MySQL server"**
+- Verificar se MySQL está rodando
+- Checar porta 3306
+- Firewall pode estar bloqueando
 
-### **"Connection refused"**
-- ✅ MySQL está rodando na porta 3306?
-- ✅ Firewall bloqueando conexões?
+### **Erro: "Database 'pipoqueiro' doesn't exist"**
+- Executar `01-create-database.sql` primeiro
+- Verificar se database foi criado no Workbench
 
-### **Scripts SQL com erro**
-- ✅ Executou na ordem: `createTabelas.sql` depois `scriptTabelas.sql`?
-- ✅ Database `pipoqueiro` estava selecionado?
+### **Scripts não executam**
+- Verificar caminho completo dos arquivos
+- Usar barras corretas: Windows = `\\`, Linux = `/`
+- Permissões de leitura dos arquivos SQL
 
 ---
 
-## **🔄 Reset Completo (se der problema)**
+## **🔄 Reset Completo**
 
 ```sql
--- Apagar tudo e começar de novo:
+-- Para recomeçar do zero:
 DROP DATABASE IF EXISTS pipoqueiro;
-CREATE DATABASE pipoqueiro CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE pipoqueiro;
 
--- Depois executar os scripts novamente
+-- Depois executar scripts novamente
 ```
 
 ---
 
-## **📞 Ajuda**
-
-**Scripts criados por:** David  
-**Integração backend:** Alexandre
-
-**Problemas?** Verifique se:
-1. MySQL está rodando
-2. Database `pipoqueiro` existe  
-3. Credenciais do `.env` estão corretas
-4. Scripts foram executados na ordem
-
-**Happy data! 🗄️**
+**💾 Qualquer dúvida, checar:** `database/README.md`

@@ -31,10 +31,9 @@ cd frontend/
 Pipoqueiro/
 ├── backend/           # 🔧 API REST (Node.js + TypeScript)
 │   ├── src/          # Código fonte
-│   ├── docs/         # 📚 Documentação da API
-│   └── database/     # 🗄️ Scripts SQL
+│   └── docs/         # 📚 Documentação da API
 ├── frontend/         # 🎨 Interface (TODO)
-└── database/         # 🗄️ Schema e dados MySQL
+└── database/         # 🗄️ Scripts SQL e schema MySQL
 ```
 
 ---
