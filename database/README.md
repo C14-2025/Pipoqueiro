@@ -73,7 +73,7 @@ DROP DATABASE IF EXISTS pipoqueiro;
 
 ---
 
-**💾 Schema criado por:** David  
+**💾 Schema criado por:** Daví Padula  
 **📡 API integração:** Alexandre
 
 **Para mais detalhes, ver:** `backend/docs/DATABASE_SETUP.md`

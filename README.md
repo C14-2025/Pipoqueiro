@@ -155,7 +155,7 @@ curl http://localhost:3000/api/reviews/filme/550
 | Pessoa | Responsabilidade |
 |--------|-----------------|
 | **Alexandre** | Backend (Node.js + TypeScript + APIs) |
-| **David** | Database (MySQL + Schema + Dados) |
+| **Daví Padula** | Database (MySQL + Schema + Dados) |
 | **Frontend Dev** | Interface (TODO) |
 
 ---
