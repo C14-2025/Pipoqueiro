@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { connectDB } from './config/database';
 import userRoutes from './routes/users';
 import reviewRoutes from './routes/reviews';
+import movieRoutes from './routes/movies';
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use(express.urlencoded({ extended: true }));
 // Rotas
 app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/movies', movieRoutes);
 
 // Rota de teste
 app.get('/api/health', (req, res) => {
