@@ -16,6 +16,14 @@ mysql -u root -p < 02-create-tables.sql
 mysql -u root -p < 03-insert-data.sql
 ```
 
+**PowerShell (Windows):**
+```powershell
+# Na pasta database/:
+Get-Content 01-create-database.sql | mysql -u root -p
+Get-Content 02-create-tables.sql | mysql -u root -p
+Get-Content 03-insert-data.sql | mysql -u root -p
+```
+
 ---
 
 ## 📁 **Arquivos**

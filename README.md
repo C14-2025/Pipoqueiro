@@ -17,10 +17,13 @@ npm run dev
 # ✅ API rodando em http://localhost:3000
 ```
 
-### **Frontend** *(em desenvolvimento)*
+### **Frontend (React + Vite)**
 ```bash
 cd frontend/
-# TODO: Instruções do frontend
+npm install
+npm run dev
+
+# ✅ Frontend rodando em http://localhost:5173
 ```
 
 ---
@@ -32,7 +35,9 @@ Pipoqueiro/
 ├── backend/           # 🔧 API REST (Node.js + TypeScript)
 │   ├── src/          # Código fonte
 │   └── docs/         # 📚 Documentação da API
-├── frontend/         # 🎨 Interface (TODO)
+├── frontend/         # 🎨 Interface Web (React + Vite + TailwindCSS)
+│   ├── src/          # Componentes, páginas e serviços
+│   └── public/       # Assets estáticos
 └── database/         # 🗄️ Scripts SQL e schema MySQL
 ```
 
@@ -48,8 +53,12 @@ Pipoqueiro/
 - **bcrypt** - Hash de senhas
 - **TMDb API** - Catálogo de filmes
 
-### **Frontend:** *(em desenvolvimento)*
-- React/Vue/Angular (TODO)
+### **Frontend:**
+- **React 19** + **Vite** - Build tool moderno
+- **React Router** - Navegação
+- **TailwindCSS** - Estilização
+- **Axios** - Requisições HTTP
+- **React Icons** - Ícones
 
 ### **Database:**
 - **MySQL 8.0+**
@@ -96,6 +105,12 @@ Pipoqueiro/
 - Views para estatísticas
 - Índices para performance
 
+### **✅ Integração TMDb**
+- Catálogo completo de filmes
+- Busca em tempo real
+- Posters e metadados
+- Filmes populares e trending
+
 ---
 
 ## 🎯 **Em Desenvolvimento**
@@ -106,11 +121,23 @@ Pipoqueiro/
 - [ ] Feed de atividades
 - [ ] API de recomendações
 
-### **⏳ Frontend**
-- [ ] Interface web responsiva
-- [ ] Catálogo de filmes (TMDb)
-- [ ] Perfis de usuário
-- [ ] Sistema de reviews
+### **✅ Frontend (React + Vite)**
+
+**📄 Páginas Implementadas:**
+- **HomePage** (`/`) - Filmes populares + trending da TMDb
+- **LoginPage** (`/login`) - Autenticação de usuários
+- **SearchPage** (`/busca`) - Busca de filmes em tempo real
+- **MediaDetailsPage** (`/filme/:id`) - Detalhes completos do filme
+- **UserProfilePage** (`/perfil`) - Perfil e configurações do usuário
+- **YourListPage** (`/sua-lista`) - Lista "Quero Ver" personalizada
+- **MoviesListPage** (`/filmes`) - Catálogo completo de filmes
+
+**🎨 Design System:**
+- Interface responsiva (mobile-first)
+- Design moderno com TailwindCSS
+- Componentes reutilizáveis (Header, Footer, Cards)
+- Sistema de cores consistente
+- Navegação intuitiva com React Router
 
 ---
 
@@ -148,6 +175,12 @@ curl http://localhost:3000/api/reviews/filme/550
 # Reviews do filme "Clube da Luta"
 ```
 
+### **4. Frontend funcionando:**
+```bash
+# Acesse http://localhost:5173 no navegador
+# ✅ Interface completa com filmes populares da TMDb
+```
+
 ---
 
 ## 👥 **Time de Desenvolvimento**
@@ -155,8 +188,10 @@ curl http://localhost:3000/api/reviews/filme/550
 | Pessoa | Responsabilidade |
 |--------|-----------------|
 | **Alexandre** | Backend (Node.js + TypeScript + APIs) |
+| **Otávio** | Backend (Node.js + TypeScript + APIs) |
 | **Daví Padula** | Database (MySQL + Schema + Dados) |
-| **Frontend Dev** | Interface (TODO) |
+| **Jordan** | Frontend (React + Design System) |
+| **Antonio** | Frontend (React + Design System) |
 
 ---
 
@@ -168,9 +203,11 @@ curl http://localhost:3000/api/reviews/filme/550
 3. Fazer fork → branch → PR
 
 ### **Para Frontend:**
-1. Setup: [`backend/docs/FRONTEND_SETUP.md`](backend/docs/FRONTEND_SETUP.md)
-2. Usar API em `http://localhost:3000/api/*`
-3. Documentação completa disponível
+1. Setup: `cd frontend/ && npm install && npm run dev`
+2. API Backend: `http://localhost:3000/api/*`
+3. Frontend local: `http://localhost:5173`
+4. Usar serviços em `src/services/api.js`
+5. Seguir padrões TailwindCSS existentes
 
 ### **Para Database:**
 1. Scripts em `/database/`

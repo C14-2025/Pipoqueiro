@@ -1,3 +1,5 @@
+USE pipoqueiro;
+
 CREATE INDEX idx_avaliacoes_tmdb ON avaliacoes(tmdb_id);
 CREATE INDEX idx_avaliacoes_usuario ON avaliacoes(usuario_id);  
 CREATE INDEX idx_avaliacoes_nota ON avaliacoes(nota);
