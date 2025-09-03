@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiSearch } from 'react-icons/fi';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { authService } from '../services/api';
 
 const Header = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setIsAuthenticated(authService.isAuthenticated());
+  }, []);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -12,6 +18,12 @@ const Header = () => {
       navigate(`/busca?query=${searchTerm.trim()}`);
       setSearchTerm('');
     }
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setIsAuthenticated(false);
+    navigate('/');
   };
 
   const baseLinkClass = "font-semibold pb-1 transition-all duration-150";
@@ -43,12 +55,14 @@ const Header = () => {
             >
               Filmes
             </NavLink>
-            <NavLink 
-              to="/perfil"
-              className={({ isActive }) => `${baseLinkClass} ${isActive ? activeLinkClass : inactiveLinkClass}`}
-            >
-              Meu Perfil
-            </NavLink>
+            {isAuthenticated && (
+              <NavLink 
+                to="/perfil"
+                className={({ isActive }) => `${baseLinkClass} ${isActive ? activeLinkClass : inactiveLinkClass}`}
+              >
+                Meu Perfil
+              </NavLink>
+            )}
           </div>
         </div>
 
@@ -66,11 +80,24 @@ const Header = () => {
             </div>
           </form>
           
-          <Link to="/login">
-             <button className="bg-[#FF8C42] text-white font-bold py-2 px-6 rounded-full hover:opacity-80 transition-opacity duration-300 whitespace-nowrap cursor-pointer">
-               Login / Registrar-se
-             </button>
-           </Link>
+          <div className="flex items-center space-x-4">
+            {isAuthenticated ? (
+              <>
+                <button 
+                  onClick={handleLogout}
+                  className="bg-gray-200 text-[#2D3748] font-bold py-2 px-6 rounded-full hover:bg-gray-300 transition-colors duration-300 whitespace-nowrap cursor-pointer"
+                >
+                  Sair
+                </button>
+              </>
+            ) : (
+              <Link to="/login">
+                 <button className="bg-[#FF8C42] text-white font-bold py-2 px-6 rounded-full hover:opacity-80 transition-opacity duration-300 whitespace-nowrap cursor-pointer">
+                   Login / Registrar-se
+                 </button>
+               </Link>
+            )}
+          </div>
         </div>
       </nav>
     </header>
