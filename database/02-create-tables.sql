@@ -1,4 +1,3 @@
-CREATE DATABASE pipoqueiro CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE pipoqueiro;
 
 CREATE TABLE usuarios (
