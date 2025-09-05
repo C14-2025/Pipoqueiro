@@ -8,8 +8,24 @@ const Header = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
 
+  // useEffect ATUALIZADO para reagir a mudanças no auth em outras abas
   useEffect(() => {
-    setIsAuthenticated(authService.isAuthenticated());
+    const checkAuth = () => {
+      setIsAuthenticated(authService.isAuthenticated());
+    };
+    
+    // Verifica o status no carregamento inicial
+    checkAuth();
+    
+    // Adiciona um listener para o evento 'storage', que é disparado
+    // quando o localStorage é alterado em outra aba do mesmo domínio.
+    window.addEventListener('storage', checkAuth);
+    
+    // Função de limpeza: remove o listener quando o componente é desmontado
+    // para evitar vazamentos de memória.
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+    };
   }, []);
 
   const handleSearchSubmit = (e) => {
