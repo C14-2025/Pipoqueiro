@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BsBookmark } from 'react-icons/bs';
-
-// Importa o serviço de API que agora está a funcionar
+import MovieCard from '../components/MovieCard';
+import LoadingSpinner, { MovieGridSkeleton } from '../components/LoadingSpinner';
 import { movieService } from '../services/api';
 
 // --- COMPONENTES AUXILIARES (do seu design original) ---
@@ -127,48 +127,75 @@ const HomePage = () => {
         {/* SECÇÃO "TOP MOVIES" COM DADOS DA API E IMAGEM MAIOR */}
         {topMovies.length >= 2 && (
           <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            <div className="bg-[#FFFFFF] rounded-lg overflow-hidden flex items-center relative h-60">
-              <div className="bg-[#00B5AD] h-full w-24 flex items-center justify-center">
-                <span className="text-7xl font-extrabold text-white">{topMovies[0].rank}</span>
-              </div>
-              <img src={topMovies[0].image} alt={topMovies[0].title} className="w-2/5 h-full object-cover" />
-              <div className="p-6 flex flex-col justify-center">
-                <h3 className="text-xl md:text-2xl font-bold text-[#2D3748]">{topMovies[0].title}</h3>
-                <StarRating rating={topMovies[0].rating} />
-                <Link to={`/filme/${topMovies[0].id}`}>
-                  <button className="mt-4 bg-[#00B5AD] text-white font-semibold py-2 px-5 rounded-full hover:opacity-90 transition self-start">VER MAIS</button>
-                </Link>
-              </div>
-            </div>
-            <div className="bg-[#FFFFFF] rounded-lg overflow-hidden flex items-center relative h-60">
-              <span className="text-8xl font-extrabold text-gray-200/80 absolute -left-4 top-1/2 -translate-y-1/2 select-none z-0">{topMovies[1].rank}</span>
-              <img src={topMovies[1].image} alt={topMovies[1].title} className="w-2/5 h-full object-cover relative z-10" />
-              <div className="p-4 z-10 flex flex-col justify-center">
-                <h3 className="text-xl md:text-2xl font-bold text-[#2D3748]">{topMovies[1].title}</h3>
-                <StarRating rating={topMovies[1].rating} />
-                <Link to={`/filme/${topMovies[1].id}`}>
-                  <button className="mt-2 bg-[#00B5AD] text-white font-semibold py-2 px-5 rounded-full hover:opacity-90 transition self-start">VER MAIS</button>
-                </Link>
-              </div>
-            </div>
+            {[0, 1].map((idx) => {
+              const movie = topMovies[idx];
+              return (
+                <div key={movie.id} className="bg-[#FFFFFF] rounded-lg overflow-hidden relative h-60 group flex items-center">
+                  {/* Número à esquerda */}
+                  <div className="bg-[#00B5AD] h-full w-24 flex items-center justify-center absolute left-0 top-0 z-10">
+                    <span className="text-7xl font-extrabold text-white">{movie.rank}</span>
+                  </div>
+                  {/* Poster */}
+                  <img src={movie.image} alt={movie.title} className="w-2/5 h-full object-cover ml-24" />
+                  {/* Overlay gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                  {/* Botão coração */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      console.log('Add to wishlist:', movie.id);
+                      // TODO: Implementar wishlist
+                    }}
+                    className="absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all duration-300 bg-black/50 text-white hover:bg-red-500 opacity-100 scale-100 z-20"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 3.75a4.75 4.75 0 00-3.75 1.75A4.75 4.75 0 009 3.75C6.376 3.75 4.5 5.626 4.5 8.25c0 4.243 7.5 9.75 7.5 9.75s7.5-5.507 7.5-9.75c0-2.624-1.876-4.5-4.5-4.5z" />
+                    </svg>
+                  </button>
+                  {/* Botão play central */}
+                  <Link to={`/filme/${movie.id}`} className="absolute inset-0 flex items-center justify-center z-20">
+                    <div className="bg-[#00B5AD] hover:bg-[#009A93] text-white p-4 rounded-full shadow-lg transform transition-transform hover:scale-110">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-7 w-7 ml-1">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.25l13.5 6.75-13.5 6.75V5.25z" />
+                      </svg>
+                    </div>
+                  </Link>
+                  {/* Info */}
+                  <div className="p-6 flex flex-col justify-center z-10 ml-4">
+                    <h3 className="text-xl md:text-2xl font-bold text-[#2D3748]">{movie.title}</h3>
+                    <StarRating rating={movie.rating} />
+                  </div>
+                </div>
+              );
+            })}
           </section>
         )}
 
         {/* SECÇÃO "TENDÊNCIAS" COM 8 FILMES */}
         <section className="mb-12">
           <h2 className="text-3xl font-bold text-[#2D3748] mb-4">Tendências Atuais</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {trendingMovies.map(movie => (
-              <Link to={`/filme/${movie.id}`} key={movie.id} className="relative rounded-lg overflow-hidden group shadow-lg bg-[#FFFFFF] aspect-[2/3]">
-                <img src={movie.image} alt={movie.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 p-4 text-white">
-                  <h4 className="font-bold text-lg">{movie.title}</h4>
-                  <StarRating rating={movie.rating} />
-                </div>
-              </Link>
-            ))}
-          </div>
+          {loading ? (
+            <MovieGridSkeleton />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              {trendingMovies.map(movie => (
+                <MovieCard 
+                  key={movie.id} 
+                  movie={{
+                    ...movie,
+                    poster_url: movie.image,
+                    vote_average: movie.rating * 2,
+                    release_date: movie.release_date || new Date().toISOString()
+                  }}
+                  onWishlistToggle={(movieId) => {
+                    console.log('Add to wishlist:', movieId);
+                    // TODO: Implementar wishlist
+                  }}
+                  isInWishlist={false}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* SECÇÃO "CRÍTICAS" (mantida com dados estáticos) */}
