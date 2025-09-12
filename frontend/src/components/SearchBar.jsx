@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { FiSearch, FiX } from 'react-icons/fi';
 
 const SearchBar = ({ onSearch, placeholder = "Buscar filmes...", className = "" }) => {
@@ -18,7 +18,7 @@ const SearchBar = ({ onSearch, placeholder = "Buscar filmes...", className = "" 
 
 	return (
 		<div className={`relative ${className}`}>
-			<form onSubmit={handleSubmit}>
+			<form onSubmit={handleSubmit} role="search">
 				<div className={`relative transition-all duration-300 ${
 					isExpanded ? 'scale-105' : 'scale-100'
 				}`}>
