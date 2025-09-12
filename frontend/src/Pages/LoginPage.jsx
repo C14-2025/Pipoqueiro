@@ -29,8 +29,16 @@ const LoginPage = () => {
   };
   
   // --- Handlers de Submissão dos Formulários ---
+  const [loginTouched, setLoginTouched] = useState({ email: false, senha: false });
+  const [registerTouched, setRegisterTouched] = useState({ nome: false, email: false, senha: false, confirmPassword: false });
+
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoginTouched({ email: true, senha: true });
+    if (!loginData.email || !loginData.senha) {
+      setError('Todos os campos são obrigatórios.');
+      return;
+    }
     try {
       setLoading(true);
       setError('');
@@ -45,6 +53,11 @@ const LoginPage = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    setRegisterTouched({ nome: true, email: true, senha: true, confirmPassword: true });
+    if (!registerData.nome || !registerData.email || !registerData.senha || !registerData.confirmPassword) {
+      setError('Todos os campos são obrigatórios.');
+      return;
+    }
     if (registerData.senha !== registerData.confirmPassword) {
       setError('As senhas não coincidem.');
       return;
@@ -110,9 +123,11 @@ const LoginPage = () => {
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B5AD] bg-[#F4F6F8]" 
               value={registerData.nome}
               onChange={handleRegisterChange}
+              onBlur={() => setRegisterTouched(t => ({ ...t, nome: true }))}
               disabled={loading}
               required
             />
+            {registerTouched.nome && !registerData.nome && <span style={{color: 'red', fontSize: 12}}>Campo obrigatório</span>}
             <input 
               type="email" 
               name="email"
@@ -120,9 +135,11 @@ const LoginPage = () => {
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B5AD] bg-[#F4F6F8]" 
               value={registerData.email}
               onChange={handleRegisterChange}
+              onBlur={() => setRegisterTouched(t => ({ ...t, email: true }))}
               disabled={loading}
               required
             />
+            {registerTouched.email && !registerData.email && <span style={{color: 'red', fontSize: 12}}>Campo obrigatório</span>}
             <div className="relative">
               <input 
                 type={showPasswordCadastro ? "text" : "password"} 
@@ -131,6 +148,7 @@ const LoginPage = () => {
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B5AD] bg-[#F4F6F8] pr-10" 
                 value={registerData.senha}
                 onChange={handleRegisterChange}
+                onBlur={() => setRegisterTouched(t => ({ ...t, senha: true }))}
                 disabled={loading}
                 required
               />
@@ -138,6 +156,7 @@ const LoginPage = () => {
                 {showPasswordCadastro ? <FiEyeOff size={20} /> : <FiEye size={20} />}
               </span>
             </div>
+            {registerTouched.senha && !registerData.senha && <span style={{color: 'red', fontSize: 12}}>Campo obrigatório</span>}
             <div className="relative">
               <input 
                 type={showConfirmPasswordCadastro ? "text" : "password"} 
@@ -146,6 +165,7 @@ const LoginPage = () => {
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B5AD] bg-[#F4F6F8] pr-10" 
                 value={registerData.confirmPassword}
                 onChange={handleRegisterChange}
+                onBlur={() => setRegisterTouched(t => ({ ...t, confirmPassword: true }))}
                 disabled={loading}
                 required
               />
@@ -153,6 +173,7 @@ const LoginPage = () => {
                 {showConfirmPasswordCadastro ? <FiEyeOff size={20} /> : <FiEye size={20} />}
               </span>
             </div>
+            {registerTouched.confirmPassword && !registerData.confirmPassword && <span style={{color: 'red', fontSize: 12}}>Campo obrigatório</span>}
             <button 
               type="submit" 
               className="w-full bg-[#FF8C42] text-white font-bold py-3 px-6 rounded-full hover:opacity-80 transition-opacity duration-300 cursor-pointer mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -178,9 +199,11 @@ const LoginPage = () => {
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B5AD] bg-[#F4F6F8]" 
               value={loginData.email}
               onChange={handleLoginChange}
+              onBlur={() => setLoginTouched(t => ({ ...t, email: true }))}
               disabled={loading}
               required
             />
+            {loginTouched.email && !loginData.email && <span style={{color: 'red', fontSize: 12}}>Campo obrigatório</span>}
             <div className="relative">
               <input 
                 type={showPasswordLogin ? "text" : "password"} 
@@ -189,6 +212,7 @@ const LoginPage = () => {
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B5AD] bg-[#F4F6F8] pr-10" 
                 value={loginData.senha}
                 onChange={handleLoginChange}
+                onBlur={() => setLoginTouched(t => ({ ...t, senha: true }))}
                 disabled={loading}
                 required
               />
@@ -196,6 +220,7 @@ const LoginPage = () => {
                 {showPasswordLogin ? <FiEyeOff size={20} /> : <FiEye size={20} />}
               </span>
             </div>
+            {loginTouched.senha && !loginData.senha && <span style={{color: 'red', fontSize: 12}}>Campo obrigatório</span>}
             <Link to="/esqueci-senha" className="text-[#00B5AD] text-sm hover:underline block text-right">Esqueceu a senha?</Link>
             <button 
               type="submit" 

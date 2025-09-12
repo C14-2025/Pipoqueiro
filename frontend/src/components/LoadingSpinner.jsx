@@ -1,3 +1,5 @@
+import React from 'react';
+
 const LoadingSpinner = ({ size = "md", className = "" }) => {
 	const sizes = {
 		sm: "h-8 w-8",
@@ -6,7 +8,7 @@ const LoadingSpinner = ({ size = "md", className = "" }) => {
 	};
 
 	return (
-		<div className={`flex justify-center items-center ${className}`}>
+		<div className={`flex justify-center items-center ${className}`} data-testid="loading-spinner">
 			<div className={`animate-spin rounded-full border-b-2 border-[#00B5AD] ${sizes[size]}`}></div>
 		</div>
 	);
