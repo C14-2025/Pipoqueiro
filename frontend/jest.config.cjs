@@ -1,8 +1,12 @@
-
 module.exports = {
-  transform: {
-    '^.+\\.[jt]sx?$': 'babel-jest',
-  },
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['./jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+
+  transform: {
+    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
+  },
+
+  transformIgnorePatterns: [
+    '/node_modules/(?!(msw|whatwg-fetch))/',
+  ],
 };
