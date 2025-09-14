@@ -100,7 +100,7 @@ describe('🎬 OTÁVIO - TESTES FUNCIONAIS DO SERVIÇO TMDB', () => {
       { id: 6, title: 'Guardians 3', popularity: 1000 }
     ];
 
-    mockAxiosInstance.get.mockImplementation((url, config) => {
+    mockAxiosInstance.get.mockImplementation((_url: string, config: any) => {
       const page = config?.params?.page || 1;
       if (page === 1) {
         return Promise.resolve({ data: { page: 1, results: page1Movies, total_pages: 100 } });
@@ -166,7 +166,7 @@ describe('🎬 OTÁVIO - TESTES FUNCIONAIS DO SERVIÇO TMDB', () => {
     expect(results.length).toBe(3);
     expect(results[0].title).toBe('The Dark Knight');
     expect(results[0].vote_average).toBe(8.5);
-    expect(results.every(movie => movie.title.toLowerCase().includes('batman') ||
+    expect(results.every((movie: any) => movie.title.toLowerCase().includes('batman') ||
                                   movie.title.toLowerCase().includes('dark knight'))).toBe(true);
     expect(mockAxiosInstance.get).toHaveBeenCalledWith('/search/movie', {
       params: { query: 'Batman', page: 1 }
@@ -201,7 +201,7 @@ describe('🎬 OTÁVIO - TESTES FUNCIONAIS DO SERVIÇO TMDB', () => {
       { id: 3, title: 'À Procura de Nemo', original_title: 'Finding Nemo' }
     ];
 
-    mockAxiosInstance.get.mockImplementation((url, config) => {
+    mockAxiosInstance.get.mockImplementation((_url: string, config: any) => {
       const query = config?.params?.query;
       if (query?.includes('João') || query?.includes('Maria')) {
         return Promise.resolve({ data: { results: [specialCharMovies[0]] } });
@@ -406,7 +406,7 @@ describe('🎬 OTÁVIO - TESTES FUNCIONAIS DO SERVIÇO TMDB', () => {
           }
         });
       }
-      return Promise.resolve({ data: { results: [{ id: callCount, title: Movie ${callCount} }] } });
+      return Promise.resolve({ data: { results: [{ id: callCount, title: `Movie ${callCount}` }] } });
     });
 
     const promises: Promise<any>[] = [];
@@ -436,5 +436,5 @@ describe('🎬 OTÁVIO - TESTES FUNCIONAIS DO SERVIÇO TMDB', () => {
     const movies = await tmdbService.getPopularMovies();
     expect(movies[0].title).toBe('Cached Movie');
     expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1);
-  });
+  });
 });
