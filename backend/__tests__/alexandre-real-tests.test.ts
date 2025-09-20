@@ -5,7 +5,8 @@ import request from 'supertest';
 import app from '../src/app';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { describe, test, expect, beforeAll } from '@jest/globals';
+import { describe, test, expect, beforeAll, jest, beforeEach } from '@jest/globals';
+import { auth } from '../src/utils/auth';
 
 describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
 
@@ -385,6 +386,88 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
         .expect(401);
 
       expect(response.body.success).toBe(false);
+    });
+
+    // NOVO TESTE COM MOCK - Middleware de autenticação JWT
+    test('deve validar e decodificar token JWT com mock do middleware', async () => {
+      // Mock do jwt.verify para simular diferentes cenários
+      const jwtVerifySpy = jest.spyOn(jwt, 'verify');
+
+      // Cenário 1: Token válido com mock
+      const mockPayload = {
+        id: 123,
+        email: 'teste@mock.com',
+        nome: 'Usuário Mock',
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 3600
+      };
+
+      jwtVerifySpy.mockReturnValueOnce(mockPayload as any);
+
+      // Simula uma requisição com token válido mockado
+      const validToken = 'mock.valid.token';
+      const mockReq = {
+        header: jest.fn().mockReturnValue(`Bearer ${validToken}`)
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis()
+      };
+      const mockNext = jest.fn();
+
+      // Testa o middleware diretamente
+      auth(mockReq as any, mockRes as any, mockNext);
+
+      // Verifica se o next() foi chamado (token válido)
+      expect(mockNext).toHaveBeenCalled();
+      expect((mockReq as any).user).toEqual(mockPayload);
+      expect(jwtVerifySpy).toHaveBeenCalledWith(validToken, 'pipoqueiro_secret_123');
+
+      // Cenário 2: Token expirado com mock
+      jwtVerifySpy.mockImplementationOnce(() => {
+        throw new Error('jwt expired');
+      });
+
+      const expiredReq = {
+        header: jest.fn().mockReturnValue('Bearer expired.token')
+      };
+      const expiredRes = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis()
+      };
+      const expiredNext = jest.fn();
+
+      auth(expiredReq as any, expiredRes as any, expiredNext);
+
+      // Verifica se retornou 401 para token expirado
+      expect(expiredRes.status).toHaveBeenCalledWith(401);
+      expect(expiredRes.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Token inválido'
+      });
+      expect(expiredNext).not.toHaveBeenCalled();
+
+      // Cenário 3: Sem token
+      const noTokenReq = {
+        header: jest.fn().mockReturnValue(undefined)
+      };
+      const noTokenRes = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis()
+      };
+      const noTokenNext = jest.fn();
+
+      auth(noTokenReq as any, noTokenRes as any, noTokenNext);
+
+      expect(noTokenRes.status).toHaveBeenCalledWith(401);
+      expect(noTokenRes.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Token não fornecido'
+      });
+      expect(noTokenNext).not.toHaveBeenCalled();
+
+      // Restaura o mock
+      jwtVerifySpy.mockRestore();
     });
   });
 
