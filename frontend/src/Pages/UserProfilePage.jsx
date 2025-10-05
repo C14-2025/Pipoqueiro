@@ -12,6 +12,8 @@ const UserProfilePage = () => {
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadUserProfile();
@@ -56,6 +58,25 @@ const UserProfilePage = () => {
       alert('Erro ao atualizar perfil. Tente novamente.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    navigate('/');
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeleting(true);
+      await authService.deleteAccount();
+      navigate('/');
+    } catch (err) {
+      console.error('Erro ao excluir conta:', err);
+      setError('Erro ao excluir conta. Tente novamente.');
+      setShowDeleteConfirmation(false);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -246,7 +267,59 @@ const UserProfilePage = () => {
             )}
           </div>
         </div>
-        
+
+        {/* Botões de Ação */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm mt-6">
+          <h2 className="text-2xl font-semibold text-[#2D3748] mb-4">Configurações da Conta</h2>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button
+              onClick={handleLogout}
+              className="bg-gray-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors duration-300"
+            >
+              Sair da Conta
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirmation(true)}
+              className="bg-red-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-600 transition-colors duration-300"
+            >
+              Apagar Conta
+            </button>
+          </div>
+        </div>
+
+        {/* Modal de Confirmação para Apagar Conta */}
+        {showDeleteConfirmation && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full mx-4">
+              <h3 className="text-2xl font-bold text-red-600 mb-4">⚠️ Confirmar Exclusão</h3>
+              <p className="text-gray-700 mb-6">
+                Tem certeza que deseja apagar sua conta? Esta ação é <strong>irreversível</strong> e todos os seus dados serão perdidos permanentemente, incluindo:
+              </p>
+              <ul className="list-disc list-inside text-gray-600 mb-6 space-y-1">
+                <li>Todas as suas avaliações</li>
+                <li>Dados do perfil</li>
+                <li>Histórico de atividades</li>
+              </ul>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowDeleteConfirmation(false)}
+                  disabled={isDeleting}
+                  className="flex-1 bg-gray-300 text-gray-700 font-bold py-3 px-6 rounded-lg hover:bg-gray-400 transition-colors duration-300 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={isDeleting}
+                  className="flex-1 bg-red-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-600 transition-colors duration-300 disabled:opacity-50"
+                >
+                  {isDeleting ? 'Apagando...' : 'Sim, Apagar Conta'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

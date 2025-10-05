@@ -1,13 +1,26 @@
 import { Request, Response } from 'express';
 import pool from '../config/database';
 import { AvaliacaoInput, ApiResponse } from '../types';
+import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger';
 
 export const criarReview = async (req: Request, res: Response) => {
   try {
+    logInfo('⭐ INICIANDO CRIAÇÃO DE REVIEW');
+
     const { tmdb_id, nota, titulo_review, comentario, spoiler = false }: AvaliacaoInput = req.body;
     const usuario_id = (req as any).user.userId;
 
+    logInfo('Dados da review recebidos', {
+      usuario_id,
+      tmdb_id,
+      nota,
+      titulo_review,
+      temComentario: !!comentario,
+      spoiler
+    });
+
     if (!tmdb_id || !nota) {
+      logError('Campos obrigatórios não fornecidos para review');
       return res.status(400).json({
         success: false,
         message: 'TMDB ID e nota são obrigatórios'
@@ -15,6 +28,7 @@ export const criarReview = async (req: Request, res: Response) => {
     }
 
     if (nota < 1 || nota > 5) {
+      logError('Nota fora do intervalo válido', { nota });
       return res.status(400).json({
         success: false,
         message: 'Nota deve estar entre 1 e 5'
@@ -26,27 +40,37 @@ export const criarReview = async (req: Request, res: Response) => {
     const comentarioValue = comentario || null;
     const spoilerValue = spoiler || false;
 
+    logInfo('Inserindo review no banco de dados');
+    logDatabase(
+      'INSERT INTO avaliacoes (usuario_id, tmdb_id, nota, titulo_review, comentario, spoiler) VALUES (?, ?, ?, ?, ?, ?)',
+      [usuario_id, tmdb_id, nota, tituloReviewValue, comentarioValue, spoilerValue]
+    );
+
     const [result] = await pool.execute(
       `INSERT INTO avaliacoes (usuario_id, tmdb_id, nota, titulo_review, comentario, spoiler)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [usuario_id, tmdb_id, nota, tituloReviewValue, comentarioValue, spoilerValue]
     );
 
+    const reviewId = (result as any).insertId;
+    logSuccess('🎉 REVIEW CRIADA COM SUCESSO!', { reviewId, usuario_id, tmdb_id, nota });
+
     res.status(201).json({
       success: true,
       message: 'Review criada com sucesso',
-      data: { id: (result as any).insertId }
+      data: { id: reviewId }
     });
 
   } catch (error: any) {
     if (error.code === 'ER_DUP_ENTRY') {
+      logError('Tentativa de criar review duplicada');
       return res.status(400).json({
         success: false,
         message: 'Você já avaliou este filme'
       });
     }
 
-    console.error('Erro ao criar review:', error);
+    logError('❌ ERRO AO CRIAR REVIEW:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'

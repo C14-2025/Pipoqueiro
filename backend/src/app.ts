@@ -5,6 +5,7 @@ import { connectDB } from './config/database';
 import userRoutes from './routes/users';
 import reviewRoutes from './routes/reviews';
 import movieRoutes from './routes/movies';
+import { requestLogger } from './middleware/logger';
 
 dotenv.config();
 
@@ -23,6 +24,9 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Middleware de logging
+app.use(requestLogger);
 
 // Rotas
 app.use('/api/users', userRoutes);

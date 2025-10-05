@@ -59,6 +59,8 @@ export const authService = {
     if (response.data.data?.token) {
       localStorage.setItem('token', response.data.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      // Dispara evento para atualizar header na mesma aba
+      window.dispatchEvent(new Event('storage'));
     }
     return response.data.data;
   },
@@ -73,6 +75,8 @@ export const authService = {
     if (response.data.data?.token) {
       localStorage.setItem('token', response.data.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      // Dispara evento para atualizar header na mesma aba
+      window.dispatchEvent(new Event('storage'));
     }
     return response.data.data;
   },
@@ -102,6 +106,9 @@ export const authService = {
    */
   logout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    // Dispara evento para atualizar header na mesma aba
+    window.dispatchEvent(new Event('storage'));
   },
 
   /**
@@ -109,6 +116,21 @@ export const authService = {
    */
   isAuthenticated() {
     return !!localStorage.getItem('token');
+  },
+
+  /**
+   * Exclui a conta do usuário.
+   * Corresponde a: DELETE /api/users/conta
+   */
+  async deleteAccount() {
+    const response = await api.delete('/users/conta');
+    // Após excluir com sucesso, remove dados locais
+    if (response.data.success) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.dispatchEvent(new Event('storage'));
+    }
+    return response.data;
   }
 };
 

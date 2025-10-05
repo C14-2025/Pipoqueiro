@@ -42,6 +42,11 @@ const Header = () => {
     navigate('/');
   };
 
+  // Função para forçar atualização do estado (pode ser chamada após login)
+  const updateAuthState = () => {
+    setIsAuthenticated(authService.isAuthenticated());
+  };
+
   const baseLinkClass = "font-semibold pb-1 transition-all duration-150";
   const activeLinkClass = "text-[#00B5AD] border-b-4 border-[#00B5AD]";
   const inactiveLinkClass = "text-[#2D3748] hover:text-[#00B5AD] hover:border-b-4 hover:border-[#00B5AD]";
@@ -58,27 +63,19 @@ const Header = () => {
           </Link>
           
           <div className="hidden md:flex items-center space-x-7">
-            <NavLink 
-              to="/" 
+            <NavLink
+              to="/"
               end
               className={({ isActive }) => `${baseLinkClass} ${isActive ? activeLinkClass : inactiveLinkClass}`}
             >
               Início
             </NavLink>
-            <NavLink 
+            <NavLink
               to="/filmes"
               className={({ isActive }) => `${baseLinkClass} ${isActive ? activeLinkClass : inactiveLinkClass}`}
             >
               Filmes
             </NavLink>
-            {isAuthenticated && (
-              <NavLink 
-                to="/perfil"
-                className={({ isActive }) => `${baseLinkClass} ${isActive ? activeLinkClass : inactiveLinkClass}`}
-              >
-                Meu Perfil
-              </NavLink>
-            )}
           </div>
         </div>
 
@@ -98,14 +95,11 @@ const Header = () => {
           
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
-              <>
-                <button 
-                  onClick={handleLogout}
-                  className="bg-gray-200 text-[#2D3748] font-bold py-2 px-6 rounded-full hover:bg-gray-300 transition-colors duration-300 whitespace-nowrap cursor-pointer"
-                >
-                  Sair
+              <Link to="/perfil">
+                <button className="bg-[#00B5AD] text-white font-bold py-2 px-6 rounded-full hover:opacity-80 transition-opacity duration-300 whitespace-nowrap cursor-pointer">
+                  Meu Perfil
                 </button>
-              </>
+              </Link>
             ) : (
               <Link to="/login">
                  <button className="bg-[#FF8C42] text-white font-bold py-2 px-6 rounded-full hover:opacity-80 transition-opacity duration-300 whitespace-nowrap cursor-pointer">
