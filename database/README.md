@@ -39,18 +39,37 @@ Get-Content 03-insert-data.sql | mysql -u root -p
 
 ## 🏗️ **Estrutura do Banco**
 
-### **Tabelas:**
+### **Tabelas Principais:**
 - **`usuarios`** - Perfis e autenticação
 - **`avaliacoes`** - Reviews de filmes (1-5⭐)
-- **`lista_quero_ver`** - Watchlist dos usuários
+- **`lista_quero_ver`** - Lista "Quero Ver" dos usuários
+- **`favoritos`** - Filmes favoritos dos usuários ⭐
 
-### **Views:**
-- **`estatisticas_filmes`** - Agregados por filme
-- **`usuarios_ativos`** - Stats por usuário
+### **Campos por Tabela:**
+
+#### **`usuarios`**
+- `id`, `nome`, `email`, `senha_hash`
+- `bio`, `foto_perfil`, `generos_favoritos`, `data_nascimento`
+- `created_at`, `updated_at`
+
+#### **`avaliacoes`**
+- `id`, `usuario_id`, `tmdb_id`, `nota` (1-5)
+- `titulo_review`, `comentario`, `spoiler`, `curtidas`
+- `created_at`, `updated_at`
+
+#### **`lista_quero_ver`**
+- `id`, `usuario_id`, `tmdb_id`
+- `prioridade` (baixa/media/alta), `data_adicao`
+- `notificar_lancamento`, `onde_assistir`
+
+#### **`favoritos`**
+- `id`, `usuario_id`, `tmdb_id`
+- `comentario_favorito`, `created_at`
 
 ### **Relacionamentos:**
 - Users → Reviews (1:N)
 - Users → Watchlist (1:N)
+- Users → Favorites (1:N)
 - Filmes via `tmdb_id` (TMDb API)
 
 ---
@@ -81,7 +100,48 @@ DROP DATABASE IF EXISTS pipoqueiro;
 
 ---
 
-**💾 Schema criado por:** Daví Padula  
-**📡 API integração:** Alexandre
+---
 
-**Para mais detalhes, ver:** `backend/docs/DATABASE_SETUP.md`
+## 🚀 **APIs Disponíveis**
+
+### **Watchlist (Lista "Quero Ver")**
+```bash
+GET    /api/watchlist           # Listar filmes "quero ver"
+POST   /api/watchlist           # Adicionar filme
+PUT    /api/watchlist/:tmdb_id  # Atualizar prioridade
+DELETE /api/watchlist/:tmdb_id  # Remover filme
+```
+
+### **Favorites (Favoritos)**
+```bash
+GET    /api/favorites           # Listar favoritos
+POST   /api/favorites           # Adicionar favorito
+PUT    /api/favorites/:tmdb_id  # Atualizar comentário
+DELETE /api/favorites/:tmdb_id  # Remover favorito
+GET    /api/favorites/check/:tmdb_id  # Verificar se é favorito
+```
+
+### **Reviews (Avaliações)**
+```bash
+GET    /api/reviews/filme/:tmdb_id  # Reviews de um filme
+GET    /api/reviews/minhas          # Minhas reviews
+POST   /api/reviews                 # Criar review
+PUT    /api/reviews/:id             # Editar review
+DELETE /api/reviews/:id             # Excluir review
+```
+
+### **Filmes (TMDb + Ranking)**
+```bash
+GET    /api/movies/popular          # Filmes populares TMDb
+GET    /api/movies/ranking          # Ranking da comunidade Pipoqueiro
+GET    /api/movies/search           # Buscar filmes
+GET    /api/movies/:tmdb_id         # Detalhes de um filme
+```
+
+---
+
+**💾 Schema criado por:** Daví Padula
+**📡 API Backend:** Alexandre
+**🎬 TMDB Integration:** Completa
+
+**Para mais detalhes técnicos, ver:** `backend/src/controllers/`

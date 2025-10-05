@@ -134,8 +134,11 @@ curl http://localhost:3000/api/health
 # Banco conectado?
 curl http://localhost:3000/api/test-db
 
-# Ver usuários de exemplo:
-curl http://localhost:3000/api/usuarios
+# Ver ranking da comunidade:
+curl http://localhost:3000/api/movies/ranking
+
+# Ver filmes populares:
+curl http://localhost:3000/api/movies/popular
 ```
 
 ---
@@ -145,16 +148,30 @@ curl http://localhost:3000/api/usuarios
 ### **Tabelas Criadas:**
 - ✅ `usuarios` - Perfis e autenticação
 - ✅ `avaliacoes` - Reviews de filmes (1-5⭐)
-- ✅ `lista_quero_ver` - Watchlist dos usuários
+- ✅ `lista_quero_ver` - Lista "Quero Ver" dos usuários
+- ✅ `favoritos` - Filmes favoritos dos usuários ⭐
+
+### **Funcionalidades Backend:**
+- 🔐 Sistema de autenticação JWT completo
+- 📝 CRUD de reviews com curtidas
+- 📋 Sistema de watchlist com prioridades
+- ⭐ Sistema de favoritos com comentários
+- 🎬 Integração com TMDb API
+- 🗑️ Exclusão de conta com cascata
+- 📊 Estatísticas de usuário
+
+### **APIs Disponíveis:**
+- `/api/users/*` - Autenticação e perfis
+- `/api/reviews/*` - Sistema de reviews
+- `/api/movies/*` - Integração TMDb + Ranking comunidade
+- `/api/watchlist/*` - Lista "Quero Ver"
+- `/api/favorites/*` - Filmes favoritos
 
 ### **Dados de Exemplo:**
 - 4 usuários já cadastrados
 - 10+ reviews de filmes populares
 - Diversos filmes na watchlist
-
-### **Views para Estatísticas:**
-- `estatisticas_filmes` - Agregados por filme  
-- `usuarios_ativos` - Stats por usuário
+- Filmes favoritos por usuário
 
 ---
 

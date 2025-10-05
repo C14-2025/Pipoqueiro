@@ -5,6 +5,8 @@ import { connectDB } from './config/database';
 import userRoutes from './routes/users';
 import reviewRoutes from './routes/reviews';
 import movieRoutes from './routes/movies';
+import watchlistRoutes from './routes/watchlist';
+import favoritesRoutes from './routes/favorites';
 import { requestLogger } from './middleware/logger';
 
 dotenv.config();
@@ -32,6 +34,8 @@ app.use(requestLogger);
 app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/movies', movieRoutes);
+app.use('/api/watchlist', watchlistRoutes);
+app.use('/api/favorites', favoritesRoutes);
 
 // Rota de teste
 app.get('/api/health', (req, res) => {
