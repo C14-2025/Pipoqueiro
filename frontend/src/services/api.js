@@ -55,38 +55,50 @@ export const authService = {
    */
   async login(email, senha) {
     const response = await api.post('/users/login', { email, senha });
-    // Salva o token no localStorage para manter o usuário logado
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
+    // Backend retorna { success: true, data: { token, user } }
+    if (response.data.data?.token) {
+      localStorage.setItem('token', response.data.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      // Dispara evento para atualizar header na mesma aba
+      window.dispatchEvent(new Event('storage'));
     }
-    return response.data;
+    return response.data.data;
   },
 
   /**
    * Registra um novo usuário.
-   * Corresponde a: POST /api/users/register
+   * Corresponde a: POST /api/users/registrar
    */
   async register(userData) {
-    const response = await api.post('/users/register', userData);
-    return response.data.user;
+    const response = await api.post('/users/registrar', userData);
+    // Backend retorna { success: true, data: { token, user } }
+    if (response.data.data?.token) {
+      localStorage.setItem('token', response.data.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      // Dispara evento para atualizar header na mesma aba
+      window.dispatchEvent(new Event('storage'));
+    }
+    return response.data.data;
   },
 
   /**
    * Busca os dados do perfil do usuário logado.
-   * Corresponde a: GET /api/users/profile
+   * Corresponde a: GET /api/users/perfil
    */
   async getProfile() {
-    const response = await api.get('/users/profile');
-    return response.data.user;
+    const response = await api.get('/users/perfil');
+    // Backend retorna { success: true, data: user }
+    return response.data.data;
   },
 
   /**
    * Atualiza os dados do perfil do usuário logado.
-   * Corresponde a: PUT /api/users/profile
+   * Corresponde a: PUT /api/users/perfil
    */
   async updateProfile(userData) {
-    const response = await api.put('/users/profile', userData);
-    return response.data.user;
+    const response = await api.put('/users/perfil', userData);
+    // Backend retorna { success: true, data: user }
+    return response.data.data;
   },
 
   /**
@@ -94,6 +106,9 @@ export const authService = {
    */
   logout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    // Dispara evento para atualizar header na mesma aba
+    window.dispatchEvent(new Event('storage'));
   },
 
   /**
@@ -101,6 +116,21 @@ export const authService = {
    */
   isAuthenticated() {
     return !!localStorage.getItem('token');
+  },
+
+  /**
+   * Exclui a conta do usuário.
+   * Corresponde a: DELETE /api/users/conta
+   */
+  async deleteAccount() {
+    const response = await api.delete('/users/conta');
+    // Após excluir com sucesso, remove dados locais
+    if (response.data.success) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.dispatchEvent(new Event('storage'));
+    }
+    return response.data;
   }
 };
 
@@ -108,20 +138,62 @@ export const authService = {
 export const reviewService = {
   /**
    * Busca todas as avaliações de um filme específico.
-   * Corresponde a: GET /api/reviews/movie/:tmdbId
+   * Corresponde a: GET /api/reviews/filme/:tmdb_id
    */
   async getMovieReviews(tmdbId) {
-    const response = await api.get(`/reviews/movie/${tmdbId}`);
-    return response.data.reviews;
+    const response = await api.get(`/reviews/filme/${tmdbId}`);
+    // Backend retorna { success: true, data: [...] }
+    return response.data.data;
   },
 
   /**
-   * Busca todas as avaliações feitas por um usuário específico.
-   * Corresponde a: GET /api/reviews/user/:userId
+   * Busca todas as avaliações feitas pelo usuário logado.
+   * Corresponde a: GET /api/reviews/minhas
    */
-  async getUserReviews(userId) {
-    const response = await api.get(`/reviews/user/${userId}`);
-    return response.data.reviews;
+  async getMyReviews() {
+    const response = await api.get('/reviews/minhas');
+    // Backend retorna { success: true, data: [...] }
+    return response.data.data;
+  },
+
+  /**
+   * Cria uma nova avaliação.
+   * Corresponde a: POST /api/reviews
+   */
+  async createReview(reviewData) {
+    const response = await api.post('/reviews', reviewData);
+    // Backend retorna { success: true, data: { id } }
+    return response.data.data;
+  },
+
+  /**
+   * Atualiza uma avaliação existente.
+   * Corresponde a: PUT /api/reviews/:id
+   */
+  async updateReview(reviewId, reviewData) {
+    const response = await api.put(`/reviews/${reviewId}`, reviewData);
+    // Backend retorna { success: true, message }
+    return response.data;
+  },
+
+  /**
+   * Exclui uma avaliação.
+   * Corresponde a: DELETE /api/reviews/:id
+   */
+  async deleteReview(reviewId) {
+    const response = await api.delete(`/reviews/${reviewId}`);
+    // Backend retorna { success: true, message }
+    return response.data;
+  },
+
+  /**
+   * Curte uma avaliação.
+   * Corresponde a: POST /api/reviews/:id/curtir
+   */
+  async likeReview(reviewId) {
+    const response = await api.post(`/reviews/${reviewId}/curtir`);
+    // Backend retorna { success: true, message }
+    return response.data;
   }
 };
 

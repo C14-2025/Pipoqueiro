@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { 
-  registrarUsuario, 
-  loginUsuario, 
-  obterPerfil, 
-  atualizarPerfil, 
-  obterEstatisticasUsuario 
+import {
+  registrarUsuario,
+  loginUsuario,
+  obterPerfil,
+  atualizarPerfil,
+  obterEstatisticasUsuario,
+  excluirConta
 } from '../controllers/userController';
 import { auth } from '../utils/auth';
 
@@ -24,5 +25,8 @@ router.put('/perfil', auth, atualizarPerfil);
 
 // Obter estatísticas do usuário (autenticado)
 router.get('/estatisticas', auth, obterEstatisticasUsuario);
+
+// Excluir conta (autenticado)
+router.delete('/conta', auth, excluirConta);
 
 export default router;
