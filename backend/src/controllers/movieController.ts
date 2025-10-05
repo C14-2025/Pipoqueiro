@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { TMDbService } from '../services/tmdbService';
 import pool from '../config/database';
+import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger';
 
 export class MovieController {
   private tmdbService = new TMDbService();
@@ -139,6 +140,124 @@ export class MovieController {
       res.status(500).json({
         success: false,
         message: 'Erro ao buscar detalhes do filme'
+      });
+    }
+  }
+
+  // GET /api/movies/ranking - Ranking dos filmes melhor avaliados pela comunidade
+  async getRanking(req: Request, res: Response) {
+    try {
+      logInfo('🏆 BUSCANDO RANKING DOS FILMES DA COMUNIDADE PIPOQUEIRO');
+
+      const limit = parseInt(req.query.limit as string) || 50;
+      const minReviews = parseInt(req.query.min_reviews as string) || 3;
+
+      logInfo('Parâmetros de ranking', { limit, minReviews });
+
+      // Buscar filmes com mais avaliações e melhores notas da nossa comunidade
+      logDatabase(`
+        SELECT
+          tmdb_id,
+          COUNT(*) as total_avaliacoes,
+          AVG(nota) as nota_media,
+          COUNT(CASE WHEN nota >= 4 THEN 1 END) as avaliacoes_positivas
+        FROM avaliacoes
+        GROUP BY tmdb_id
+        HAVING COUNT(*) >= ?
+        ORDER BY nota_media DESC, total_avaliacoes DESC
+        LIMIT ?
+      `, [minReviews, limit]);
+
+      const [rows] = await pool.execute(`
+        SELECT
+          tmdb_id,
+          COUNT(*) as total_avaliacoes,
+          AVG(nota) as nota_media,
+          COUNT(CASE WHEN nota >= 4 THEN 1 END) as avaliacoes_positivas
+        FROM avaliacoes
+        GROUP BY tmdb_id
+        HAVING COUNT(*) >= ?
+        ORDER BY nota_media DESC, total_avaliacoes DESC
+        LIMIT ?
+      `, [minReviews, limit]);
+
+      const rankingMovies = rows as any[];
+      logInfo(`Encontrados ${rankingMovies.length} filmes no ranking`);
+
+      if (rankingMovies.length === 0) {
+        logInfo('Nenhum filme encontrado com avaliações suficientes');
+        return res.json({
+          success: true,
+          message: 'Ranking obtido com sucesso',
+          data: []
+        });
+      }
+
+      // Para cada filme, buscar dados completos do TMDB
+      const rankingWithDetails = await Promise.all(
+        rankingMovies.map(async (movieStats, index) => {
+          try {
+            const movieDetails = await this.tmdbService.getMovieDetails(movieStats.tmdb_id);
+
+            logInfo(`Processando filme ${index + 1}/${rankingMovies.length}`, {
+              tmdb_id: movieStats.tmdb_id,
+              title: movieDetails.title,
+              nota_media: parseFloat(movieStats.nota_media).toFixed(1)
+            });
+
+            return {
+              rank: index + 1,
+              tmdb_id: movieStats.tmdb_id,
+              // Dados do TMDB
+              ...movieDetails,
+              poster_url: this.tmdbService.formatPosterURL(movieDetails.poster_path),
+              backdrop_url: movieDetails.backdrop_path ?
+                `https://image.tmdb.org/t/p/w1280${movieDetails.backdrop_path}` : null,
+              // Estatísticas da nossa comunidade
+              nossa_stats: {
+                total_avaliacoes: movieStats.total_avaliacoes,
+                nota_media: parseFloat(movieStats.nota_media).toFixed(1),
+                avaliacoes_positivas: movieStats.avaliacoes_positivas,
+                percentual_positivo: Math.round((movieStats.avaliacoes_positivas / movieStats.total_avaliacoes) * 100)
+              }
+            };
+          } catch (error) {
+            logError(`Erro ao buscar dados do filme ${movieStats.tmdb_id}:`, error);
+            return {
+              rank: index + 1,
+              tmdb_id: movieStats.tmdb_id,
+              title: 'Filme não encontrado',
+              poster_url: null,
+              backdrop_url: null,
+              nossa_stats: {
+                total_avaliacoes: movieStats.total_avaliacoes,
+                nota_media: parseFloat(movieStats.nota_media).toFixed(1),
+                avaliacoes_positivas: movieStats.avaliacoes_positivas,
+                percentual_positivo: Math.round((movieStats.avaliacoes_positivas / movieStats.total_avaliacoes) * 100)
+              }
+            };
+          }
+        })
+      );
+
+      logSuccess(`🎉 RANKING CARREGADO COM ${rankingWithDetails.length} FILMES!`);
+
+      res.json({
+        success: true,
+        message: `Top ${rankingWithDetails.length} filmes da comunidade Pipoqueiro`,
+        data: rankingWithDetails,
+        meta: {
+          total_filmes: rankingWithDetails.length,
+          min_reviews_required: minReviews,
+          ordenacao: 'nota_media DESC, total_avaliacoes DESC'
+        }
+      });
+
+    } catch (error) {
+      logError('❌ ERRO AO BUSCAR RANKING DA COMUNIDADE:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar ranking dos filmes'
       });
     }
   }
