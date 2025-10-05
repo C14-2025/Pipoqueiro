@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { movieService } from '../services/api';
+import { movieService, reviewService, authService } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { BsStarFill, BsStar, BsBookmarkPlus } from 'react-icons/bs';
 
@@ -92,6 +92,8 @@ const MediaDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userRating, setUserRating] = useState(0); // Estado para a nota do usuário
+  const [reviewText, setReviewText] = useState(''); // Estado para o texto da review
+  const [submittingReview, setSubmittingReview] = useState(false); // Estado para envio da review
 
   useEffect(() => {
     if (id) {
@@ -103,13 +105,60 @@ const MediaDetailsPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const movieData = await movieService.getMovieDetails(movieId);
-      setMovie(movieData);
+
+      // Carrega dados do filme e reviews em paralelo
+      const [movieData, reviewsData] = await Promise.all([
+        movieService.getMovieDetails(movieId),
+        reviewService.getMovieReviews(movieId)
+      ]);
+
+      // Adiciona reviews ao objeto do filme
+      setMovie({
+        ...movieData,
+        reviews: reviewsData || []
+      });
     } catch (error) {
       console.error('Erro ao carregar filme:', error);
       setError('Erro ao carregar dados do filme.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Função para submeter uma nova review
+  const handleSubmitReview = async () => {
+    if (!authService.isAuthenticated()) {
+      navigate('/login');
+      return;
+    }
+
+    if (!userRating || !reviewText.trim()) {
+      alert('Por favor, adicione uma nota e um comentário.');
+      return;
+    }
+
+    try {
+      setSubmittingReview(true);
+      await reviewService.createReview({
+        tmdb_id: parseInt(id),
+        nota: userRating,
+        comentario: reviewText.trim()
+      });
+
+      // Recarrega as reviews após criar uma nova
+      await loadMovieData(parseInt(id));
+
+      // Limpa o formulário
+      setUserRating(0);
+      setReviewText('');
+
+      alert('Review publicada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao submeter review:', error);
+      const errorMessage = error.response?.data?.message || 'Erro ao publicar review. Tente novamente.';
+      alert(errorMessage);
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -200,24 +249,41 @@ const MediaDetailsPage = () => {
 
             <div className="mb-8">
               <h2 className="text-3xl font-bold text-[#2D3748] mb-4">Deixe sua Avaliação</h2>
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <textarea 
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B5AD] bg-[#F4F6F8] transition"
-                  rows="4"
-                  placeholder="Escreva sua opinião aqui..."
-                ></textarea>
-                <div className="flex justify-between items-center mt-3">
-                  <div>
-                    <p className="text-sm font-semibold text-[#2D3748] mb-1">Sua nota:</p>
-                    <InteractiveStarRating rating={userRating} onRatingChange={setUserRating} />
+              {authService.isAuthenticated() ? (
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <textarea
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B5AD] bg-[#F4F6F8] transition"
+                    rows="4"
+                    placeholder="Escreva sua opinião aqui..."
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    disabled={submittingReview}
+                  />
+                  <div className="flex justify-between items-center mt-3">
+                    <div>
+                      <p className="text-sm font-semibold text-[#2D3748] mb-1">Sua nota:</p>
+                      <InteractiveStarRating rating={userRating} onRatingChange={setUserRating} />
+                    </div>
+                    <button
+                      onClick={handleSubmitReview}
+                      disabled={submittingReview || !userRating || !reviewText.trim()}
+                      className="bg-[#FF8C42] text-white font-bold py-2 px-6 rounded-full hover:opacity-80 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {submittingReview ? 'Publicando...' : 'Publicar'}
+                    </button>
                   </div>
-                  <button 
-                    className="bg-[#FF8C42] text-white font-bold py-2 px-6 rounded-full hover:opacity-80 transition-opacity cursor-pointer"
+                </div>
+              ) : (
+                <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+                  <p className="text-[#A0AEC0] mb-4">Faça login para deixar sua avaliação</p>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="bg-[#00B5AD] text-white font-bold py-2 px-6 rounded-full hover:opacity-80 transition-opacity cursor-pointer"
                   >
-                    Publicar
+                    Fazer Login
                   </button>
                 </div>
-              </div>
+              )}
             </div>
 
             {movie.reviews && movie.reviews.length > 0 && (

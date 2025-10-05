@@ -21,10 +21,15 @@ export const criarReview = async (req: Request, res: Response) => {
       });
     }
 
+    // Tratar campos opcionais - converter undefined para null
+    const tituloReviewValue = titulo_review || null;
+    const comentarioValue = comentario || null;
+    const spoilerValue = spoiler || false;
+
     const [result] = await pool.execute(
-      `INSERT INTO avaliacoes (usuario_id, tmdb_id, nota, titulo_review, comentario, spoiler) 
+      `INSERT INTO avaliacoes (usuario_id, tmdb_id, nota, titulo_review, comentario, spoiler)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [usuario_id, tmdb_id, nota, titulo_review, comentario, spoiler]
+      [usuario_id, tmdb_id, nota, tituloReviewValue, comentarioValue, spoilerValue]
     );
 
     res.status(201).json({
@@ -123,15 +128,21 @@ export const atualizarReview = async (req: Request, res: Response) => {
       });
     }
 
+    // Tratar campos opcionais - converter undefined para null
+    const notaValue = nota || null;
+    const tituloReviewValue = titulo_review || null;
+    const comentarioValue = comentario || null;
+    const spoilerValue = spoiler !== undefined ? spoiler : null;
+
     const [result] = await pool.execute(
-      `UPDATE avaliacoes 
-       SET nota = COALESCE(?, nota), 
-           titulo_review = COALESCE(?, titulo_review), 
-           comentario = COALESCE(?, comentario), 
+      `UPDATE avaliacoes
+       SET nota = COALESCE(?, nota),
+           titulo_review = COALESCE(?, titulo_review),
+           comentario = COALESCE(?, comentario),
            spoiler = COALESCE(?, spoiler),
            updated_at = CURRENT_TIMESTAMP
        WHERE id = ? AND usuario_id = ?`,
-      [nota, titulo_review, comentario, spoiler, id, usuario_id]
+      [notaValue, tituloReviewValue, comentarioValue, spoilerValue, id, usuario_id]
     );
 
     if ((result as any).affectedRows === 0) {

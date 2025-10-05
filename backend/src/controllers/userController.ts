@@ -6,7 +6,8 @@ import { UsuarioInput, UsuarioLogin, AuthPayload } from '../types';
 
 export const registrarUsuario = async (req: Request, res: Response) => {
   try {
-    const { nome, email, senha, bio, foto_perfil, generos_favoritos, data_nascimento }: UsuarioInput = req.body;
+    // Apenas campos obrigatórios no registro
+    const { nome, email, senha } = req.body;
 
     if (!nome || !email || !senha) {
       return res.status(400).json({
@@ -32,11 +33,12 @@ export const registrarUsuario = async (req: Request, res: Response) => {
     const salt = await bcrypt.genSalt(10);
     const senha_hash = await bcrypt.hash(senha, salt);
 
-    // Inserir usuário
+    // Inserir usuário apenas com campos obrigatórios
+    // Campos opcionais ficam NULL para serem preenchidos no perfil depois
     const [result] = await pool.execute(
-      `INSERT INTO usuarios (nome, email, senha_hash, bio, foto_perfil, generos_favoritos, data_nascimento) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [nome, email, senha_hash, bio, foto_perfil, JSON.stringify(generos_favoritos), data_nascimento]
+      `INSERT INTO usuarios (nome, email, senha_hash, bio, foto_perfil, generos_favoritos, data_nascimento)
+       VALUES (?, ?, ?, NULL, NULL, NULL, NULL)`,
+      [nome, email, senha_hash]
     );
 
     const userId = (result as any).insertId;
@@ -56,9 +58,9 @@ export const registrarUsuario = async (req: Request, res: Response) => {
           id: userId,
           nome,
           email,
-          bio,
-          foto_perfil,
-          generos_favoritos
+          bio: null,
+          foto_perfil: null,
+          generos_favoritos: null
         }
       }
     });
@@ -179,16 +181,23 @@ export const atualizarPerfil = async (req: Request, res: Response) => {
     const userId = (req as any).user.userId;
     const { nome, bio, foto_perfil, generos_favoritos, data_nascimento } = req.body;
 
+    // Tratar campos opcionais - converter undefined para null
+    const nomeValue = nome || null;
+    const bioValue = bio || null;
+    const fotoPerfilValue = foto_perfil || null;
+    const generosFavoritosValue = generos_favoritos ? JSON.stringify(generos_favoritos) : null;
+    const dataNascimentoValue = data_nascimento || null;
+
     const [result] = await pool.execute(
-      `UPDATE usuarios 
-       SET nome = COALESCE(?, nome), 
-           bio = COALESCE(?, bio), 
-           foto_perfil = COALESCE(?, foto_perfil), 
-           generos_favoritos = COALESCE(?, generos_favoritos), 
+      `UPDATE usuarios
+       SET nome = COALESCE(?, nome),
+           bio = COALESCE(?, bio),
+           foto_perfil = COALESCE(?, foto_perfil),
+           generos_favoritos = COALESCE(?, generos_favoritos),
            data_nascimento = COALESCE(?, data_nascimento),
            updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
-      [nome, bio, foto_perfil, JSON.stringify(generos_favoritos), data_nascimento, userId]
+      [nomeValue, bioValue, fotoPerfilValue, generosFavoritosValue, dataNascimentoValue, userId]
     );
 
     if ((result as any).affectedRows === 0) {

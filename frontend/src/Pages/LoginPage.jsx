@@ -42,10 +42,18 @@ const LoginPage = () => {
     try {
       setLoading(true);
       setError('');
-      await authService.login(loginData.email, loginData.senha);
-      navigate('/'); // Redireciona para a home após o login
+      const result = await authService.login(loginData.email, loginData.senha);
+      if (result?.token) {
+        navigate('/'); // Redireciona para a home após o login
+      } else {
+        setError('Erro no login. Tente novamente.');
+      }
     } catch (err) {
-      setError('Email ou senha incorretos. Por favor, tente novamente.');
+      console.error('Erro no login:', err);
+      const errorMessage = err.response?.status === 401
+        ? 'Email ou senha incorretos.'
+        : 'Erro ao fazer login. Tente novamente.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -65,14 +73,20 @@ const LoginPage = () => {
     try {
       setLoading(true);
       setError('');
-      // Note que o serviço de registro pode esperar um objeto sem o confirmPassword
+      // Remove confirmPassword antes de enviar
       const { confirmPassword, ...dataToRegister } = registerData;
-      await authService.register(dataToRegister);
-      // Faz login automaticamente após o registro bem-sucedido
-      await authService.login(registerData.email, registerData.senha);
-      navigate('/'); // Redireciona para a home
+      const result = await authService.register(dataToRegister);
+
+      if (result?.token) {
+        // Registro já faz login automaticamente no backend
+        navigate('/'); // Redireciona para a home
+      } else {
+        setError('Erro ao criar conta. Tente novamente.');
+      }
     } catch (err) {
-      setError('Erro ao criar a conta. Verifique os dados ou tente outro email.');
+      console.error('Erro no registro:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao criar a conta. Verifique os dados ou tente outro email.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
