@@ -41,3 +41,14 @@ CREATE TABLE lista_quero_ver (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     UNIQUE KEY unique_user_movie_watchlist (usuario_id, tmdb_id)  -- Não duplicar filme
 );
+
+CREATE TABLE favoritos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,                       -- De quem é a lista de favoritos
+    tmdb_id INT NOT NULL,                          -- Qual filme é favorito
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    comentario_favorito TEXT,                      -- "Meu filme favorito da infância"
+
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_favorite (usuario_id, tmdb_id)  -- Não duplicar favorito
+);

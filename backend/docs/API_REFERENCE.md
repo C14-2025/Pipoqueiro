@@ -243,6 +243,254 @@ POST /reviews/{id}/curtir
 
 ---
 
+## 📋 **LISTA "QUERO VER" (WATCHLIST)**
+
+### **🔒 Obter Lista "Quero Ver" (Requer Auth)**
+```http
+GET /watchlist
+Authorization: Bearer {token}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Lista quero ver obtida com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "tmdb_id": 550,
+      "prioridade": "alta",
+      "data_adicao": "2025-01-01T00:00:00.000Z",
+      "onde_assistir": "Netflix",
+      "notificar_lancamento": true,
+      "title": "Clube da Luta",
+      "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+      "overview": "Um funcionário...",
+      "release_date": "1999-10-15",
+      "runtime": 139
+    }
+  ]
+}
+```
+
+### **🔒 Adicionar à Lista "Quero Ver" (Requer Auth)**
+```http
+POST /watchlist
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+**Body:**
+```json
+{
+  "tmdb_id": 550,
+  "prioridade": "alta", // opcional: baixa|media|alta (default: media)
+  "onde_assistir": "Netflix", // opcional
+  "notificar_lancamento": true // opcional (default: true)
+}
+```
+
+### **🔒 Atualizar Item da Lista (Requer Auth)**
+```http
+PUT /watchlist/{tmdb_id}
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+**Body:**
+```json
+{
+  "prioridade": "baixa",
+  "onde_assistir": "Amazon Prime",
+  "notificar_lancamento": false
+}
+```
+
+### **🔒 Remover da Lista "Quero Ver" (Requer Auth)**
+```http
+DELETE /watchlist/{tmdb_id}
+Authorization: Bearer {token}
+```
+
+---
+
+## ⭐ **FAVORITOS**
+
+### **🔒 Obter Filmes Favoritos (Requer Auth)**
+```http
+GET /favorites
+Authorization: Bearer {token}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Filmes favoritos obtidos com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "tmdb_id": 550,
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "comentario_favorito": "Meu filme favorito de todos os tempos!",
+      "title": "Clube da Luta",
+      "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+      "backdrop_url": "https://image.tmdb.org/t/p/w1280/...",
+      "overview": "Um funcionário...",
+      "release_date": "1999-10-15",
+      "runtime": 139
+    }
+  ]
+}
+```
+
+### **🔒 Adicionar aos Favoritos (Requer Auth)**
+```http
+POST /favorites
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+**Body:**
+```json
+{
+  "tmdb_id": 550,
+  "comentario_favorito": "Filme incrível!" // opcional
+}
+```
+
+### **🔒 Atualizar Comentário do Favorito (Requer Auth)**
+```http
+PUT /favorites/{tmdb_id}
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+**Body:**
+```json
+{
+  "comentario_favorito": "Novo comentário sobre este favorito"
+}
+```
+
+### **🔒 Remover dos Favoritos (Requer Auth)**
+```http
+DELETE /favorites/{tmdb_id}
+Authorization: Bearer {token}
+```
+
+### **🔒 Verificar se é Favorito (Requer Auth)**
+```http
+GET /favorites/check/{tmdb_id}
+Authorization: Bearer {token}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "is_favorite": true
+  }
+}
+```
+
+---
+
+## 🎬 **FILMES (TMDB)**
+
+### **Filmes Populares**
+```http
+GET /movies/popular?page=1
+```
+**Query Params:**
+- `page` - Número da página (default: 1)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Filmes populares obtidos com sucesso",
+  "data": [
+    {
+      "id": 550,
+      "title": "Clube da Luta",
+      "overview": "Um funcionário...",
+      "poster_path": "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+      "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+      "release_date": "1999-10-15",
+      "vote_average": 8.4,
+      "nossa_stats": {
+        "total_reviews": 5,
+        "nota_media": 4.6,
+        "reviews_positivas": 4
+      }
+    }
+  ]
+}
+```
+
+### **Buscar Filmes**
+```http
+GET /movies/search?query={termo}&page=1
+```
+**Query Params:**
+- `query` - Termo de busca (obrigatório)
+- `page` - Número da página (default: 1)
+
+### **Detalhes do Filme**
+```http
+GET /movies/{tmdb_id}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Detalhes do filme obtidos com sucesso",
+  "data": {
+    "id": 550,
+    "title": "Clube da Luta",
+    "overview": "Um funcionário...",
+    "poster_url": "https://image.tmdb.org/t/p/w500/...",
+    "backdrop_url": "https://image.tmdb.org/t/p/w1280/...",
+    "release_date": "1999-10-15",
+    "runtime": 139,
+    "genres": [{"id": 18, "name": "Drama"}],
+    "vote_average": 8.4,
+    "reviews": [
+      {
+        "id": 1,
+        "nota": 5,
+        "titulo_review": "Obra-prima!",
+        "comentario": "Filme incrível...",
+        "nome": "João Silva",
+        "foto_perfil": "https://..."
+      }
+    ],
+    "stats": {
+      "total_reviews": 5,
+      "nota_media": 4.6,
+      "reviews_positivas": 4,
+      "reviews_com_spoiler": 1
+    }
+  }
+}
+```
+
+---
+
+## 🗑️ **EXCLUSÃO DE CONTA**
+
+### **🔒 Excluir Conta (Requer Auth)**
+```http
+DELETE /users/conta
+Authorization: Bearer {token}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Conta excluída com sucesso"
+}
+```
+**⚠️ ATENÇÃO:** Esta ação remove TODOS os dados do usuário (reviews, watchlist, favoritos).
+
+---
+
 ## 🔐 **AUTENTICAÇÃO**
 
 ### **Como usar o token:**
