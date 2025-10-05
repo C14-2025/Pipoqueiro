@@ -400,6 +400,14 @@ GET /movies/popular?page=1
 **Query Params:**
 - `page` - Número da página (default: 1)
 
+### **🏆 Ranking da Comunidade Pipoqueiro**
+```http
+GET /movies/ranking?limit=50&min_reviews=3
+```
+**Query Params:**
+- `limit` - Número de filmes no ranking (default: 50)
+- `min_reviews` - Mínimo de avaliações necessárias (default: 3)
+
 **Response:**
 ```json
 {
@@ -421,6 +429,38 @@ GET /movies/popular?page=1
       }
     }
   ]
+}
+```
+
+**Response Ranking:**
+```json
+{
+  "success": true,
+  "message": "Top 50 filmes da comunidade Pipoqueiro",
+  "data": [
+    {
+      "rank": 1,
+      "tmdb_id": 550,
+      "title": "Clube da Luta",
+      "overview": "Um funcionário...",
+      "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+      "backdrop_url": "https://image.tmdb.org/t/p/w1280/...",
+      "release_date": "1999-10-15",
+      "runtime": 139,
+      "vote_average": 8.4,
+      "nossa_stats": {
+        "total_avaliacoes": 25,
+        "nota_media": "4.8",
+        "avaliacoes_positivas": 23,
+        "percentual_positivo": 92
+      }
+    }
+  ],
+  "meta": {
+    "total_filmes": 50,
+    "min_reviews_required": 3,
+    "ordenacao": "nota_media DESC, total_avaliacoes DESC"
+  }
 }
 ```
 
@@ -559,6 +599,15 @@ curl -X POST http://localhost:3000/api/reviews \
 ### **Ver reviews de um filme:**
 ```bash
 curl http://localhost:3000/api/reviews/filme/550
+```
+
+### **Ver ranking da comunidade:**
+```bash
+# Top 50 filmes da comunidade
+curl http://localhost:3000/api/movies/ranking
+
+# Top 20 filmes com pelo menos 5 avaliações
+curl "http://localhost:3000/api/movies/ranking?limit=20&min_reviews=5"
 ```
 
 ---

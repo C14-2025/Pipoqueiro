@@ -130,6 +130,14 @@ PUT    /api/reviews/:id             # Editar review
 DELETE /api/reviews/:id             # Excluir review
 ```
 
+### **Filmes (TMDb + Ranking)**
+```bash
+GET    /api/movies/popular          # Filmes populares TMDb
+GET    /api/movies/ranking          # Ranking da comunidade Pipoqueiro
+GET    /api/movies/search           # Buscar filmes
+GET    /api/movies/:tmdb_id         # Detalhes de um filme
+```
+
 ---
 
 **💾 Schema criado por:** Daví Padula

@@ -134,8 +134,11 @@ curl http://localhost:3000/api/health
 # Banco conectado?
 curl http://localhost:3000/api/test-db
 
-# Ver usuários de exemplo:
-curl http://localhost:3000/api/usuarios
+# Ver ranking da comunidade:
+curl http://localhost:3000/api/movies/ranking
+
+# Ver filmes populares:
+curl http://localhost:3000/api/movies/popular
 ```
 
 ---
@@ -160,7 +163,7 @@ curl http://localhost:3000/api/usuarios
 ### **APIs Disponíveis:**
 - `/api/users/*` - Autenticação e perfis
 - `/api/reviews/*` - Sistema de reviews
-- `/api/movies/*` - Integração TMDb
+- `/api/movies/*` - Integração TMDb + Ranking comunidade
 - `/api/watchlist/*` - Lista "Quero Ver"
 - `/api/favorites/*` - Filmes favoritos
 
