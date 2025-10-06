@@ -29,6 +29,15 @@ export const movieService = {
   },
 
   /**
+   * Busca o ranking dos filmes da comunidade.
+   * Corresponde a: GET /api/movies/ranking
+   */
+  async getRanking(minReviews = 1) {
+    const response = await api.get('/movies/ranking', { params: { min_reviews: minReviews } });
+    return response.data.data;
+  },
+
+  /**
    * Busca filmes por um termo de pesquisa.
    * Corresponde a: GET /api/movies/search
    */
