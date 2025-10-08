@@ -49,4 +49,47 @@ export class TMDbService {
     if (!path) return 'https://via.placeholder.com/500x750/374151/9CA3AF?text=Sem+Poster';
     return `https://image.tmdb.org/t/p/w500${path}`;
   }
+
+  // Buscar vídeos do filme
+  async getMovieVideos(tmdbId: number) {
+    try {
+      const response = await this.api.get(`/movie/${tmdbId}/videos`);
+      return response.data.results;
+    } catch (error) {
+      throw new Error('Erro ao buscar vídeos do filme');
+    }
+  }
+
+  // Buscar créditos do filme (elenco e equipe)
+  async getMovieCredits(tmdbId: number) {
+    try {
+      const response = await this.api.get(`/movie/${tmdbId}/credits`);
+      return response.data;
+    } catch (error) {
+      throw new Error('Erro ao buscar créditos do filme');
+    }
+  }
+
+  // Buscar provedores de streaming
+  async getMovieWatchProviders(tmdbId: number) {
+    try {
+      const response = await this.api.get(`/movie/${tmdbId}/watch/providers`);
+      return response.data.results?.BR || {};
+    } catch (error) {
+      throw new Error('Erro ao buscar provedores de streaming');
+    }
+  }
+
+  // Buscar filmes similares
+  async getSimilarMovies(tmdbId: number, page = 1) {
+    try {
+      const response = await this.api.get(`/movie/${tmdbId}/similar`, {
+        params: { page }
+      });
+      return response.data.results;
+    } catch (error) {
+      throw new Error('Erro ao buscar filmes similares');
+    }
+  }
+  }
 }
