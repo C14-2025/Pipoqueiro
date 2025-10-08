@@ -47,6 +47,87 @@ export class MovieController {
     }
   }
 
+  // GET /api/movies/:tmdbId/videos
+  async getVideos(req: Request, res: Response) {
+    try {
+      const tmdbId = parseInt(req.params.tmdbId);
+      const videos = await this.tmdbService.getMovieVideos(tmdbId);
+      
+      res.json({
+        success: true,
+        message: 'Vídeos obtidos com sucesso',
+        data: videos
+      });
+    } catch (error) {
+      console.error('Erro ao obter vídeos:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar vídeos do filme'
+      });
+    }
+  }
+
+  // GET /api/movies/:tmdbId/credits
+  async getCredits(req: Request, res: Response) {
+    try {
+      const tmdbId = parseInt(req.params.tmdbId);
+      const credits = await this.tmdbService.getMovieCredits(tmdbId);
+      
+      res.json({
+        success: true,
+        message: 'Créditos obtidos com sucesso',
+        data: credits
+      });
+    } catch (error) {
+      console.error('Erro ao obter créditos:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar créditos do filme'
+      });
+    }
+  }
+
+  // GET /api/movies/:tmdbId/watch-providers
+  async getWatchProviders(req: Request, res: Response) {
+    try {
+      const tmdbId = parseInt(req.params.tmdbId);
+      const providers = await this.tmdbService.getMovieWatchProviders(tmdbId);
+      
+      res.json({
+        success: true,
+        message: 'Provedores obtidos com sucesso',
+        data: providers
+      });
+    } catch (error) {
+      console.error('Erro ao obter provedores:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar provedores de streaming'
+      });
+    }
+  }
+
+  // GET /api/movies/:tmdbId/similar
+  async getSimilar(req: Request, res: Response) {
+    try {
+      const tmdbId = parseInt(req.params.tmdbId);
+      const page = parseInt(req.query.page as string) || 1;
+      const similar = await this.tmdbService.getSimilarMovies(tmdbId, page);
+      
+      res.json({
+        success: true,
+        message: 'Filmes similares obtidos com sucesso',
+        data: similar
+      });
+    } catch (error) {
+      console.error('Erro ao obter filmes similares:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar filmes similares'
+      });
+    }
+  }
+
   // GET /api/movies/search
   async search(req: Request, res: Response) {
     try {
