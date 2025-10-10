@@ -22,7 +22,7 @@ export class OpenAIService {
         const prompt = this.buildPrompt(userMessage, userContext);
 
         const completion = await this.client.chat.completions.create({
-            model: "gpt-5",
+            model: "gpt-4o-mini",
             messages: [
                 {
                     role: "system",
