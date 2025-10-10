@@ -8,6 +8,7 @@ import movieRoutes from './routes/movies';
 import watchlistRoutes from './routes/watchlist';
 import favoritesRoutes from './routes/favorites';
 import { requestLogger } from './middleware/logger';
+import chatRoutes from './routes/chat';
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/movies', movieRoutes);
 app.use('/api/watchlist', watchlistRoutes);
 app.use('/api/favorites', favoritesRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Rota de teste
 app.get('/api/health', (req, res) => {
