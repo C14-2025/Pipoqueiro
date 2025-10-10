@@ -52,14 +52,3 @@ CREATE TABLE favoritos (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     UNIQUE KEY unique_user_favorite (usuario_id, tmdb_id)  -- Não duplicar favorito
 );
-
--- Tabela de histórico de chat
-CREATE TABLE chat_history (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  usuario_id INT NOT NULL,
-  message TEXT NOT NULL,
-  response TEXT NOT NULL,
-  context_data JSON,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-);
