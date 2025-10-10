@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 
+
 export class OpenAIService {
     private client: OpenAI;
 

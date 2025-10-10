@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { OpenAIService } from "../services/openaiService";
 
 
+
 // Instância única (sem salvar histórico, apenas para chamadas temporárias)
 const openAIService = new OpenAIService();
 
