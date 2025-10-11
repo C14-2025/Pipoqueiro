@@ -3,8 +3,9 @@ import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
+import ChatBot from './components/ChatBot';
 
-import { UserListsProvider } from './context/UserListsContext'; 
+import { UserListsProvider } from './context/UserListsContext';
 
 import HomePage from './Pages/HomePage';
 import LoginPage from './Pages/LoginPage';
@@ -16,27 +17,28 @@ import MoviesListPage from './Pages/MoviesListPage';
 
 
 function App() {
-  return (
-    <UserListsProvider> 
-      <div className="bg-[#FFFFFF] text-[#2D3748] font-sans flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-grow">
-          <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/filme/:id" element={<MediaDetailsPage />} />
-            <Route path="/serie/:id" element={<MediaDetailsPage />} />
-            <Route path="/minha-lista" element={<YourListPage />} /> 
-            <Route path="/busca" element={<SearchPage />} />     
-            <Route path="/perfil" element={<UserProfilePage />} />   
-            <Route path="/filmes" element={<MoviesListPage />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
+  return (
+    <UserListsProvider>
+      <div className="bg-[#FFFFFF] text-[#2D3748] font-sans flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow">
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/filme/:id" element={<MediaDetailsPage />} />
+            <Route path="/serie/:id" element={<MediaDetailsPage />} />
+            <Route path="/minha-lista" element={<YourListPage />} />
+            <Route path="/busca" element={<SearchPage />} />
+            <Route path="/perfil" element={<UserProfilePage />} />
+            <Route path="/filmes" element={<MoviesListPage />} />
+          </Routes>
+        </main>
+        <Footer />
+        <ChatBot />
+      </div>
     </UserListsProvider>
-  );
+  );
 }
 
 export default App;

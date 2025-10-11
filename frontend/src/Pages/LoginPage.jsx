@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { authService } from '../services/api'; // Certifique-se que o caminho está correto
 
 const LoginPage = () => {
+  const [searchParams] = useSearchParams();
+
   // --- Estados da UI ---
   const [activeTab, setActiveTab] = useState('cadastro');
   const [showPasswordCadastro, setShowPasswordCadastro] = useState(false);
@@ -15,7 +17,15 @@ const LoginPage = () => {
   const [registerData, setRegisterData] = useState({ nome: '', email: '', senha: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const message = searchParams.get('message');
+    if (message === 'favorite') {
+      setInfoMessage('Você precisa estar logado para favoritar um filme!');
+    }
+  }, [searchParams]);
 
   // --- Handlers de Mudança nos Inputs ---
   const handleLoginChange = (e) => {
@@ -119,6 +129,13 @@ const LoginPage = () => {
             Já tenho conta
           </button>
         </div>
+
+        {/* Exibição de Mensagem Informativa */}
+        {infoMessage && (
+            <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg relative mb-4 text-sm" role="alert">
+                <span className="block sm:inline">{infoMessage}</span>
+            </div>
+        )}
 
         {/* Exibição de Erro */}
         {error && (

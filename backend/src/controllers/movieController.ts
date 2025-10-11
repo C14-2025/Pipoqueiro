@@ -87,37 +87,27 @@ export class MovieController {
     }
   }
 
-  // GET /api/movies/:tmdbId/watch-providers
-  async getWatchProviders(req: Request, res: Response) {
-    try {
-      const tmdbId = parseInt(req.params.tmdbId);
-      const providers = await this.tmdbService.getMovieWatchProviders(tmdbId);
-      
-      res.json({
-        success: true,
-        message: 'Provedores obtidos com sucesso',
-        data: providers
-      });
-    } catch (error) {
-      console.error('Erro ao obter provedores:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Erro ao buscar provedores de streaming'
-      });
-    }
-  }
-
   // GET /api/movies/:tmdbId/similar
   async getSimilar(req: Request, res: Response) {
     try {
       const tmdbId = parseInt(req.params.tmdbId);
       const page = parseInt(req.query.page as string) || 1;
       const similar = await this.tmdbService.getSimilarMovies(tmdbId, page);
-      
+
+      // Filtra e ordena por melhor avaliação e popularidade
+      const filteredAndSorted = similar
+        .filter((movie: any) => movie.vote_average >= 6.0 && movie.vote_count >= 100)
+        .sort((a: any, b: any) => {
+          // Ordena por vote_average * popularidade
+          const scoreA = a.vote_average * Math.log(a.vote_count + 1);
+          const scoreB = b.vote_average * Math.log(b.vote_count + 1);
+          return scoreB - scoreA;
+        });
+
       res.json({
         success: true,
         message: 'Filmes similares obtidos com sucesso',
-        data: similar
+        data: filteredAndSorted
       });
     } catch (error) {
       console.error('Erro ao obter filmes similares:', error);
