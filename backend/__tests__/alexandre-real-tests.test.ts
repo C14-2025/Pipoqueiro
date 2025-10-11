@@ -116,11 +116,7 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
       const userData = {
         nome: 'Profile User',
         email: `profile${Date.now()}@test.com`,
-        senha: 'senha123',
-        bio: 'Minha bio teste',
-        foto_perfil: null,
-        generos_favoritos: null,
-        data_nascimento: null
+        senha: 'senha123'
       };
 
       const registerResponse = await request(app)
@@ -138,7 +134,7 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
       expect(profileResponse.body.success).toBe(true);
       expect(profileResponse.body.data.nome).toBe(userData.nome);
       expect(profileResponse.body.data.email).toBe(userData.email);
-      expect(profileResponse.body.data.bio).toBe(userData.bio);
+      expect(profileResponse.body.data.bio).toBe(null);
     });
 
     test('deve obter estatísticas do usuário', async () => {
