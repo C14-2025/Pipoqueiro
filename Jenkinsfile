@@ -1,12 +1,13 @@
 pipeline {
     agent any
-    
+
     tools {
         nodejs 'nodejs18'
     }
-    
+
     stages {
-        stage('Build e Teste') {
+       
+        stage('Build') {
             parallel {
                 stage('Frontend') {
                     stages {
