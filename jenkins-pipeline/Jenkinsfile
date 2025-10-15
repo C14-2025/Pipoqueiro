@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            parallel {
+                stage('Frontend') {
+                    stages {
+                        stage('Build Frontend') {
+                            steps {
+                                dir('frontend') {
+                                    sh 'npm install'
+                                    sh 'npm run build'
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                stage('Backend') {
+                    stages {
+                        stage('Build Backend') {
+                            steps {
+                                dir('backend') {
+                                    sh 'npm install'
+                                    sh 'npm run build'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo 'Executando os testes...'
+                sh 'tests/test.sh'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Implantando a aplicação...'
+                sh 'scripts/deploy.sh'
+            }
+        }
+    }
+}
