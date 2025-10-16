@@ -40,7 +40,8 @@ pipeline {
                                 dir('backend') {
                                     withCredentials([
                                         string(credentialsId: 'tmdb-api-key', variable: 'TMDB_API_KEY'),
-                                        string(credentialsId: 'jwt-secret', variable: 'JWT_SECRET')
+                                        string(credentialsId: 'jwt-secret', variable: 'JWT_SECRET'),
+                                        string(credentialsId: 'openai_api_key', variable: 'OPENAI_API_KEY')
                                     ]) {
                                         sh 'npm install'
                                         sh 'npm test'
