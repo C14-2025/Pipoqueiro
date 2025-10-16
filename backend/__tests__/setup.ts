@@ -1,27 +1,42 @@
-// Setup para testes de integração reais
-import pool from '../src/config/database';
-import { afterEach, afterAll } from '@jest/globals';
-
+// Setup para testes com mock do banco de dados
+import { jest } from '@jest/globals';
 
 // Configurar ambiente de teste
 process.env.NODE_ENV = 'test';
 
-// Função para limpar dados de teste após cada teste
-afterEach(async () => {
-  try {
-    // Limpar apenas dados de teste (emails que contêm 'test.com')
-    await pool.execute('DELETE FROM avaliacoes WHERE usuario_id IN (SELECT id FROM usuarios WHERE email LIKE "%test.com%")');
-    await pool.execute('DELETE FROM usuarios WHERE email LIKE "%test.com%"');
-  } catch (error) {
-    // Ignorar erros de limpeza - dados podem não existir
-  }
+// Mock do pool de conexões MySQL
+const mockPool = {
+  execute: jest.fn(),
+  getConnection: jest.fn(),
+  end: jest.fn(),
+};
+
+// Mock do módulo mysql2/promise
+jest.mock('mysql2/promise', () => ({
+  createPool: jest.fn(() => mockPool),
+  default: {
+    createPool: jest.fn(() => mockPool),
+  },
+}));
+
+// Mock do módulo de database
+jest.mock('../src/config/database', () => ({
+  pool: mockPool,
+  connectDB: jest.fn().mockResolvedValue(undefined),
+  default: mockPool,
+}));
+
+// Configurar mocks padrão para operações de banco
+beforeEach(() => {
+  // Mock para getConnection
+  mockPool.getConnection.mockResolvedValue({
+    release: jest.fn(),
+  });
+
+  // Mock padrão para execute (retorna array vazio)
+  mockPool.execute.mockResolvedValue([[], []]);
 });
 
-// Fechar conexões após todos os testes
-afterAll(async () => {
-  try {
-    await pool.end();
-  } catch (error) {
-    // Ignorar erros de fechamento
-  }
+afterEach(() => {
+  jest.clearAllMocks();
 });
