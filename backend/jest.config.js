@@ -2,11 +2,6 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
 
-  // Variáveis de ambiente para testes
-  testEnvironmentOptions: {
-    NODE_ENV: 'test'
-  },
-
   // Diretórios de busca
   roots: ['<rootDir>/src', '<rootDir>/__tests__'],
   
