@@ -21,6 +21,16 @@ pipeline {
                                 }
                             }
                         }
+                        stage('Test Frontend') {
+                            steps {
+                                dir('frontend') {
+                                    echo 'Iniciando testes do frontend...'
+                                    sh 'npm install'
+                                    sh 'npm test'
+                                    echo 'Testes do frontend finalizados com sucesso!'
+                                }
+                            }
+                        }
                     }
                 }
                 stage('Backend') {
