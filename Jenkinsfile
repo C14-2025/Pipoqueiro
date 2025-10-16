@@ -23,6 +23,20 @@ pipeline {
                         }
                     }
                 }
+                stage('Backend') {
+                    stages {
+                        stage('Build Backend') {
+                            steps {
+                                dir('backend') {
+                                    echo 'Iniciando build do backend...'
+                                    sh 'npm install'
+                                    sh 'npm run build'
+                                    echo 'Build do backend finalizado com sucesso!'
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
