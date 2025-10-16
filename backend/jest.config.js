@@ -1,7 +1,12 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  
+
+  // Variáveis de ambiente para testes
+  testEnvironmentOptions: {
+    NODE_ENV: 'test'
+  },
+
   // Diretórios de busca
   roots: ['<rootDir>/src', '<rootDir>/__tests__'],
   
@@ -50,7 +55,7 @@ module.exports = {
   },
   
   // Mapeamento de módulos (se necessário)
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   
