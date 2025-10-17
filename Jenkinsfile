@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         SENDER_EMAIL = 'alexandretoalves@gmail.com'
-        TEAM_EMAILS = 'augusto.otavio@ges.inatel.br, a.augusto@ges.inatel.br, davi.padula@gec.inatel.br, jordan.lima@gec.inatel.br, alexandre.tommasi@ges.inatel.br'
+        TEAM_EMAILS = 'augusto.otavio@ges.inatel.br, a.augusto@ges.inatel.br, davi.padula@gec.inatel.br, jordan.lima@gec.inatel.br, alexandre.tommasi@ges.inatel.br, xandinhotalves@gmail.com'
     }
 
     stages {
