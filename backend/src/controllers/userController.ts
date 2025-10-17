@@ -68,7 +68,7 @@ export const registrarUsuario = async (req: Request, res: Response) => {
     logInfo('Gerando token JWT');
     const token = jwt.sign(
       { userId, email },
-      'pipoqueiro_secret_123'
+      process.env.JWT_SECRET || 'default_secret_key'
     );
     logSuccess('Token JWT gerado com sucesso');
 
@@ -160,7 +160,7 @@ export const loginUsuario = async (req: Request, res: Response) => {
     logInfo('Gerando token JWT para login');
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      'pipoqueiro_secret_123'
+      process.env.JWT_SECRET || 'default_secret_key'
     );
     logSuccess('Token JWT gerado com sucesso');
 
