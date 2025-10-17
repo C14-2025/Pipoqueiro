@@ -13,7 +13,7 @@ export const auth = (req: Request, res: Response, next: NextFunction) => {
       });
     }
 
-    const decoded = jwt.verify(token, 'pipoqueiro_secret_123') as AuthPayload;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret_key') as AuthPayload;
     (req as any).user = decoded;
     next();
     

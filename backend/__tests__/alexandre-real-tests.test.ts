@@ -1,27 +1,34 @@
-// TESTES REAIS DO ALEXANDRE - Backend Controllers
-// Testes unitários que fazem sentido para o sistema!
+// TESTES UNITÁRIOS COM MOCKS - SEM BANCO DE DADOS REAL
+// Testes unitários que cobrem funcionalidades sem precisar de MySQL
 
 import request from 'supertest';
 import app from '../src/app';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { describe, test, expect, beforeAll, jest, beforeEach } from '@jest/globals';
+import { describe, test, expect, beforeAll, beforeEach, jest } from '@jest/globals';
 import { auth } from '../src/utils/auth';
+import { mockExecute } from './setup';
 
-describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
+describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
 
   // ==================== USER CONTROLLER - 8 TESTES ====================
   describe('👤 USER CONTROLLER - Funcionalidade Real', () => {
 
+    beforeEach(() => {
+      // Reset dos mocks antes de cada teste
+      jest.clearAllMocks();
+    });
+
     test('deve registrar usuário e retornar JWT token', async () => {
+      // Mock: Email não existe no banco
+      (mockExecute as any)
+        .mockResolvedValueOnce([[], []]) // SELECT para verificar email existente
+        .mockResolvedValueOnce([{ insertId: 1 }, []]); // INSERT do novo usuário
+
       const userData = {
         nome: 'Alexandre Teste',
-        email: `test${Date.now()}@test.com`,
+        email: 'teste@test.com',
         senha: 'senha123',
-        bio: 'Desenvolvedor backend',
-        foto_perfil: null,
-        generos_favoritos: null,
-        data_nascimento: null
       };
 
       const response = await request(app)
@@ -34,30 +41,22 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
       expect(response.body.data.token).toBeDefined();
       expect(response.body.data.user.nome).toBe(userData.nome);
       expect(response.body.data.user.email).toBe(userData.email);
-      
+
       // Verificar se o token JWT é válido
-      const decoded = jwt.verify(response.body.data.token, 'pipoqueiro_secret_123') as any;
+      const decoded = jwt.verify(response.body.data.token, process.env.JWT_SECRET || 'test_jwt_secret_key') as any;
       expect(decoded.email).toBe(userData.email);
     });
 
     test('deve rejeitar registro com email duplicado', async () => {
+      // Mock: Email já existe no banco
+      (mockExecute as any).mockResolvedValueOnce([[{ id: 1 }], []]);
+
       const userData = {
         nome: 'User 1',
         email: 'duplicate@test.com',
         senha: 'senha123',
-        bio: null,
-        foto_perfil: null,
-        generos_favoritos: null,
-        data_nascimento: null
       };
 
-      // Primeiro registro
-      await request(app)
-        .post('/api/users/registrar')
-        .send(userData)
-        .expect(201);
-
-      // Segundo registro com mesmo email
       const response = await request(app)
         .post('/api/users/registrar')
         .send(userData)
@@ -68,37 +67,41 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
     });
 
     test('deve fazer login com credenciais válidas', async () => {
-      const userData = {
-        nome: 'Login User',
-        email: `login${Date.now()}@test.com`,
-        senha: 'minhasenha123',
-        bio: null,
-        foto_perfil: null,
-        generos_favoritos: null,
-        data_nascimento: null
-      };
+      const senha = 'minhasenha123';
+      const senhaHash = await bcrypt.hash(senha, 10);
 
-      // Primeiro registrar
-      await request(app)
-        .post('/api/users/registrar')
-        .send(userData);
+      // Mock: Usuário existe no banco
+      (mockExecute as any).mockResolvedValueOnce([
+        [{
+          id: 1,
+          nome: 'Login User',
+          email: 'login@test.com',
+          senha_hash: senhaHash,
+          bio: null,
+          foto_perfil: null,
+          generos_favoritos: null,
+        }],
+        []
+      ]);
 
-      // Agora fazer login
-      const loginResponse = await request(app)
+      const response = await request(app)
         .post('/api/users/login')
         .send({
-          email: userData.email,
-          senha: userData.senha
+          email: 'login@test.com',
+          senha: senha
         })
         .expect(200);
 
-      expect(loginResponse.body.success).toBe(true);
-      expect(loginResponse.body.message).toBe('Login realizado com sucesso');
-      expect(loginResponse.body.data.token).toBeDefined();
-      expect(loginResponse.body.data.user.email).toBe(userData.email);
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Login realizado com sucesso');
+      expect(response.body.data.token).toBeDefined();
+      expect(response.body.data.user.email).toBe('login@test.com');
     });
 
     test('deve rejeitar login com credenciais inválidas', async () => {
+      // Mock: Usuário não existe
+      (mockExecute as any).mockResolvedValueOnce([[], []]);
+
       const response = await request(app)
         .post('/api/users/login')
         .send({
@@ -112,50 +115,60 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
     });
 
     test('deve obter perfil do usuário autenticado', async () => {
-      // Registrar usuário
-      const userData = {
-        nome: 'Profile User',
-        email: `profile${Date.now()}@test.com`,
-        senha: 'senha123'
-      };
+      // Criar token válido
+      const token = jwt.sign(
+        { userId: 1, email: 'profile@test.com' },
+        process.env.JWT_SECRET || 'test_jwt_secret_key'
+      );
 
-      const registerResponse = await request(app)
-        .post('/api/users/registrar')
-        .send(userData);
+      // Mock: Retornar dados do usuário
+      (mockExecute as any).mockResolvedValueOnce([
+        [{
+          id: 1,
+          nome: 'Profile User',
+          email: 'profile@test.com',
+          bio: null,
+          foto_perfil: null,
+          generos_favoritos: null,
+          data_nascimento: null,
+          created_at: new Date(),
+        }],
+        []
+      ]);
 
-      const token = registerResponse.body.data.token;
-
-      // Obter perfil
       const profileResponse = await request(app)
         .get('/api/users/perfil')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
       expect(profileResponse.body.success).toBe(true);
-      expect(profileResponse.body.data.nome).toBe(userData.nome);
-      expect(profileResponse.body.data.email).toBe(userData.email);
+      expect(profileResponse.body.data.nome).toBe('Profile User');
+      expect(profileResponse.body.data.email).toBe('profile@test.com');
       expect(profileResponse.body.data.bio).toBe(null);
     });
 
     test('deve obter estatísticas do usuário', async () => {
-      // Registrar usuário
-      const userData = {
-        nome: 'Stats User',
-        email: `stats${Date.now()}@test.com`,
-        senha: 'senha123',
-        bio: null,
-        foto_perfil: null,
-        generos_favoritos: null,
-        data_nascimento: null
-      };
+      // Criar token válido
+      const token = jwt.sign(
+        { userId: 1, email: 'stats@test.com' },
+        process.env.JWT_SECRET || 'test_jwt_secret_key'
+      );
 
-      const registerResponse = await request(app)
-        .post('/api/users/registrar')
-        .send(userData);
+      // Mock: Estatísticas de reviews
+      (mockExecute as any)
+        .mockResolvedValueOnce([
+          [{
+            total_reviews: 5,
+            nota_media: 4.2,
+            reviews_positivas: 3
+          }],
+          []
+        ])
+        .mockResolvedValueOnce([
+          [{ filmes_na_lista: 10 }],
+          []
+        ]);
 
-      const token = registerResponse.body.data.token;
-
-      // Obter estatísticas
       const statsResponse = await request(app)
         .get('/api/users/estatisticas')
         .set('Authorization', `Bearer ${token}`)
@@ -183,15 +196,15 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
     test('deve criptografar senha com bcrypt de forma segura', async () => {
       const senha = 'minhasenhasecreta';
       const hash = await bcrypt.hash(senha, 10);
-      
+
       expect(hash).toBeDefined();
       expect(hash).not.toBe(senha);
       expect(hash.length).toBeGreaterThan(50);
-      
+
       // Verificar se a comparação funciona
       const isValid = await bcrypt.compare(senha, hash);
       expect(isValid).toBe(true);
-      
+
       const isInvalid = await bcrypt.compare('senhaerrada', hash);
       expect(isInvalid).toBe(false);
     });
@@ -202,26 +215,22 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
 
     let userToken: string;
 
-    beforeAll(async () => {
-      // Criar usuário para os testes de review
-      const userData = {
-        nome: 'Review User',
-        email: `reviewer${Date.now()}@test.com`,
-        senha: 'senha123',
-        bio: null,
-        foto_perfil: null,
-        generos_favoritos: null,
-        data_nascimento: null
-      };
+    beforeAll(() => {
+      // Criar token para os testes
+      userToken = jwt.sign(
+        { userId: 1, email: 'reviewer@test.com' },
+        process.env.JWT_SECRET || 'test_jwt_secret_key'
+      );
+    });
 
-      const response = await request(app)
-        .post('/api/users/registrar')
-        .send(userData);
-
-      userToken = response.body.data.token;
+    beforeEach(() => {
+      jest.clearAllMocks();
     });
 
     test('deve criar review de filme com dados válidos', async () => {
+      // Mock: INSERT bem-sucedido
+      (mockExecute as any).mockResolvedValueOnce([{ insertId: 1 }, []]);
+
       const reviewData = {
         tmdb_id: 550, // Fight Club
         nota: 5,
@@ -274,9 +283,24 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
     });
 
     test('deve obter reviews de um filme específico', async () => {
-      const tmdbId = 550; // Fight Club
-      
-      // Obter reviews do filme usando rota que existe: /filme/:tmdb_id
+      const tmdbId = 550;
+
+      // Mock: Retornar reviews do filme
+      (mockExecute as any).mockResolvedValueOnce([
+        [{
+          id: 1,
+          usuario_id: 1,
+          tmdb_id: 550,
+          nota: 5,
+          titulo_review: 'Excelente!',
+          comentario: 'Muito bom',
+          spoiler: false,
+          nome: 'Alexandre',
+          foto_perfil: null,
+        }],
+        []
+      ]);
+
       const response = await request(app)
         .get(`/api/reviews/filme/${tmdbId}`)
         .expect(200);
@@ -286,7 +310,20 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
     });
 
     test('deve obter reviews do usuário logado', async () => {
-      // Usar rota que existe: /minhas
+      // Mock: Retornar reviews do usuário
+      (mockExecute as any).mockResolvedValueOnce([
+        [{
+          id: 1,
+          usuario_id: 1,
+          tmdb_id: 550,
+          nota: 5,
+          titulo_review: 'Minha review',
+          comentario: 'Gostei muito',
+          spoiler: false,
+        }],
+        []
+      ]);
+
       const response = await request(app)
         .get('/api/reviews/minhas')
         .set('Authorization', `Bearer ${userToken}`)
@@ -308,7 +345,21 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
   // ==================== MOVIE CONTROLLER - 4 TESTES ====================
   describe('🎬 MOVIE CONTROLLER - Funcionalidade Real', () => {
 
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     test('deve obter filmes populares da TMDb', async () => {
+      // Mock: Estatísticas dos filmes
+      (mockExecute as any).mockResolvedValue([
+        [{
+          total_reviews: 10,
+          nota_media: 4.5,
+          reviews_positivas: 8
+        }],
+        []
+      ]);
+
       const response = await request(app)
         .get('/api/movies/popular')
         .expect(200);
@@ -317,7 +368,7 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
       expect(response.body.message).toBe('Filmes populares obtidos com sucesso');
       expect(response.body.data).toBeInstanceOf(Array);
       expect(response.body.data.length).toBeGreaterThan(0);
-      
+
       // Verificar estrutura dos dados
       const firstMovie = response.body.data[0];
       expect(firstMovie.id).toBeDefined();
@@ -327,6 +378,15 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
     });
 
     test('deve buscar filmes por termo de pesquisa', async () => {
+      // Mock: Estatísticas dos filmes
+      (mockExecute as any).mockResolvedValue([
+        [{
+          total_reviews: 5,
+          nota_media: 4.0
+        }],
+        []
+      ]);
+
       const response = await request(app)
         .get('/api/movies/search')
         .query({ query: 'batman' })
@@ -348,7 +408,33 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
 
     test('deve obter detalhes de filme específico', async () => {
       const tmdbId = 550; // Fight Club
-      
+
+      // Mock: Reviews e estatísticas do filme
+      (mockExecute as any)
+        .mockResolvedValueOnce([
+          [{
+            id: 1,
+            usuario_id: 1,
+            tmdb_id: 550,
+            nota: 5,
+            titulo_review: 'Excelente',
+            comentario: 'Obra-prima',
+            spoiler: false,
+            nome: 'Alexandre',
+            foto_perfil: null,
+          }],
+          []
+        ])
+        .mockResolvedValueOnce([
+          [{
+            total_reviews: 10,
+            nota_media: 4.8,
+            reviews_positivas: 9,
+            reviews_com_spoiler: 2
+          }],
+          []
+        ]);
+
       const response = await request(app)
         .get(`/api/movies/${tmdbId}`)
         .expect(200);
@@ -384,7 +470,6 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
       expect(response.body.success).toBe(false);
     });
 
-    // NOVO TESTE COM MOCK - Middleware de autenticação JWT
     test('deve validar e decodificar token JWT com mock do middleware', async () => {
       // Mock do jwt.verify para simular diferentes cenários
       const jwtVerifySpy = jest.spyOn(jwt, 'verify');
@@ -402,38 +487,38 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
 
       // Simula uma requisição com token válido mockado
       const validToken = 'mock.valid.token';
-      const mockReq = {
+      const mockReq: any = {
         header: jest.fn().mockReturnValue(`Bearer ${validToken}`)
       };
-      const mockRes = {
+      const mockRes: any = {
         status: jest.fn().mockReturnThis(),
         json: jest.fn().mockReturnThis()
       };
-      const mockNext = jest.fn();
+      const mockNext: any = jest.fn();
 
       // Testa o middleware diretamente
-      auth(mockReq as any, mockRes as any, mockNext);
+      auth(mockReq, mockRes, mockNext);
 
       // Verifica se o next() foi chamado (token válido)
       expect(mockNext).toHaveBeenCalled();
-      expect((mockReq as any).user).toEqual(mockPayload);
-      expect(jwtVerifySpy).toHaveBeenCalledWith(validToken, 'pipoqueiro_secret_123');
+      expect(mockReq.user).toEqual(mockPayload);
+      expect(jwtVerifySpy).toHaveBeenCalledWith(validToken, process.env.JWT_SECRET || 'test_jwt_secret_key');
 
       // Cenário 2: Token expirado com mock
       jwtVerifySpy.mockImplementationOnce(() => {
         throw new Error('jwt expired');
       });
 
-      const expiredReq = {
+      const expiredReq: any = {
         header: jest.fn().mockReturnValue('Bearer expired.token')
       };
-      const expiredRes = {
+      const expiredRes: any = {
         status: jest.fn().mockReturnThis(),
         json: jest.fn().mockReturnThis()
       };
-      const expiredNext = jest.fn();
+      const expiredNext: any = jest.fn();
 
-      auth(expiredReq as any, expiredRes as any, expiredNext);
+      auth(expiredReq, expiredRes, expiredNext);
 
       // Verifica se retornou 401 para token expirado
       expect(expiredRes.status).toHaveBeenCalledWith(401);
@@ -444,16 +529,16 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND', () => {
       expect(expiredNext).not.toHaveBeenCalled();
 
       // Cenário 3: Sem token
-      const noTokenReq = {
+      const noTokenReq: any = {
         header: jest.fn().mockReturnValue(undefined)
       };
-      const noTokenRes = {
+      const noTokenRes: any = {
         status: jest.fn().mockReturnThis(),
         json: jest.fn().mockReturnThis()
       };
-      const noTokenNext = jest.fn();
+      const noTokenNext: any = jest.fn();
 
-      auth(noTokenReq as any, noTokenRes as any, noTokenNext);
+      auth(noTokenReq, noTokenRes, noTokenNext);
 
       expect(noTokenRes.status).toHaveBeenCalledWith(401);
       expect(noTokenRes.json).toHaveBeenCalledWith({
