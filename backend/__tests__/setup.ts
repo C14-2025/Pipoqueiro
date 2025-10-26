@@ -1,3 +1,4 @@
+/// <reference types="node" />
 // Setup para testes com mocks completos - SEM BANCO DE DADOS REAL
 import { jest } from '@jest/globals';
 
