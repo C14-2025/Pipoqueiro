@@ -86,3 +86,6 @@ jspm_packages/
 
 # TernJS port file
 .tern-port
+
+# Claude AI files
+.claude/
