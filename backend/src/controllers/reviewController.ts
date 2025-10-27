@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import pool from '../config/database';
-import { AvaliacaoInput, ApiResponse } from '../types';
+import { AvaliacaoInput } from '../types';
 import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger';
 
 export const criarReview = async (req: Request, res: Response) => {

@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '../config/database';
-import { UsuarioInput, UsuarioLogin, AuthPayload } from '../types';
+import { UsuarioLogin } from '../types';
 import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger';
 
 export const registrarUsuario = async (req: Request, res: Response) => {
