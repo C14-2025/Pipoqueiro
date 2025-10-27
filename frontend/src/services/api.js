@@ -258,15 +258,6 @@ export const watchlistService = {
   },
 
   /**
-   * Atualiza um item da lista "Quero Ver".
-   * Corresponde a: PUT /api/watchlist/:tmdb_id
-   */
-  async updateWatchlistItem(tmdbId, updateData) {
-    const response = await api.put(`/watchlist/${tmdbId}`, updateData);
-    return response.data;
-  },
-
-  /**
    * Remove um filme da lista "Quero Ver".
    * Corresponde a: DELETE /api/watchlist/:tmdb_id
    */
@@ -293,17 +284,8 @@ export const favoritesService = {
    * Adicionar filme aos favoritos.
    * Corresponde a: POST /api/favorites
    */
-  async addToFavorites(tmdbId, comment = '') {
-    const response = await api.post('/favorites', { tmdb_id: tmdbId, comentario_favorito: comment });
-    return response.data;
-  },
-
-  /**
-   * Atualizar comentário de um favorito.
-   * Corresponde a: PUT /api/favorites/:tmdb_id
-   */
-  async updateFavoriteComment(tmdbId, comment) {
-    const response = await api.put(`/favorites/${tmdbId}`, { comentario_favorito: comment });
+  async addToFavorites(tmdbId) {
+    const response = await api.post('/favorites', { tmdb_id: tmdbId });
     return response.data;
   },
 

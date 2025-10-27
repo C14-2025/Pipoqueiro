@@ -11,9 +11,6 @@ router.get('/', auth, favoritesController.getFavorites.bind(favoritesController)
 // Adicionar filme aos favoritos (autenticado)
 router.post('/', auth, favoritesController.addToFavorites.bind(favoritesController));
 
-// Atualizar comentário do favorito (autenticado)
-router.put('/:tmdb_id', auth, favoritesController.updateFavoriteComment.bind(favoritesController));
-
 // Remover filme dos favoritos (autenticado)
 router.delete('/:tmdb_id', auth, favoritesController.removeFromFavorites.bind(favoritesController));
 

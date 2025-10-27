@@ -1,3 +1,25 @@
+// ============================================================================
+// LISTAS (Favoritos e Watchlist)
+// ============================================================================
+
+export interface ListItem {
+  tmdb_id: number;
+  data_adicao: string;
+}
+
+export interface AddToListInput {
+  tmdb_id: number;
+}
+
+export type FavoritoItem = ListItem;
+export type ListaQueroVerItem = ListItem;
+export type AddFavoritoInput = AddToListInput;
+export type AddListaQueroVerInput = AddToListInput;
+
+// ============================================================================
+// USUÁRIOS
+// ============================================================================
+
 export interface Usuario {
   id: number;
   nome: string;
@@ -6,7 +28,9 @@ export interface Usuario {
   bio?: string;
   foto_perfil?: string;
   generos_favoritos?: string[];
-  data_nascimento?: Date;
+  data_nascimento?: string;
+  favoritos: FavoritoItem[];
+  lista_quero_ver: ListaQueroVerItem[];
   created_at: Date;
   updated_at: Date;
 }
@@ -18,13 +42,17 @@ export interface UsuarioInput {
   bio?: string;
   foto_perfil?: string;
   generos_favoritos?: string[];
-  data_nascimento?: Date;
+  data_nascimento?: string;
 }
 
 export interface UsuarioLogin {
   email: string;
   senha: string;
 }
+
+// ============================================================================
+// AVALIAÇÕES
+// ============================================================================
 
 export interface Avaliacao {
   id: number;
@@ -47,22 +75,9 @@ export interface AvaliacaoInput {
   spoiler?: boolean;
 }
 
-export interface ListaQueroVer {
-  id: number;
-  usuario_id: number;
-  tmdb_id: number;
-  prioridade: 'baixa' | 'media' | 'alta';
-  data_adicao: Date;
-  notificar_lancamento: boolean;
-  onde_assistir?: string;
-}
-
-export interface ListaQueroVerInput {
-  tmdb_id: number;
-  prioridade?: 'baixa' | 'media' | 'alta';
-  notificar_lancamento?: boolean;
-  onde_assistir?: string;
-}
+// ============================================================================
+// AUTENTICAÇÃO E API
+// ============================================================================
 
 export interface AuthPayload {
   userId: number;

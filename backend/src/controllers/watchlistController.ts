@@ -2,57 +2,47 @@ import { Request, Response } from 'express';
 import pool from '../config/database';
 import { TMDbService } from '../services/tmdbService';
 import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger';
+import { ListaQueroVerItem, AddListaQueroVerInput } from '../types';
 
 export class WatchlistController {
   private tmdbService = new TMDbService();
 
-  // GET /api/watchlist - Obter lista "quero ver" do usuário
   async getWatchlist(req: Request, res: Response) {
     try {
       logInfo('📋 BUSCANDO LISTA QUERO VER DO USUÁRIO');
 
       const userId = (req as any).user.userId;
 
-      logDatabase('SELECT * FROM lista_quero_ver WHERE usuario_id = ? ORDER BY data_adicao DESC', [userId]);
+      logDatabase('SELECT lista_quero_ver FROM usuarios WHERE id = ?', [userId]);
 
       const [rows] = await pool.execute(
-        `SELECT * FROM lista_quero_ver
-         WHERE usuario_id = ?
-         ORDER BY
-           CASE prioridade
-             WHEN 'alta' THEN 1
-             WHEN 'media' THEN 2
-             WHEN 'baixa' THEN 3
-           END,
-           data_adicao DESC`,
+        'SELECT lista_quero_ver FROM usuarios WHERE id = ?',
         [userId]
       );
 
-      const watchlistItems = rows as any[];
-      logInfo(`Encontrados ${watchlistItems.length} itens na lista quero ver`);
+      const user = (rows as any[])[0];
+      let watchlist: ListaQueroVerItem[] = user?.lista_quero_ver || [];
 
-      // Para cada item, buscar dados do TMDB
+      watchlist = watchlist.sort((a, b) => {
+        return new Date(b.data_adicao).getTime() - new Date(a.data_adicao).getTime();
+      });
+
+      logInfo(`Encontrados ${watchlist.length} itens na lista quero ver`);
+
       const watchlistWithDetails = await Promise.all(
-        watchlistItems.map(async (item) => {
+        watchlist.map(async (item) => {
           try {
             const movieDetails = await this.tmdbService.getMovieDetails(item.tmdb_id);
             return {
-              id: item.id,
               tmdb_id: item.tmdb_id,
-              prioridade: item.prioridade,
               data_adicao: item.data_adicao,
-              notificar_lancamento: item.notificar_lancamento,
-              onde_assistir: item.onde_assistir,
-              // Dados do filme do TMDB
               ...movieDetails,
               poster_url: this.tmdbService.formatPosterURL(movieDetails.poster_path)
             };
           } catch (error) {
             logError(`Erro ao buscar dados do filme ${item.tmdb_id}:`, error);
             return {
-              id: item.id,
               tmdb_id: item.tmdb_id,
-              prioridade: item.prioridade,
               data_adicao: item.data_adicao,
               title: 'Filme não encontrado',
               poster_url: null
@@ -78,15 +68,14 @@ export class WatchlistController {
     }
   }
 
-  // POST /api/watchlist - Adicionar filme à lista "quero ver"
   async addToWatchlist(req: Request, res: Response) {
     try {
       logInfo('➕ ADICIONANDO FILME À LISTA QUERO VER');
 
       const userId = (req as any).user.userId;
-      const { tmdb_id, prioridade = 'media', onde_assistir, notificar_lancamento = true } = req.body;
+      const { tmdb_id }: AddListaQueroVerInput = req.body;
 
-      logInfo('Dados recebidos', { userId, tmdb_id, prioridade, onde_assistir, notificar_lancamento });
+      logInfo('Dados recebidos', { userId, tmdb_id });
 
       if (!tmdb_id) {
         logError('TMDB ID não fornecido');
@@ -96,15 +85,17 @@ export class WatchlistController {
         });
       }
 
-      // Verificar se já existe na lista
-      logDatabase('SELECT id FROM lista_quero_ver WHERE usuario_id = ? AND tmdb_id = ?', [userId, tmdb_id]);
+      logDatabase('SELECT lista_quero_ver FROM usuarios WHERE id = ?', [userId]);
 
-      const [existing] = await pool.execute(
-        'SELECT id FROM lista_quero_ver WHERE usuario_id = ? AND tmdb_id = ?',
-        [userId, tmdb_id]
+      const [rows] = await pool.execute(
+        'SELECT lista_quero_ver FROM usuarios WHERE id = ?',
+        [userId]
       );
 
-      if ((existing as any[]).length > 0) {
+      const user = (rows as any[])[0];
+      const watchlist: ListaQueroVerItem[] = user?.lista_quero_ver || [];
+
+      if (watchlist.some(item => item.tmdb_id === tmdb_id)) {
         logError('Filme já está na lista quero ver');
         return res.status(400).json({
           success: false,
@@ -112,37 +103,32 @@ export class WatchlistController {
         });
       }
 
-      // Inserir na lista
+      const newItem: ListaQueroVerItem = {
+        tmdb_id,
+        data_adicao: new Date().toISOString().split('T')[0]
+      };
+
+      watchlist.push(newItem);
+
       logDatabase(
-        'INSERT INTO lista_quero_ver (usuario_id, tmdb_id, prioridade, onde_assistir, notificar_lancamento) VALUES (?, ?, ?, ?, ?)',
-        [userId, tmdb_id, prioridade, onde_assistir, notificar_lancamento]
+        'UPDATE usuarios SET lista_quero_ver = ? WHERE id = ?',
+        [JSON.stringify(watchlist), userId]
       );
 
-      const [result] = await pool.execute(
-        `INSERT INTO lista_quero_ver
-         (usuario_id, tmdb_id, prioridade, onde_assistir, notificar_lancamento)
-         VALUES (?, ?, ?, ?, ?)`,
-        [userId, tmdb_id, prioridade, onde_assistir || null, notificar_lancamento]
+      await pool.execute(
+        'UPDATE usuarios SET lista_quero_ver = ? WHERE id = ?',
+        [JSON.stringify(watchlist), userId]
       );
 
-      const itemId = (result as any).insertId;
-      logSuccess('🎉 FILME ADICIONADO À LISTA QUERO VER!', { itemId, tmdb_id, prioridade });
+      logSuccess('🎉 FILME ADICIONADO À LISTA QUERO VER!', { tmdb_id });
 
       res.status(201).json({
         success: true,
         message: 'Filme adicionado à lista "Quero Ver" com sucesso',
-        data: { id: itemId }
+        data: newItem
       });
 
-    } catch (error: any) {
-      if (error.code === 'ER_DUP_ENTRY') {
-        logError('Tentativa de adicionar filme duplicado');
-        return res.status(400).json({
-          success: false,
-          message: 'Filme já está na sua lista "Quero Ver"'
-        });
-      }
-
+    } catch (error) {
       logError('❌ ERRO AO ADICIONAR À LISTA QUERO VER:', error);
       res.status(500).json({
         success: false,
@@ -151,24 +137,29 @@ export class WatchlistController {
     }
   }
 
-  // DELETE /api/watchlist/:tmdb_id - Remover filme da lista "quero ver"
   async removeFromWatchlist(req: Request, res: Response) {
     try {
       logInfo('🗑️ REMOVENDO FILME DA LISTA QUERO VER');
 
       const userId = (req as any).user.userId;
       const { tmdb_id } = req.params;
+      const tmdbId = parseInt(tmdb_id);
 
-      logInfo('Removendo filme', { userId, tmdb_id });
+      logInfo('Removendo filme', { userId, tmdb_id: tmdbId });
 
-      logDatabase('DELETE FROM lista_quero_ver WHERE usuario_id = ? AND tmdb_id = ?', [userId, tmdb_id]);
+      logDatabase('SELECT lista_quero_ver FROM usuarios WHERE id = ?', [userId]);
 
-      const [result] = await pool.execute(
-        'DELETE FROM lista_quero_ver WHERE usuario_id = ? AND tmdb_id = ?',
-        [userId, tmdb_id]
+      const [rows] = await pool.execute(
+        'SELECT lista_quero_ver FROM usuarios WHERE id = ?',
+        [userId]
       );
 
-      if ((result as any).affectedRows === 0) {
+      const user = (rows as any[])[0];
+      const watchlist: ListaQueroVerItem[] = user?.lista_quero_ver || [];
+
+      const filteredWatchlist = watchlist.filter(item => item.tmdb_id !== tmdbId);
+
+      if (filteredWatchlist.length === watchlist.length) {
         logError('Filme não encontrado na lista quero ver');
         return res.status(404).json({
           success: false,
@@ -176,7 +167,17 @@ export class WatchlistController {
         });
       }
 
-      logSuccess('🎉 FILME REMOVIDO DA LISTA QUERO VER!', { tmdb_id });
+      logDatabase(
+        'UPDATE usuarios SET lista_quero_ver = ? WHERE id = ?',
+        [JSON.stringify(filteredWatchlist), userId]
+      );
+
+      await pool.execute(
+        'UPDATE usuarios SET lista_quero_ver = ? WHERE id = ?',
+        [JSON.stringify(filteredWatchlist), userId]
+      );
+
+      logSuccess('🎉 FILME REMOVIDO DA LISTA QUERO VER!', { tmdb_id: tmdbId });
 
       res.json({
         success: true,
@@ -192,52 +193,4 @@ export class WatchlistController {
     }
   }
 
-  // PUT /api/watchlist/:tmdb_id - Atualizar prioridade/dados de um item
-  async updateWatchlistItem(req: Request, res: Response) {
-    try {
-      logInfo('✏️ ATUALIZANDO ITEM DA LISTA QUERO VER');
-
-      const userId = (req as any).user.userId;
-      const { tmdb_id } = req.params;
-      const { prioridade, onde_assistir, notificar_lancamento } = req.body;
-
-      logInfo('Atualizando item', { userId, tmdb_id, prioridade, onde_assistir, notificar_lancamento });
-
-      logDatabase(
-        'UPDATE lista_quero_ver SET prioridade = ?, onde_assistir = ?, notificar_lancamento = ? WHERE usuario_id = ? AND tmdb_id = ?',
-        [prioridade, onde_assistir, notificar_lancamento, userId, tmdb_id]
-      );
-
-      const [result] = await pool.execute(
-        `UPDATE lista_quero_ver
-         SET prioridade = COALESCE(?, prioridade),
-             onde_assistir = COALESCE(?, onde_assistir),
-             notificar_lancamento = COALESCE(?, notificar_lancamento)
-         WHERE usuario_id = ? AND tmdb_id = ?`,
-        [prioridade || null, onde_assistir || null, notificar_lancamento, userId, tmdb_id]
-      );
-
-      if ((result as any).affectedRows === 0) {
-        logError('Item não encontrado na lista quero ver');
-        return res.status(404).json({
-          success: false,
-          message: 'Item não encontrado na sua lista "Quero Ver"'
-        });
-      }
-
-      logSuccess('🎉 ITEM DA LISTA QUERO VER ATUALIZADO!', { tmdb_id });
-
-      res.json({
-        success: true,
-        message: 'Item da lista "Quero Ver" atualizado com sucesso'
-      });
-
-    } catch (error) {
-      logError('❌ ERRO AO ATUALIZAR ITEM DA LISTA QUERO VER:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Erro interno do servidor'
-      });
-    }
-  }
 }
