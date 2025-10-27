@@ -44,10 +44,14 @@ export class TMDbService {
     }
   }
 
-  // Formatar URL do poster
   formatPosterURL(path: string | null) {
     if (!path) return 'https://via.placeholder.com/500x750/374151/9CA3AF?text=Sem+Poster';
     return `https://image.tmdb.org/t/p/w500${path}`;
+  }
+
+  formatBackdropURL(path: string | null) {
+    if (!path) return null;
+    return `https://image.tmdb.org/t/p/w1280${path}`;
   }
 
   // Buscar vídeos do filme
