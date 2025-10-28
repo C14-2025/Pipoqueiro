@@ -1,33 +1,37 @@
 import { Request, Response } from 'express';
 import pool from '../config/database';
 import { TMDbService } from '../services/tmdbService';
-import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger';
+import { logSuccess, logError, logDatabase } from '../middleware/logger';
 import { ListaQueroVerItem, AddListaQueroVerInput } from '../types';
 
 export class WatchlistController {
   private tmdbService = new TMDbService();
 
+  private async getUserWatchlist(userId: number): Promise<ListaQueroVerItem[]> {
+    logDatabase('SELECT lista_quero_ver FROM usuarios WHERE id = ?', [userId]);
+    const [rows] = await pool.execute(
+      'SELECT lista_quero_ver FROM usuarios WHERE id = ?',
+      [userId]
+    );
+    return (rows as any[])[0]?.lista_quero_ver || [];
+  }
+
+  private async saveUserWatchlist(userId: number, watchlist: ListaQueroVerItem[]): Promise<void> {
+    logDatabase('UPDATE usuarios SET lista_quero_ver = ? WHERE id = ?', [JSON.stringify(watchlist), userId]);
+    await pool.execute(
+      'UPDATE usuarios SET lista_quero_ver = ? WHERE id = ?',
+      [JSON.stringify(watchlist), userId]
+    );
+  }
+
   async getWatchlist(req: Request, res: Response) {
     try {
-      logInfo('📋 BUSCANDO LISTA QUERO VER DO USUÁRIO');
-
       const userId = (req as any).user.userId;
-
-      logDatabase('SELECT lista_quero_ver FROM usuarios WHERE id = ?', [userId]);
-
-      const [rows] = await pool.execute(
-        'SELECT lista_quero_ver FROM usuarios WHERE id = ?',
-        [userId]
-      );
-
-      const user = (rows as any[])[0];
-      let watchlist: ListaQueroVerItem[] = user?.lista_quero_ver || [];
+      let watchlist = await this.getUserWatchlist(userId);
 
       watchlist = watchlist.sort((a, b) => {
         return new Date(b.data_adicao).getTime() - new Date(a.data_adicao).getTime();
       });
-
-      logInfo(`Encontrados ${watchlist.length} itens na lista quero ver`);
 
       const watchlistWithDetails = await Promise.all(
         watchlist.map(async (item) => {
@@ -40,7 +44,7 @@ export class WatchlistController {
               poster_url: this.tmdbService.formatPosterURL(movieDetails.poster_path)
             };
           } catch (error) {
-            logError(`Erro ao buscar dados do filme ${item.tmdb_id}:`, error);
+            logError(`Erro ao buscar filme ${item.tmdb_id}:`, error);
             return {
               tmdb_id: item.tmdb_id,
               data_adicao: item.data_adicao,
@@ -51,16 +55,15 @@ export class WatchlistController {
         })
       );
 
-      logSuccess(`🎉 Lista quero ver carregada com ${watchlistWithDetails.length} filmes`);
+      logSuccess(`Lista quero ver carregada: ${watchlistWithDetails.length} filmes`);
 
       res.json({
         success: true,
         message: 'Lista quero ver obtida com sucesso',
         data: watchlistWithDetails
       });
-
     } catch (error) {
-      logError('❌ ERRO AO BUSCAR LISTA QUERO VER:', error);
+      logError('Erro ao buscar lista quero ver:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -70,33 +73,19 @@ export class WatchlistController {
 
   async addToWatchlist(req: Request, res: Response) {
     try {
-      logInfo('➕ ADICIONANDO FILME À LISTA QUERO VER');
-
       const userId = (req as any).user.userId;
       const { tmdb_id }: AddListaQueroVerInput = req.body;
 
-      logInfo('Dados recebidos', { userId, tmdb_id });
-
       if (!tmdb_id) {
-        logError('TMDB ID não fornecido');
         return res.status(400).json({
           success: false,
           message: 'TMDB ID é obrigatório'
         });
       }
 
-      logDatabase('SELECT lista_quero_ver FROM usuarios WHERE id = ?', [userId]);
-
-      const [rows] = await pool.execute(
-        'SELECT lista_quero_ver FROM usuarios WHERE id = ?',
-        [userId]
-      );
-
-      const user = (rows as any[])[0];
-      const watchlist: ListaQueroVerItem[] = user?.lista_quero_ver || [];
+      const watchlist = await this.getUserWatchlist(userId);
 
       if (watchlist.some(item => item.tmdb_id === tmdb_id)) {
-        logError('Filme já está na lista quero ver');
         return res.status(400).json({
           success: false,
           message: 'Filme já está na sua lista "Quero Ver"'
@@ -109,27 +98,17 @@ export class WatchlistController {
       };
 
       watchlist.push(newItem);
+      await this.saveUserWatchlist(userId, watchlist);
 
-      logDatabase(
-        'UPDATE usuarios SET lista_quero_ver = ? WHERE id = ?',
-        [JSON.stringify(watchlist), userId]
-      );
-
-      await pool.execute(
-        'UPDATE usuarios SET lista_quero_ver = ? WHERE id = ?',
-        [JSON.stringify(watchlist), userId]
-      );
-
-      logSuccess('🎉 FILME ADICIONADO À LISTA QUERO VER!', { tmdb_id });
+      logSuccess(`Filme ${tmdb_id} adicionado à lista quero ver`);
 
       res.status(201).json({
         success: true,
         message: 'Filme adicionado à lista "Quero Ver" com sucesso',
         data: newItem
       });
-
     } catch (error) {
-      logError('❌ ERRO AO ADICIONAR À LISTA QUERO VER:', error);
+      logError('Erro ao adicionar à lista quero ver:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -139,58 +118,34 @@ export class WatchlistController {
 
   async removeFromWatchlist(req: Request, res: Response) {
     try {
-      logInfo('🗑️ REMOVENDO FILME DA LISTA QUERO VER');
-
       const userId = (req as any).user.userId;
-      const { tmdb_id } = req.params;
-      const tmdbId = parseInt(tmdb_id);
+      const tmdbId = parseInt(req.params.tmdb_id);
 
-      logInfo('Removendo filme', { userId, tmdb_id: tmdbId });
+      const watchlist = await this.getUserWatchlist(userId);
+      const movieIndex = watchlist.findIndex(item => item.tmdb_id === tmdbId);
 
-      logDatabase('SELECT lista_quero_ver FROM usuarios WHERE id = ?', [userId]);
-
-      const [rows] = await pool.execute(
-        'SELECT lista_quero_ver FROM usuarios WHERE id = ?',
-        [userId]
-      );
-
-      const user = (rows as any[])[0];
-      const watchlist: ListaQueroVerItem[] = user?.lista_quero_ver || [];
-
-      const filteredWatchlist = watchlist.filter(item => item.tmdb_id !== tmdbId);
-
-      if (filteredWatchlist.length === watchlist.length) {
-        logError('Filme não encontrado na lista quero ver');
+      if (movieIndex === -1) {
         return res.status(404).json({
           success: false,
           message: 'Filme não encontrado na sua lista "Quero Ver"'
         });
       }
 
-      logDatabase(
-        'UPDATE usuarios SET lista_quero_ver = ? WHERE id = ?',
-        [JSON.stringify(filteredWatchlist), userId]
-      );
+      watchlist.splice(movieIndex, 1);
+      await this.saveUserWatchlist(userId, watchlist);
 
-      await pool.execute(
-        'UPDATE usuarios SET lista_quero_ver = ? WHERE id = ?',
-        [JSON.stringify(filteredWatchlist), userId]
-      );
-
-      logSuccess('🎉 FILME REMOVIDO DA LISTA QUERO VER!', { tmdb_id: tmdbId });
+      logSuccess(`Filme ${tmdbId} removido da lista quero ver`);
 
       res.json({
         success: true,
         message: 'Filme removido da lista "Quero Ver" com sucesso'
       });
-
     } catch (error) {
-      logError('❌ ERRO AO REMOVER DA LISTA QUERO VER:', error);
+      logError('Erro ao remover da lista quero ver:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
       });
     }
   }
-
 }

@@ -7,31 +7,27 @@ import reviewRoutes from './routes/reviews';
 import movieRoutes from './routes/movies';
 import watchlistRoutes from './routes/watchlist';
 import favoritesRoutes from './routes/favorites';
-import { requestLogger } from './middleware/logger';
 import chatRoutes from './routes/chat';
+import { requestLogger, logSuccess, logError } from './middleware/logger';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middlewares
 app.use(cors({
   origin: [
-    'http://localhost:5173',   
-    'http://127.0.0.1:5173',     
-    'http://localhost:3000'     
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3000'
   ],
   credentials: true
 }));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-
-// Middleware de logging
 app.use(requestLogger);
 
-// Rotas
 app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/movies', movieRoutes);
@@ -39,7 +35,6 @@ app.use('/api/watchlist', watchlistRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/chat', chatRoutes);
 
-// Rota de teste
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
@@ -48,18 +43,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Testar banco
-app.get('/api/test-db', async (req, res) => {
-  try {
-    const { default: db } = await import('./config/database');
-    const [result] = await db.execute('SELECT COUNT(*) as total FROM usuarios');
-    res.json({ message: 'Banco conectado!', usuarios: result });
-  } catch (error) {
-    res.status(500).json({ error: 'Erro no banco' });
-  }
-});
-
-// Middleware de erro 404
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
@@ -67,30 +50,27 @@ app.use('*', (req, res) => {
   });
 });
 
-// Middleware de tratamento de erros
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Erro não tratado:', err);
+  logError('Erro não tratado:', err);
   res.status(500).json({
     success: false,
     message: 'Erro interno do servidor'
   });
 });
 
-// Inicializar servidor
 const startServer = async () => {
   try {
     await connectDB();
     app.listen(PORT, () => {
-      console.log(`🚀 Servidor rodando na porta ${PORT}`);
-      console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
+      logSuccess(`Servidor rodando na porta ${PORT}`);
+      logSuccess(`Health check: http://localhost:${PORT}/api/health`);
     });
   } catch (error) {
-    console.error('❌ Erro ao iniciar servidor:', error);
+    logError('Erro ao iniciar servidor:', error);
     process.exit(1);
   }
 };
 
-// Só inicia o servidor se não estiver em ambiente de teste
 if (process.env.NODE_ENV !== 'test') {
   startServer();
 }

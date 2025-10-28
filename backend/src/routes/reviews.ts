@@ -1,32 +1,15 @@
 import { Router } from 'express';
-import { 
-  criarReview, 
-  obterReviews, 
-  obterMinhasReviews, 
-  atualizarReview, 
-  excluirReview, 
-  curtirReview 
-} from '../controllers/reviewController';
+import { ReviewController } from '../controllers/reviewController';
 import { auth } from '../utils/auth';
 
 const router = Router();
+const reviewController = new ReviewController();
 
-// Criar nova review (autenticado)
-router.post('/', auth, criarReview);
-
-// Obter reviews de um filme específico (público)
-router.get('/filme/:tmdb_id', obterReviews);
-
-// Obter minhas reviews (autenticado)
-router.get('/minhas', auth, obterMinhasReviews);
-
-// Atualizar review (autenticado)
-router.put('/:id', auth, atualizarReview);
-
-// Excluir review (autenticado)
-router.delete('/:id', auth, excluirReview);
-
-// Curtir review (público)
-router.post('/:id/curtir', curtirReview);
+router.post('/', auth, reviewController.criarReview.bind(reviewController));
+router.get('/filme/:tmdb_id', reviewController.obterReviews.bind(reviewController));
+router.get('/minhas', auth, reviewController.obterMinhasReviews.bind(reviewController));
+router.put('/:id', auth, reviewController.atualizarReview.bind(reviewController));
+router.delete('/:id', auth, reviewController.excluirReview.bind(reviewController));
+router.post('/:id/curtir', reviewController.curtirReview.bind(reviewController));
 
 export default router;
