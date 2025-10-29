@@ -1,9 +1,10 @@
+/// <reference types="node" />
 import { jest } from '@jest/globals';
 
 process.env.NODE_ENV = 'test';
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_key';
-process.env.TMDB_API_KEY = process.env.TMDB_API_KEY || 'mock_tmdb_key';
-process.env.OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'mock_openai_key';
+process.env.JWT_SECRET = 'test_jwt_secret_key';
+process.env.TMDB_API_KEY = 'mock_tmdb_key';
+process.env.OPENAI_API_KEY = 'mock_openai_key';
 
 const mockExecute = jest.fn();
 const mockGetConnection = jest.fn();
