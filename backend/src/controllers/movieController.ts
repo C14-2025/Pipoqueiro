@@ -236,8 +236,8 @@ export class MovieController {
         GROUP BY tmdb_id
         HAVING COUNT(*) >= ?
         ORDER BY nota_media DESC, total_avaliacoes DESC
-        LIMIT ?
-      `, [minReviews, limit]);
+        LIMIT ${limit}
+      `, [minReviews]);
 
       const [rows] = await pool.execute(`
         SELECT
@@ -249,8 +249,8 @@ export class MovieController {
         GROUP BY tmdb_id
         HAVING COUNT(*) >= ?
         ORDER BY nota_media DESC, total_avaliacoes DESC
-        LIMIT ?
-      `, [minReviews, limit]);
+        LIMIT ${limit}
+      `, [minReviews]);
 
       const rankingMovies = rows as any[];
       logInfo(`Encontrados ${rankingMovies.length} filmes no ranking`);

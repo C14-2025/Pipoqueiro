@@ -1,5 +1,21 @@
-// TESTES UNITÁRIOS COM MOCKS - SEM BANCO DE DADOS REAL
-// Testes unitários que cobrem funcionalidades sem precisar de MySQL
+/**
+ * TESTES UNITÁRIOS - BACKEND PIPOQUEIRO
+ *
+ * Testes com mocks completos - não requer banco de dados real.
+ * Todas as queries MySQL são simuladas usando jest.fn().
+ *
+ * Cobertura:
+ * - UserController: 10 testes (registro, login, perfil, estatísticas, CRUD)
+ * - ReviewController: 10 testes (CRUD completo, validações, curtidas)
+ * - FavoritesController: 7 testes (adicionar, remover, verificar)
+ * - WatchlistController: 6 testes (adicionar, remover, listar)
+ * - Segurança: 3 testes (JWT, autenticação)
+ * - Health Check: 1 teste
+ *
+ * Total: 51 testes
+ *
+ * Para rodar: npm test
+ */
 
 import request from 'supertest';
 import app from '../src/app';
