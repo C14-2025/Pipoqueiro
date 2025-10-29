@@ -1,12 +1,12 @@
-# 🎬 API Pipoqueiro - Referência Completa
+# API Pipoqueiro - Referência Completa
 
 **Base URL:** `http://localhost:3000/api`
 
 ---
 
-## 🔓 **ENDPOINTS PÚBLICOS**
+## ENDPOINTS PÚBLICOS
 
-### **Status da API**
+### Status da API
 ```http
 GET /health
 ```
@@ -19,24 +19,11 @@ GET /health
 }
 ```
 
-### **Teste do Banco**
-```http
-GET /test-db
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Banco conectado!",
-  "usuarios": [{ "total": 4 }]
-}
-```
-
 ---
 
-## 👤 **USUÁRIOS**
+## USUÁRIOS
 
-### **Registrar Usuário**
+### Registrar Usuário
 ```http
 POST /users/registrar
 Content-Type: application/json
@@ -46,10 +33,7 @@ Content-Type: application/json
 {
   "nome": "João Silva",
   "email": "joao@email.com",
-  "senha": "123456",
-  "bio": "Amo filmes!", // opcional
-  "generos_favoritos": ["ação", "terror"], // opcional
-  "data_nascimento": "1990-01-01" // opcional
+  "senha": "123456"
 }
 ```
 **Response:**
@@ -63,14 +47,15 @@ Content-Type: application/json
       "id": 5,
       "nome": "João Silva",
       "email": "joao@email.com",
-      "bio": "Amo filmes!",
-      "generos_favoritos": ["ação", "terror"]
+      "bio": null,
+      "foto_perfil": null,
+      "generos_favoritos": null
     }
   }
 }
 ```
 
-### **Login**
+### Login
 ```http
 POST /users/login
 Content-Type: application/json
@@ -93,14 +78,15 @@ Content-Type: application/json
       "id": 5,
       "nome": "João Silva",
       "email": "joao@email.com",
-      "bio": "Amo filmes!",
-      "generos_favoritos": ["ação", "terror"]
+      "bio": null,
+      "foto_perfil": null,
+      "generos_favoritos": []
     }
   }
 }
 ```
 
-### **🔒 Obter Perfil (Requer Auth)**
+### Obter Perfil (Requer Auth)
 ```http
 GET /users/perfil
 Authorization: Bearer {token}
@@ -114,15 +100,16 @@ Authorization: Bearer {token}
     "id": 5,
     "nome": "João Silva",
     "email": "joao@email.com",
-    "bio": "Amo filmes!",
+    "bio": null,
+    "foto_perfil": null,
     "generos_favoritos": ["ação", "terror"],
-    "data_nascimento": "1990-01-01",
+    "data_nascimento": null,
     "created_at": "2025-01-01T00:00:00.000Z"
   }
 }
 ```
 
-### **🔒 Atualizar Perfil (Requer Auth)**
+### Atualizar Perfil (Requer Auth)
 ```http
 PUT /users/perfil
 Authorization: Bearer {token}
@@ -131,13 +118,22 @@ Content-Type: application/json
 **Body:**
 ```json
 {
-  "nome": "João Santos", // opcional
-  "bio": "Nova bio", // opcional
-  "generos_favoritos": ["ação", "comédia"] // opcional
+  "nome": "João Santos",
+  "bio": "Nova bio",
+  "foto_perfil": "https://avatar.com/joao.jpg",
+  "generos_favoritos": ["ação", "comédia"],
+  "data_nascimento": "1990-01-01"
+}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Perfil atualizado com sucesso"
 }
 ```
 
-### **🔒 Estatísticas do Usuário (Requer Auth)**
+### Estatísticas do Usuário (Requer Auth)
 ```http
 GET /users/estatisticas
 Authorization: Bearer {token}
@@ -146,6 +142,7 @@ Authorization: Bearer {token}
 ```json
 {
   "success": true,
+  "message": "Estatísticas obtidas com sucesso",
   "data": {
     "reviews": {
       "total_reviews": 15,
@@ -159,11 +156,25 @@ Authorization: Bearer {token}
 }
 ```
 
+### Excluir Conta (Requer Auth)
+```http
+DELETE /users/conta
+Authorization: Bearer {token}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Conta excluída com sucesso"
+}
+```
+**ATENÇÃO:** Esta ação remove TODOS os dados do usuário (reviews, watchlist, favoritos).
+
 ---
 
-## 🎬 **REVIEWS**
+## REVIEWS
 
-### **🔒 Criar Review (Requer Auth)**
+### Criar Review (Requer Auth)
 ```http
 POST /reviews
 Authorization: Bearer {token}
@@ -179,8 +190,18 @@ Content-Type: application/json
   "spoiler": false
 }
 ```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Review criada com sucesso",
+  "data": {
+    "id": 1
+  }
+}
+```
 
-### **Obter Reviews de um Filme**
+### Obter Reviews de um Filme
 ```http
 GET /reviews/filme/{tmdb_id}
 ```
@@ -191,6 +212,7 @@ GET /reviews/filme/{tmdb_id}
 ```json
 {
   "success": true,
+  "message": "Reviews obtidas com sucesso",
   "data": [
     {
       "id": 1,
@@ -202,6 +224,7 @@ GET /reviews/filme/{tmdb_id}
       "spoiler": false,
       "curtidas": 12,
       "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z",
       "nome": "João Silva",
       "foto_perfil": "https://avatar.com/joao.jpg"
     }
@@ -209,13 +232,34 @@ GET /reviews/filme/{tmdb_id}
 }
 ```
 
-### **🔒 Minhas Reviews (Requer Auth)**
+### Minhas Reviews (Requer Auth)
 ```http
 GET /reviews/minhas
 Authorization: Bearer {token}
 ```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Reviews obtidas com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "usuario_id": 1,
+      "tmdb_id": 550,
+      "nota": 5,
+      "titulo_review": "Minha review",
+      "comentario": "Gostei muito",
+      "spoiler": false,
+      "curtidas": 5,
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
 
-### **🔒 Atualizar Review (Requer Auth)**
+### Atualizar Review (Requer Auth)
 ```http
 PUT /reviews/{id}
 Authorization: Bearer {token}
@@ -226,26 +270,48 @@ Content-Type: application/json
 {
   "nota": 4,
   "titulo_review": "Título atualizado",
-  "comentario": "Comentário atualizado"
+  "comentario": "Comentário atualizado",
+  "spoiler": true
+}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Review atualizada com sucesso"
 }
 ```
 
-### **🔒 Excluir Review (Requer Auth)**
+### Excluir Review (Requer Auth)
 ```http
 DELETE /reviews/{id}
 Authorization: Bearer {token}
 ```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Review excluída com sucesso"
+}
+```
 
-### **Curtir Review**
+### Curtir Review
 ```http
 POST /reviews/{id}/curtir
+```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Review curtida com sucesso"
+}
 ```
 
 ---
 
-## 📋 **LISTA "QUERO VER" (WATCHLIST)**
+## LISTA "QUERO VER" (WATCHLIST)
 
-### **🔒 Obter Lista "Quero Ver" (Requer Auth)**
+### Obter Lista "Quero Ver" (Requer Auth)
 ```http
 GET /watchlist
 Authorization: Bearer {token}
@@ -257,23 +323,26 @@ Authorization: Bearer {token}
   "message": "Lista quero ver obtida com sucesso",
   "data": [
     {
-      "id": 1,
       "tmdb_id": 550,
-      "prioridade": "alta",
-      "data_adicao": "2025-01-01T00:00:00.000Z",
-      "onde_assistir": "Netflix",
-      "notificar_lancamento": true,
+      "data_adicao": "2025-01-01",
+      "id": 550,
       "title": "Clube da Luta",
-      "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
       "overview": "Um funcionário...",
+      "poster_path": "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+      "backdrop_path": "/fCayJrkfRaCRCTh8GqN30f8oyQF.jpg",
       "release_date": "1999-10-15",
-      "runtime": 139
+      "vote_average": 8.4,
+      "vote_count": 26280,
+      "runtime": 139,
+      "genres": [{"id": 18, "name": "Drama"}],
+      "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+      "backdrop_url": "https://image.tmdb.org/t/p/w1280/fCayJrkfRaCRCTh8GqN30f8oyQF.jpg"
     }
   ]
 }
 ```
 
-### **🔒 Adicionar à Lista "Quero Ver" (Requer Auth)**
+### Adicionar à Lista "Quero Ver" (Requer Auth)
 ```http
 POST /watchlist
 Authorization: Bearer {token}
@@ -282,39 +351,39 @@ Content-Type: application/json
 **Body:**
 ```json
 {
-  "tmdb_id": 550,
-  "prioridade": "alta", // opcional: baixa|media|alta (default: media)
-  "onde_assistir": "Netflix", // opcional
-  "notificar_lancamento": true // opcional (default: true)
+  "tmdb_id": 550
 }
 ```
-
-### **🔒 Atualizar Item da Lista (Requer Auth)**
-```http
-PUT /watchlist/{tmdb_id}
-Authorization: Bearer {token}
-Content-Type: application/json
-```
-**Body:**
+**Response:**
 ```json
 {
-  "prioridade": "baixa",
-  "onde_assistir": "Amazon Prime",
-  "notificar_lancamento": false
+  "success": true,
+  "message": "Filme adicionado à lista \"Quero Ver\" com sucesso",
+  "data": {
+    "tmdb_id": 550,
+    "data_adicao": "2025-01-01"
+  }
 }
 ```
 
-### **🔒 Remover da Lista "Quero Ver" (Requer Auth)**
+### Remover da Lista "Quero Ver" (Requer Auth)
 ```http
 DELETE /watchlist/{tmdb_id}
 Authorization: Bearer {token}
 ```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Filme removido da lista \"Quero Ver\" com sucesso"
+}
+```
 
 ---
 
-## ⭐ **FAVORITOS**
+## FAVORITOS
 
-### **🔒 Obter Filmes Favoritos (Requer Auth)**
+### Obter Filmes Favoritos (Requer Auth)
 ```http
 GET /favorites
 Authorization: Bearer {token}
@@ -326,22 +395,26 @@ Authorization: Bearer {token}
   "message": "Filmes favoritos obtidos com sucesso",
   "data": [
     {
-      "id": 1,
       "tmdb_id": 550,
-      "created_at": "2025-01-01T00:00:00.000Z",
-      "comentario_favorito": "Meu filme favorito de todos os tempos!",
+      "data_adicao": "2025-01-01",
+      "id": 550,
       "title": "Clube da Luta",
-      "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
-      "backdrop_url": "https://image.tmdb.org/t/p/w1280/...",
       "overview": "Um funcionário...",
+      "poster_path": "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+      "backdrop_path": "/fCayJrkfRaCRCTh8GqN30f8oyQF.jpg",
       "release_date": "1999-10-15",
-      "runtime": 139
+      "vote_average": 8.4,
+      "vote_count": 26280,
+      "runtime": 139,
+      "genres": [{"id": 18, "name": "Drama"}],
+      "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+      "backdrop_url": "https://image.tmdb.org/t/p/w1280/fCayJrkfRaCRCTh8GqN30f8oyQF.jpg"
     }
   ]
 }
 ```
 
-### **🔒 Adicionar aos Favoritos (Requer Auth)**
+### Adicionar aos Favoritos (Requer Auth)
 ```http
 POST /favorites
 Authorization: Bearer {token}
@@ -350,31 +423,35 @@ Content-Type: application/json
 **Body:**
 ```json
 {
-  "tmdb_id": 550,
-  "comentario_favorito": "Filme incrível!" // opcional
+  "tmdb_id": 550
 }
 ```
-
-### **🔒 Atualizar Comentário do Favorito (Requer Auth)**
-```http
-PUT /favorites/{tmdb_id}
-Authorization: Bearer {token}
-Content-Type: application/json
-```
-**Body:**
+**Response:**
 ```json
 {
-  "comentario_favorito": "Novo comentário sobre este favorito"
+  "success": true,
+  "message": "Filme adicionado aos favoritos com sucesso",
+  "data": {
+    "tmdb_id": 550,
+    "data_adicao": "2025-01-01"
+  }
 }
 ```
 
-### **🔒 Remover dos Favoritos (Requer Auth)**
+### Remover dos Favoritos (Requer Auth)
 ```http
 DELETE /favorites/{tmdb_id}
 Authorization: Bearer {token}
 ```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Filme removido dos favoritos com sucesso"
+}
+```
 
-### **🔒 Verificar se é Favorito (Requer Auth)**
+### Verificar se é Favorito (Requer Auth)
 ```http
 GET /favorites/check/{tmdb_id}
 Authorization: Bearer {token}
@@ -391,22 +468,14 @@ Authorization: Bearer {token}
 
 ---
 
-## 🎬 **FILMES (TMDB)**
+## FILMES (TMDB)
 
-### **Filmes Populares**
+### Filmes Populares
 ```http
 GET /movies/popular?page=1
 ```
 **Query Params:**
 - `page` - Número da página (default: 1)
-
-### **🏆 Ranking da Comunidade Pipoqueiro**
-```http
-GET /movies/ranking?limit=50&min_reviews=3
-```
-**Query Params:**
-- `limit` - Número de filmes no ranking (default: 50)
-- `min_reviews` - Mínimo de avaliações necessárias (default: 3)
 
 **Response:**
 ```json
@@ -420,8 +489,10 @@ GET /movies/ranking?limit=50&min_reviews=3
       "overview": "Um funcionário...",
       "poster_path": "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
       "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+      "backdrop_url": "https://image.tmdb.org/t/p/w1280/...",
       "release_date": "1999-10-15",
       "vote_average": 8.4,
+      "vote_count": 26280,
       "nossa_stats": {
         "total_reviews": 5,
         "nota_media": 4.6,
@@ -432,7 +503,15 @@ GET /movies/ranking?limit=50&min_reviews=3
 }
 ```
 
-**Response Ranking:**
+### Ranking da Comunidade Pipoqueiro
+```http
+GET /movies/ranking?limit=50&min_reviews=3
+```
+**Query Params:**
+- `limit` - Número de filmes no ranking (default: 50)
+- `min_reviews` - Mínimo de avaliações necessárias (default: 3)
+
+**Response:**
 ```json
 {
   "success": true,
@@ -443,7 +522,7 @@ GET /movies/ranking?limit=50&min_reviews=3
       "tmdb_id": 550,
       "title": "Clube da Luta",
       "overview": "Um funcionário...",
-      "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+      "poster_url": "https://image.tmdb.org/t/p/w500/...",
       "backdrop_url": "https://image.tmdb.org/t/p/w1280/...",
       "release_date": "1999-10-15",
       "runtime": 139,
@@ -464,7 +543,7 @@ GET /movies/ranking?limit=50&min_reviews=3
 }
 ```
 
-### **Buscar Filmes**
+### Buscar Filmes
 ```http
 GET /movies/search?query={termo}&page=1
 ```
@@ -472,7 +551,29 @@ GET /movies/search?query={termo}&page=1
 - `query` - Termo de busca (obrigatório)
 - `page` - Número da página (default: 1)
 
-### **Detalhes do Filme**
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Busca realizada com sucesso",
+  "data": [
+    {
+      "id": 550,
+      "title": "Clube da Luta",
+      "overview": "Um funcionário...",
+      "poster_url": "https://image.tmdb.org/t/p/w500/...",
+      "release_date": "1999-10-15",
+      "vote_average": 8.4,
+      "nossa_stats": {
+        "total_reviews": 5,
+        "nota_media": 4.6
+      }
+    }
+  ]
+}
+```
+
+### Detalhes do Filme
 ```http
 GET /movies/{tmdb_id}
 ```
@@ -485,18 +586,24 @@ GET /movies/{tmdb_id}
     "id": 550,
     "title": "Clube da Luta",
     "overview": "Um funcionário...",
+    "poster_path": "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+    "backdrop_path": "/fCayJrkfRaCRCTh8GqN30f8oyQF.jpg",
     "poster_url": "https://image.tmdb.org/t/p/w500/...",
     "backdrop_url": "https://image.tmdb.org/t/p/w1280/...",
     "release_date": "1999-10-15",
     "runtime": 139,
     "genres": [{"id": 18, "name": "Drama"}],
     "vote_average": 8.4,
+    "vote_count": 26280,
     "reviews": [
       {
         "id": 1,
+        "usuario_id": 1,
         "nota": 5,
         "titulo_review": "Obra-prima!",
         "comentario": "Filme incrível...",
+        "spoiler": false,
+        "curtidas": 12,
         "nome": "João Silva",
         "foto_perfil": "https://..."
       }
@@ -511,46 +618,109 @@ GET /movies/{tmdb_id}
 }
 ```
 
----
-
-## 🗑️ **EXCLUSÃO DE CONTA**
-
-### **🔒 Excluir Conta (Requer Auth)**
+### Vídeos do Filme
 ```http
-DELETE /users/conta
-Authorization: Bearer {token}
+GET /movies/{tmdb_id}/videos
 ```
 **Response:**
 ```json
 {
   "success": true,
-  "message": "Conta excluída com sucesso"
+  "message": "Vídeos obtidos com sucesso",
+  "data": [
+    {
+      "id": "dQw4w9WgXcQ",
+      "key": "dQw4w9WgXcQ",
+      "name": "Official Trailer",
+      "site": "YouTube",
+      "type": "Trailer"
+    }
+  ]
 }
 ```
-**⚠️ ATENÇÃO:** Esta ação remove TODOS os dados do usuário (reviews, watchlist, favoritos).
+
+### Créditos do Filme
+```http
+GET /movies/{tmdb_id}/credits
+```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Créditos obtidos com sucesso",
+  "data": {
+    "cast": [
+      {
+        "id": 287,
+        "name": "Brad Pitt",
+        "character": "Tyler Durden",
+        "profile_path": "/..."
+      }
+    ],
+    "crew": [
+      {
+        "id": 7467,
+        "name": "David Fincher",
+        "job": "Director"
+      }
+    ]
+  }
+}
+```
+
+### Filmes Similares
+```http
+GET /movies/{tmdb_id}/similar
+```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Filmes similares obtidos com sucesso",
+  "data": [
+    {
+      "id": 680,
+      "title": "Pulp Fiction",
+      "poster_url": "https://image.tmdb.org/t/p/w500/...",
+      "vote_average": 8.5,
+      "nossa_stats": {
+        "total_reviews": 8,
+        "nota_media": 4.7
+      }
+    }
+  ]
+}
+```
 
 ---
 
-## 🔐 **AUTENTICAÇÃO**
+## AUTENTICAÇÃO
 
-### **Como usar o token:**
-1. **Fazer login** ou **registrar** para obter o token
-2. **Incluir** em todas as requisições protegidas:
+### Como usar o token:
+1. Fazer login ou registrar para obter o token
+2. Incluir em todas as requisições protegidas:
 ```http
 Authorization: Bearer {seu_token_aqui}
 ```
 
-### **Tratamento de erros de auth:**
+### Tratamento de erros de auth:
 ```json
 {
   "success": false,
-  "message": "Token não fornecido" // ou "Token inválido"
+  "message": "Token não fornecido"
+}
+```
+ou
+```json
+{
+  "success": false,
+  "message": "Token inválido"
 }
 ```
 
 ---
 
-## ❌ **CÓDIGOS DE ERRO**
+## CÓDIGOS DE ERRO
 
 | Código | Significado |
 |--------|------------|
@@ -563,26 +733,26 @@ Authorization: Bearer {seu_token_aqui}
 
 ---
 
-## 🧪 **TESTANDO A API**
+## TESTANDO A API
 
-### **Ferramentas recomendadas:**
-- **Postman** 
-- **Insomnia**
-- **Thunder Client** (VS Code)
-- **curl**
+### Ferramentas recomendadas:
+- Postman
+- Insomnia
+- Thunder Client (VS Code)
+- curl
 
-### **Fluxo básico:**
+### Fluxo básico:
 1. `POST /users/registrar` - Criar conta
-2. Salvar o `token` retornado  
+2. Salvar o `token` retornado
 3. Usar o token nas requisições protegidas
 4. `POST /reviews` - Criar reviews
 5. `GET /reviews/filme/550` - Ver reviews
 
 ---
 
-## 🎯 **EXEMPLOS PRÁTICOS**
+## EXEMPLOS PRÁTICOS
 
-### **Registrar e criar review:**
+### Registrar e criar review:
 ```bash
 # 1. Registrar
 curl -X POST http://localhost:3000/api/users/registrar \
@@ -596,12 +766,20 @@ curl -X POST http://localhost:3000/api/reviews \
   -d '{"tmdb_id":550,"nota":5,"titulo_review":"Incrível!"}'
 ```
 
-### **Ver reviews de um filme:**
+### Ver reviews de um filme:
 ```bash
 curl http://localhost:3000/api/reviews/filme/550
 ```
 
-### **Ver ranking da comunidade:**
+### Adicionar aos favoritos:
+```bash
+curl -X POST http://localhost:3000/api/favorites \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI" \
+  -d '{"tmdb_id":550}'
+```
+
+### Ver ranking da comunidade:
 ```bash
 # Top 50 filmes da comunidade
 curl http://localhost:3000/api/movies/ranking
@@ -612,4 +790,4 @@ curl "http://localhost:3000/api/movies/ranking?limit=20&min_reviews=5"
 
 ---
 
-**📝 Criado para o time frontend - Happy coding! 🚀**
+**Criado para o time frontend - Happy coding!**

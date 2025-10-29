@@ -62,7 +62,9 @@ Pipoqueiro/
 
 ### **Database:**
 - **MySQL 8.0+**
-- **4 tabelas principais** + views
+- **2 tabelas principais** (usuarios, avaliacoes)
+- **Campos JSON** para favoritos e watchlist
+- **2 views** para estatísticas
 - **Dados de exemplo** inclusos
 
 ---
@@ -94,16 +96,17 @@ Pipoqueiro/
 - Reviews por filme
 
 ### **✅ Listas**
-- Lista "Quero Ver"
-- Prioridades (baixa/média/alta)
-- Notificações de lançamento
-- "Onde assistir"
+- Lista "Quero Ver" (watchlist em JSON)
+- Lista de Favoritos (em JSON)
+- Integração com TMDb para detalhes dos filmes
+- Armazenamento eficiente com campos JSON
 
 ### **✅ Database**
 - Schema completo otimizado
-- Dados de exemplo (4 usuários, 10+ reviews)
-- Views para estatísticas
-- Índices para performance
+- Dados de exemplo (4 usuários, 10 reviews)
+- 2 views para estatísticas (estatisticas_filmes, usuarios_ativos)
+- 4 índices para performance
+- Campos JSON para favoritos e watchlist
 
 ### **✅ Integração TMDb**
 - Catálogo completo de filmes
@@ -144,14 +147,17 @@ Pipoqueiro/
 ## 🗄️ **Database Schema**
 
 ### **Tabelas:**
-- **`usuarios`** - Perfis e autenticação
+- **`usuarios`** - Perfis, autenticação, favoritos (JSON), watchlist (JSON)
 - **`avaliacoes`** - Reviews e notas (1-5⭐)
-- **`lista_quero_ver`** - Watchlist dos usuários
+
+### **Views:**
+- **`estatisticas_filmes`** - Total de avaliações, nota média, reviews positivas por filme
+- **`usuarios_ativos`** - Estatísticas de atividade dos usuários
 
 ### **Relacionamentos:**
-- Users → Reviews (1:N)
-- Users → Watchlist (1:N)  
-- Filmes via `tmdb_id` (TMDb API)
+- Users → Reviews (1:N via FOREIGN KEY)
+- Filmes via `tmdb_id` (integração com TMDb API)
+- Favoritos e Watchlist armazenados como JSON em `usuarios`
 
 ---
 
@@ -163,10 +169,10 @@ curl http://localhost:3000/api/health
 # {"success": true, "message": "API Pipoqueiro funcionando!"}
 ```
 
-### **2. Banco conectado:**
+### **2. Filmes populares da TMDb:**
 ```bash
-curl http://localhost:3000/api/test-db
-# {"success": true, "message": "Banco conectado!", "usuarios": [...]}
+curl http://localhost:3000/api/movies/popular
+# {"success": true, "data": [...]}
 ```
 
 ### **3. Reviews de exemplo:**
