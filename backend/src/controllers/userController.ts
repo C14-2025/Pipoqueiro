@@ -2,391 +2,303 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '../config/database';
-import { UsuarioInput, UsuarioLogin, AuthPayload } from '../types';
-import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger';
+import { UsuarioLogin } from '../types';
+import { logSuccess, logError, logDatabase } from '../middleware/logger';
 
-export const registrarUsuario = async (req: Request, res: Response) => {
-  try {
-    logInfo('🆕 INICIANDO REGISTRO DE USUÁRIO');
+export class UserController {
+  private JWT_SECRET = process.env.JWT_SECRET || 'default_secret_key';
 
-    // Apenas campos obrigatórios no registro
-    const { nome, email, senha } = req.body;
-
-    logInfo('Validando campos obrigatórios', { nome, email, senhaPresente: !!senha });
-
-    if (!nome || !email || !senha) {
-      logError('Campos obrigatórios não fornecidos');
-      return res.status(400).json({
-        success: false,
-        message: 'Nome, email e senha são obrigatórios'
-      });
-    }
-
-    // Verificar se email já existe
-    logInfo('Verificando se email já existe', { email });
-    logDatabase('SELECT id FROM usuarios WHERE email = ?', [email]);
-
-    const [existingUser] = await pool.execute(
-      'SELECT id FROM usuarios WHERE email = ?',
-      [email]
-    );
-
-    logInfo('Resultado da verificação de email', { emailJaExiste: (existingUser as any[]).length > 0 });
-
-    if ((existingUser as any[]).length > 0) {
-      logError('Email já cadastrado no sistema');
-      return res.status(400).json({
-        success: false,
-        message: 'Email já cadastrado'
-      });
-    }
-
-    // Hash da senha
-    logInfo('Gerando hash da senha');
-    const salt = await bcrypt.genSalt(10);
-    const senha_hash = await bcrypt.hash(senha, salt);
-    logSuccess('Hash da senha gerado com sucesso');
-
-    // Inserir usuário apenas com campos obrigatórios
-    // Campos opcionais ficam NULL para serem preenchidos no perfil depois
-    logInfo('Inserindo usuário no banco de dados');
-    logDatabase(
-      'INSERT INTO usuarios (nome, email, senha_hash, bio, foto_perfil, generos_favoritos, data_nascimento) VALUES (?, ?, ?, NULL, NULL, NULL, NULL)',
-      [nome, email, '***HASH***']
-    );
-
-    const [result] = await pool.execute(
-      `INSERT INTO usuarios (nome, email, senha_hash, bio, foto_perfil, generos_favoritos, data_nascimento)
-       VALUES (?, ?, ?, NULL, NULL, NULL, NULL)`,
-      [nome, email, senha_hash]
-    );
-
-    const userId = (result as any).insertId;
-    logSuccess('Usuário inserido no banco', { userId });
-
-    // Gerar JWT
-    logInfo('Gerando token JWT');
-    const token = jwt.sign(
-      { userId, email },
-      process.env.JWT_SECRET || 'default_secret_key'
-    );
-    logSuccess('Token JWT gerado com sucesso');
-
-    logSuccess('🎉 USUÁRIO REGISTRADO COM SUCESSO!', {
-      userId,
-      nome,
-      email,
-      tokenGerado: !!token
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'Usuário criado com sucesso',
-      data: {
-        token,
-        user: {
-          id: userId,
-          nome,
-          email,
-          bio: null,
-          foto_perfil: null,
-          generos_favoritos: null
-        }
-      }
-    });
-
-  } catch (error) {
-    logError('❌ ERRO AO REGISTRAR USUÁRIO:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-};
-
-export const loginUsuario = async (req: Request, res: Response) => {
-  try {
-    logInfo('🔐 INICIANDO LOGIN DE USUÁRIO');
-
-    const { email, senha }: UsuarioLogin = req.body;
-
-    logInfo('Validando credenciais', { email, senhaPresente: !!senha });
-
-    if (!email || !senha) {
-      logError('Email ou senha não fornecidos');
-      return res.status(400).json({
-        success: false,
-        message: 'Email e senha são obrigatórios'
-      });
-    }
-
-    // Buscar usuário
-    logInfo('Buscando usuário no banco', { email });
-    logDatabase('SELECT * FROM usuarios WHERE email = ?', [email]);
-
-    const [rows] = await pool.execute(
-      'SELECT * FROM usuarios WHERE email = ?',
-      [email]
-    );
-
-    const users = rows as any[];
-    logInfo('Resultado da busca do usuário', { usuarioEncontrado: users.length > 0 });
-
-    if (users.length === 0) {
-      logError('Usuário não encontrado');
-      return res.status(401).json({
-        success: false,
-        message: 'Credenciais inválidas'
-      });
-    }
-
-    const user = users[0];
-    logInfo('Usuário encontrado', { id: user.id, nome: user.nome, email: user.email });
-
-    // Verificar senha
-    logInfo('Verificando senha');
-    const senhaValida = await bcrypt.compare(senha, user.senha_hash);
-    logInfo('Resultado da verificação da senha', { senhaValida });
-
-    if (!senhaValida) {
-      logError('Senha inválida');
-      return res.status(401).json({
-        success: false,
-        message: 'Credenciais inválidas'
-      });
-    }
-
-    // Gerar JWT
-    logInfo('Gerando token JWT para login');
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET || 'default_secret_key'
-    );
-    logSuccess('Token JWT gerado com sucesso');
-
-    // Debug: verificar o campo generos_favoritos
-    logInfo('Debugando generos_favoritos', {
-      valorOriginal: user.generos_favoritos,
-      tipo: typeof user.generos_favoritos,
-      ehNull: user.generos_favoritos === null,
-      ehString: typeof user.generos_favoritos === 'string'
-    });
-
-    // Processar generos_favoritos com segurança
-    let generosFavoritos = [];
+  private parseGenerosFavoritos(value: any): string[] {
     try {
-      if (user.generos_favoritos && typeof user.generos_favoritos === 'string') {
-        generosFavoritos = JSON.parse(user.generos_favoritos);
+      if (value && typeof value === 'string') {
+        return JSON.parse(value);
       }
-      logSuccess('generos_favoritos processado com sucesso', { resultado: generosFavoritos });
-    } catch (parseError: any) {
-      logError('Erro ao fazer parse de generos_favoritos', {
-        valor: user.generos_favoritos,
-        erro: parseError?.message || 'Erro desconhecido'
-      });
-      generosFavoritos = []; // Fallback para array vazio
+      return [];
+    } catch {
+      return [];
     }
-
-    logSuccess('🎉 LOGIN REALIZADO COM SUCESSO!', {
-      userId: user.id,
-      nome: user.nome,
-      email: user.email,
-      tokenGerado: !!token
-    });
-
-    res.json({
-      success: true,
-      message: 'Login realizado com sucesso',
-      data: {
-        token,
-        user: {
-          id: user.id,
-          nome: user.nome,
-          email: user.email,
-          bio: user.bio,
-          foto_perfil: user.foto_perfil,
-          generos_favoritos: generosFavoritos
-        }
-      }
-    });
-
-  } catch (error) {
-    logError('❌ ERRO AO FAZER LOGIN:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
   }
-};
 
-export const obterPerfil = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user.userId;
-
-    const [rows] = await pool.execute(
-      'SELECT id, nome, email, bio, foto_perfil, generos_favoritos, data_nascimento, created_at FROM usuarios WHERE id = ?',
-      [userId]
-    );
-
-    const users = rows as any[];
-    if (users.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Usuário não encontrado'
-      });
-    }
-
-    const user = users[0];
-
-    // Processar generos_favoritos com segurança
+  async registrarUsuario(req: Request, res: Response) {
     try {
-      if (user.generos_favoritos && typeof user.generos_favoritos === 'string') {
-        user.generos_favoritos = JSON.parse(user.generos_favoritos);
-      } else {
-        user.generos_favoritos = [];
+      const { nome, email, senha } = req.body;
+
+      if (!nome || !email || !senha) {
+        return res.status(400).json({
+          success: false,
+          message: 'Nome, email e senha são obrigatórios'
+        });
       }
-    } catch (parseError) {
-      console.error('Erro ao fazer parse de generos_favoritos no perfil:', parseError);
-      user.generos_favoritos = []; // Fallback para array vazio
-    }
 
-    res.json({
-      success: true,
-      message: 'Perfil obtido com sucesso',
-      data: user
-    });
+      logDatabase('SELECT id FROM usuarios WHERE email = ?', [email]);
+      const [existingUser] = await pool.execute(
+        'SELECT id FROM usuarios WHERE email = ?',
+        [email]
+      );
 
-  } catch (error) {
-    console.error('Erro ao obter perfil:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-};
+      if ((existingUser as any[]).length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email já cadastrado'
+        });
+      }
 
-export const atualizarPerfil = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user.userId;
-    const { nome, bio, foto_perfil, generos_favoritos, data_nascimento } = req.body;
+      const salt = await bcrypt.genSalt(10);
+      const senha_hash = await bcrypt.hash(senha, salt);
 
-    // Tratar campos opcionais - converter undefined para null
-    const nomeValue = nome || null;
-    const bioValue = bio || null;
-    const fotoPerfilValue = foto_perfil || null;
-    const generosFavoritosValue = generos_favoritos ? JSON.stringify(generos_favoritos) : null;
-    const dataNascimentoValue = data_nascimento || null;
+      logDatabase(
+        'INSERT INTO usuarios (nome, email, senha_hash, bio, foto_perfil, generos_favoritos, data_nascimento) VALUES (?, ?, ?, NULL, NULL, NULL, NULL)',
+        [nome, email, '***HASH***']
+      );
 
-    const [result] = await pool.execute(
-      `UPDATE usuarios
-       SET nome = COALESCE(?, nome),
-           bio = COALESCE(?, bio),
-           foto_perfil = COALESCE(?, foto_perfil),
-           generos_favoritos = COALESCE(?, generos_favoritos),
-           data_nascimento = COALESCE(?, data_nascimento),
-           updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?`,
-      [nomeValue, bioValue, fotoPerfilValue, generosFavoritosValue, dataNascimentoValue, userId]
-    );
+      const [result] = await pool.execute(
+        `INSERT INTO usuarios (nome, email, senha_hash, bio, foto_perfil, generos_favoritos, data_nascimento)
+         VALUES (?, ?, ?, NULL, NULL, NULL, NULL)`,
+        [nome, email, senha_hash]
+      );
 
-    if ((result as any).affectedRows === 0) {
-      return res.status(404).json({
+      const userId = (result as any).insertId;
+      const token = jwt.sign({ userId, email }, this.JWT_SECRET);
+
+      logSuccess(`Usuário registrado: ${nome} (ID ${userId})`);
+
+      res.status(201).json({
+        success: true,
+        message: 'Usuário criado com sucesso',
+        data: {
+          token,
+          user: {
+            id: userId,
+            nome,
+            email,
+            bio: null,
+            foto_perfil: null,
+            generos_favoritos: null
+          }
+        }
+      });
+    } catch (error) {
+      logError('Erro ao registrar usuário:', error);
+      res.status(500).json({
         success: false,
-        message: 'Usuário não encontrado'
+        message: 'Erro interno do servidor'
       });
     }
-
-    res.json({
-      success: true,
-      message: 'Perfil atualizado com sucesso'
-    });
-
-  } catch (error) {
-    console.error('Erro ao atualizar perfil:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
   }
-};
 
-export const obterEstatisticasUsuario = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user.userId;
+  async loginUsuario(req: Request, res: Response) {
+    try {
+      const { email, senha }: UsuarioLogin = req.body;
 
-    // Estatísticas de reviews
-    const [reviewStats] = await pool.execute(
-      `SELECT
-        COUNT(*) as total_reviews,
-        AVG(nota) as nota_media,
-        COUNT(CASE WHEN nota >= 4 THEN 1 END) as reviews_positivas
-       FROM avaliacoes WHERE usuario_id = ?`,
-      [userId]
-    );
-
-    // Filmes na lista "quero ver"
-    const [watchlistStats] = await pool.execute(
-      'SELECT COUNT(*) as filmes_na_lista FROM lista_quero_ver WHERE usuario_id = ?',
-      [userId]
-    );
-
-    res.json({
-      success: true,
-      message: 'Estatísticas obtidas com sucesso',
-      data: {
-        reviews: (reviewStats as any[])[0],
-        watchlist: (watchlistStats as any[])[0]
+      if (!email || !senha) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email e senha são obrigatórios'
+        });
       }
-    });
 
-  } catch (error) {
-    console.error('Erro ao obter estatísticas:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-};
+      logDatabase('SELECT * FROM usuarios WHERE email = ?', [email]);
+      const [rows] = await pool.execute(
+        'SELECT * FROM usuarios WHERE email = ?',
+        [email]
+      );
 
-export const excluirConta = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user.userId;
+      const users = rows as any[];
 
-    // Excluir todas as avaliações do usuário primeiro (devido às constraints de FK)
-    await pool.execute(
-      'DELETE FROM avaliacoes WHERE usuario_id = ?',
-      [userId]
-    );
+      if (users.length === 0) {
+        return res.status(401).json({
+          success: false,
+          message: 'Credenciais inválidas'
+        });
+      }
 
-    // Excluir da lista "quero ver" se existir
-    await pool.execute(
-      'DELETE FROM lista_quero_ver WHERE usuario_id = ?',
-      [userId]
-    );
+      const user = users[0];
+      const senhaValida = await bcrypt.compare(senha, user.senha_hash);
 
-    // Excluir o usuário
-    const [result] = await pool.execute(
-      'DELETE FROM usuarios WHERE id = ?',
-      [userId]
-    );
+      if (!senhaValida) {
+        return res.status(401).json({
+          success: false,
+          message: 'Credenciais inválidas'
+        });
+      }
 
-    if ((result as any).affectedRows === 0) {
-      return res.status(404).json({
+      const token = jwt.sign(
+        { userId: user.id, email: user.email },
+        this.JWT_SECRET
+      );
+
+      const generosFavoritos = this.parseGenerosFavoritos(user.generos_favoritos);
+
+      logSuccess(`Login realizado: ${user.nome} (ID ${user.id})`);
+
+      res.json({
+        success: true,
+        message: 'Login realizado com sucesso',
+        data: {
+          token,
+          user: {
+            id: user.id,
+            nome: user.nome,
+            email: user.email,
+            bio: user.bio,
+            foto_perfil: user.foto_perfil,
+            generos_favoritos: generosFavoritos
+          }
+        }
+      });
+    } catch (error) {
+      logError('Erro ao fazer login:', error);
+      res.status(500).json({
         success: false,
-        message: 'Usuário não encontrado'
+        message: 'Erro interno do servidor'
       });
     }
-
-    res.json({
-      success: true,
-      message: 'Conta excluída com sucesso'
-    });
-
-  } catch (error) {
-    console.error('Erro ao excluir conta:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
   }
-};
+
+  async obterPerfil(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.userId;
+
+      const [rows] = await pool.execute(
+        'SELECT id, nome, email, bio, foto_perfil, generos_favoritos, data_nascimento, created_at FROM usuarios WHERE id = ?',
+        [userId]
+      );
+
+      const users = rows as any[];
+
+      if (users.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Usuário não encontrado'
+        });
+      }
+
+      const user = users[0];
+      user.generos_favoritos = this.parseGenerosFavoritos(user.generos_favoritos);
+
+      res.json({
+        success: true,
+        message: 'Perfil obtido com sucesso',
+        data: user
+      });
+    } catch (error) {
+      logError('Erro ao obter perfil:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    }
+  }
+
+  async atualizarPerfil(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.userId;
+      const { nome, bio, foto_perfil, generos_favoritos, data_nascimento } = req.body;
+
+      const [result] = await pool.execute(
+        `UPDATE usuarios
+         SET nome = COALESCE(?, nome),
+             bio = COALESCE(?, bio),
+             foto_perfil = COALESCE(?, foto_perfil),
+             generos_favoritos = COALESCE(?, generos_favoritos),
+             data_nascimento = COALESCE(?, data_nascimento),
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [
+          nome || null,
+          bio || null,
+          foto_perfil || null,
+          generos_favoritos ? JSON.stringify(generos_favoritos) : null,
+          data_nascimento || null,
+          userId
+        ]
+      );
+
+      if ((result as any).affectedRows === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Usuário não encontrado'
+        });
+      }
+
+      logSuccess(`Perfil atualizado: usuário ${userId}`);
+
+      res.json({
+        success: true,
+        message: 'Perfil atualizado com sucesso'
+      });
+    } catch (error) {
+      logError('Erro ao atualizar perfil:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    }
+  }
+
+  async obterEstatisticasUsuario(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.userId;
+
+      const [reviewStats] = await pool.execute(
+        `SELECT
+          COUNT(*) as total_reviews,
+          AVG(nota) as nota_media,
+          COUNT(CASE WHEN nota >= 4 THEN 1 END) as reviews_positivas
+         FROM avaliacoes WHERE usuario_id = ?`,
+        [userId]
+      );
+
+      const [watchlistStats] = await pool.execute(
+        'SELECT JSON_LENGTH(lista_quero_ver) as filmes_na_lista FROM usuarios WHERE id = ?',
+        [userId]
+      );
+
+      res.json({
+        success: true,
+        message: 'Estatísticas obtidas com sucesso',
+        data: {
+          reviews: (reviewStats as any[])[0],
+          watchlist: { filmes_na_lista: (watchlistStats as any[])[0]?.filmes_na_lista || 0 }
+        }
+      });
+    } catch (error) {
+      logError('Erro ao obter estatísticas:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    }
+  }
+
+  async excluirConta(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.userId;
+
+      const [result] = await pool.execute(
+        'DELETE FROM usuarios WHERE id = ?',
+        [userId]
+      );
+
+      if ((result as any).affectedRows === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Usuário não encontrado'
+        });
+      }
+
+      logSuccess(`Conta excluída: usuário ${userId}`);
+
+      res.json({
+        success: true,
+        message: 'Conta excluída com sucesso'
+      });
+    } catch (error) {
+      logError('Erro ao excluir conta:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    }
+  }
+}

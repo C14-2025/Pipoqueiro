@@ -79,7 +79,7 @@ export const UserListsProvider = ({ children }) => {
             if (isCurrentlyInList) {
                 await (isFavorite ? service.removeFromFavorites(tmdbIdInt) : service.removeFromWatchlist(tmdbIdInt));
             } else {
-                await (isFavorite ? service.addToFavorites(tmdbIdInt, '') : service.addToWatchlist(tmdbIdInt));
+                await (isFavorite ? service.addToFavorites(tmdbIdInt) : service.addToWatchlist(tmdbIdInt));
             }
             return true;
         } catch (error) {

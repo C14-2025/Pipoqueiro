@@ -1,15 +1,16 @@
-export interface Usuario {
-  id: number;
-  nome: string;
-  email: string;
-  senha_hash: string;
-  bio?: string;
-  foto_perfil?: string;
-  generos_favoritos?: string[];
-  data_nascimento?: Date;
-  created_at: Date;
-  updated_at: Date;
+export interface ListItem {
+  tmdb_id: number;
+  data_adicao: string;
 }
+
+export interface AddToListInput {
+  tmdb_id: number;
+}
+
+export type FavoritoItem = ListItem;
+export type ListaQueroVerItem = ListItem;
+export type AddFavoritoInput = AddToListInput;
+export type AddListaQueroVerInput = AddToListInput;
 
 export interface UsuarioInput {
   nome: string;
@@ -18,7 +19,7 @@ export interface UsuarioInput {
   bio?: string;
   foto_perfil?: string;
   generos_favoritos?: string[];
-  data_nascimento?: Date;
+  data_nascimento?: string;
 }
 
 export interface UsuarioLogin {
@@ -26,17 +27,9 @@ export interface UsuarioLogin {
   senha: string;
 }
 
-export interface Avaliacao {
-  id: number;
-  usuario_id: number;
-  tmdb_id: number;
-  nota: number;
-  titulo_review?: string;
-  comentario?: string;
-  spoiler: boolean;
-  curtidas: number;
-  created_at: Date;
-  updated_at: Date;
+export interface AuthPayload {
+  userId: number;
+  email: string;
 }
 
 export interface AvaliacaoInput {
@@ -45,33 +38,4 @@ export interface AvaliacaoInput {
   titulo_review?: string;
   comentario?: string;
   spoiler?: boolean;
-}
-
-export interface ListaQueroVer {
-  id: number;
-  usuario_id: number;
-  tmdb_id: number;
-  prioridade: 'baixa' | 'media' | 'alta';
-  data_adicao: Date;
-  notificar_lancamento: boolean;
-  onde_assistir?: string;
-}
-
-export interface ListaQueroVerInput {
-  tmdb_id: number;
-  prioridade?: 'baixa' | 'media' | 'alta';
-  notificar_lancamento?: boolean;
-  onde_assistir?: string;
-}
-
-export interface AuthPayload {
-  userId: number;
-  email: string;
-}
-
-export interface ApiResponse<T = any> {
-  success: boolean;
-  message: string;
-  data?: T;
-  error?: string;
 }

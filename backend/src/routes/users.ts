@@ -1,32 +1,15 @@
 import { Router } from 'express';
-import {
-  registrarUsuario,
-  loginUsuario,
-  obterPerfil,
-  atualizarPerfil,
-  obterEstatisticasUsuario,
-  excluirConta
-} from '../controllers/userController';
+import { UserController } from '../controllers/userController';
 import { auth } from '../utils/auth';
 
 const router = Router();
+const userController = new UserController();
 
-// Registrar usuário (público)
-router.post('/registrar', registrarUsuario);
-
-// Login usuário (público)
-router.post('/login', loginUsuario);
-
-// Obter perfil (autenticado)
-router.get('/perfil', auth, obterPerfil);
-
-// Atualizar perfil (autenticado)
-router.put('/perfil', auth, atualizarPerfil);
-
-// Obter estatísticas do usuário (autenticado)
-router.get('/estatisticas', auth, obterEstatisticasUsuario);
-
-// Excluir conta (autenticado)
-router.delete('/conta', auth, excluirConta);
+router.post('/registrar', userController.registrarUsuario.bind(userController));
+router.post('/login', userController.loginUsuario.bind(userController));
+router.get('/perfil', auth, userController.obterPerfil.bind(userController));
+router.put('/perfil', auth, userController.atualizarPerfil.bind(userController));
+router.get('/estatisticas', auth, userController.obterEstatisticasUsuario.bind(userController));
+router.delete('/conta', auth, userController.excluirConta.bind(userController));
 
 export default router;

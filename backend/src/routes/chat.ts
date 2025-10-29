@@ -1,10 +1,9 @@
 import { Router } from 'express';
-import { chatController } from '../controllers/chatController';
-
+import { ChatController } from '../controllers/chatController';
 
 const router = Router();
+const chatController = new ChatController();
 
-//Rota pública
-router.post('/chat', chatController.sendMessage);
+router.post('/chat', chatController.sendMessage.bind(chatController));
 
 export default router;
