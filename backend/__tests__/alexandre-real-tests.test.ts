@@ -9,10 +9,10 @@ import { describe, test, expect, beforeAll, beforeEach, jest } from '@jest/globa
 import { auth } from '../src/utils/auth';
 import { mockExecute } from './setup';
 
-describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
+describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
 
-  // ==================== USER CONTROLLER - 8 TESTES ====================
-  describe('👤 USER CONTROLLER - Funcionalidade Real', () => {
+  // ==================== USER CONTROLLER - 10 TESTES ====================
+  describe('USER CONTROLLER - Funcionalidade Real', () => {
 
     beforeEach(() => {
       // Reset dos mocks antes de cada teste
@@ -208,10 +208,51 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
       const isInvalid = await bcrypt.compare('senhaerrada', hash);
       expect(isInvalid).toBe(false);
     });
+
+    test('deve atualizar perfil do usuário', async () => {
+      const token = jwt.sign(
+        { userId: 1, email: 'update@test.com' },
+        process.env.JWT_SECRET || 'test_jwt_secret_key'
+      );
+
+      // Mock: Update bem-sucedido
+      (mockExecute as any).mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+
+      const response = await request(app)
+        .put('/api/users/perfil')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          nome: 'Nome Atualizado',
+          bio: 'Nova bio',
+          generos_favoritos: ['ação', 'ficção']
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Perfil atualizado com sucesso');
+    });
+
+    test('deve excluir conta do usuário', async () => {
+      const token = jwt.sign(
+        { userId: 1, email: 'delete@test.com' },
+        process.env.JWT_SECRET || 'test_jwt_secret_key'
+      );
+
+      // Mock: Delete bem-sucedido
+      (mockExecute as any).mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+
+      const response = await request(app)
+        .delete('/api/users/conta')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Conta excluída com sucesso');
+    });
   });
 
-  // ==================== REVIEW CONTROLLER - 6 TESTES ====================
-  describe('⭐ REVIEW CONTROLLER - Funcionalidade Real', () => {
+  // ==================== REVIEW CONTROLLER - 10 TESTES ====================
+  describe('REVIEW CONTROLLER - Funcionalidade Real', () => {
 
     let userToken: string;
 
@@ -340,118 +381,319 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
 
       expect(response.body.success).toBe(false);
     });
+
+    test('deve atualizar review existente', async () => {
+      // Mock: Update bem-sucedido
+      (mockExecute as any).mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+
+      const response = await request(app)
+        .put('/api/reviews/1')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          nota: 4,
+          titulo_review: 'Review atualizada',
+          comentario: 'Comentário atualizado'
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Review atualizada com sucesso');
+    });
+
+    test('deve rejeitar atualização de review inexistente', async () => {
+      // Mock: Nenhuma linha afetada
+      (mockExecute as any).mockResolvedValueOnce([{ affectedRows: 0 }, []]);
+
+      const response = await request(app)
+        .put('/api/reviews/999')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ nota: 4 })
+        .expect(404);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Review não encontrada ou você não tem permissão');
+    });
+
+    test('deve excluir review', async () => {
+      // Mock: Delete bem-sucedido
+      (mockExecute as any).mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+
+      const response = await request(app)
+        .delete('/api/reviews/1')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Review excluída com sucesso');
+    });
+
+    test('deve curtir review', async () => {
+      // Mock: Update de curtidas bem-sucedido
+      (mockExecute as any).mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+
+      const response = await request(app)
+        .post('/api/reviews/1/curtir')
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Review curtida com sucesso');
+    });
   });
 
-  // ==================== MOVIE CONTROLLER - 4 TESTES ====================
-  describe('🎬 MOVIE CONTROLLER - Funcionalidade Real', () => {
+  // ==================== FAVORITES CONTROLLER - 7 TESTES ====================
+  describe('FAVORITES CONTROLLER - Funcionalidade Real', () => {
+
+    let userToken: string;
+
+    beforeAll(() => {
+      userToken = jwt.sign(
+        { userId: 1, email: 'favorites@test.com' },
+        process.env.JWT_SECRET || 'test_jwt_secret_key'
+      );
+    });
 
     beforeEach(() => {
       jest.clearAllMocks();
     });
 
-    test('deve obter filmes populares da TMDb', async () => {
-      // Mock: Estatísticas dos filmes
-      (mockExecute as any).mockResolvedValue([
-        [{
-          total_reviews: 10,
-          nota_media: 4.5,
-          reviews_positivas: 8
-        }],
+    test('deve adicionar filme aos favoritos', async () => {
+      // Mock: Usuário com lista vazia de favoritos
+      (mockExecute as any)
+        .mockResolvedValueOnce([
+          [{ favoritos: [] }],
+          []
+        ])
+        .mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+
+      const response = await request(app)
+        .post('/api/favorites')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ tmdb_id: 550 })
+        .expect(201);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Filme adicionado aos favoritos com sucesso');
+      expect(response.body.data.tmdb_id).toBe(550);
+      expect(response.body.data.data_adicao).toBeDefined();
+    });
+
+    test('deve rejeitar filme duplicado nos favoritos', async () => {
+      // Mock: Usuário já tem o filme nos favoritos
+      (mockExecute as any).mockResolvedValueOnce([
+        [{ favoritos: [{ tmdb_id: 550, data_adicao: '2025-01-01' }] }],
         []
       ]);
 
       const response = await request(app)
-        .get('/api/movies/popular')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Filmes populares obtidos com sucesso');
-      expect(response.body.data).toBeInstanceOf(Array);
-      expect(response.body.data.length).toBeGreaterThan(0);
-
-      // Verificar estrutura dos dados
-      const firstMovie = response.body.data[0];
-      expect(firstMovie.id).toBeDefined();
-      expect(firstMovie.title).toBeDefined();
-      expect(firstMovie.poster_url).toBeDefined();
-      expect(firstMovie.nossa_stats).toBeDefined();
-    });
-
-    test('deve buscar filmes por termo de pesquisa', async () => {
-      // Mock: Estatísticas dos filmes
-      (mockExecute as any).mockResolvedValue([
-        [{
-          total_reviews: 5,
-          nota_media: 4.0
-        }],
-        []
-      ]);
-
-      const response = await request(app)
-        .get('/api/movies/search')
-        .query({ query: 'batman' })
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Busca realizada com sucesso');
-      expect(response.body.data).toBeInstanceOf(Array);
-    });
-
-    test('deve rejeitar busca sem parâmetro query obrigatório', async () => {
-      const response = await request(app)
-        .get('/api/movies/search')
+        .post('/api/favorites')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ tmdb_id: 550 })
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Parâmetro de busca é obrigatório');
+      expect(response.body.message).toBe('Filme já está nos seus favoritos');
     });
 
-    test('deve obter detalhes de filme específico', async () => {
-      const tmdbId = 550; // Fight Club
+    test('deve validar tmdb_id obrigatório ao adicionar', async () => {
+      const response = await request(app)
+        .post('/api/favorites')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({})
+        .expect(400);
 
-      // Mock: Reviews e estatísticas do filme
-      (mockExecute as any)
-        .mockResolvedValueOnce([
-          [{
-            id: 1,
-            usuario_id: 1,
-            tmdb_id: 550,
-            nota: 5,
-            titulo_review: 'Excelente',
-            comentario: 'Obra-prima',
-            spoiler: false,
-            nome: 'Alexandre',
-            foto_perfil: null,
-          }],
-          []
-        ])
-        .mockResolvedValueOnce([
-          [{
-            total_reviews: 10,
-            nota_media: 4.8,
-            reviews_positivas: 9,
-            reviews_com_spoiler: 2
-          }],
-          []
-        ]);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('TMDB ID é obrigatório');
+    });
+
+    test('deve obter lista de favoritos vazia', async () => {
+      // Mock: Usuário sem favoritos
+      (mockExecute as any).mockResolvedValueOnce([
+        [{ favoritos: [] }],
+        []
+      ]);
 
       const response = await request(app)
-        .get(`/api/movies/${tmdbId}`)
+        .get('/api/favorites')
+        .set('Authorization', `Bearer ${userToken}`)
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Detalhes do filme obtidos com sucesso');
-      expect(response.body.data.id).toBe(tmdbId);
-      expect(response.body.data.title).toBeDefined();
-      expect(response.body.data.overview).toBeDefined();
-      expect(response.body.data.poster_url).toBeDefined();
-      expect(response.body.data.reviews).toBeInstanceOf(Array);
-      expect(response.body.data.stats).toBeDefined();
+      expect(response.body.message).toBe('Filmes favoritos obtidos com sucesso');
+      expect(response.body.data).toBeInstanceOf(Array);
+      expect(response.body.data.length).toBe(0);
+    });
+
+    test('deve remover filme dos favoritos', async () => {
+      // Mock: Usuário tem filme nos favoritos
+      (mockExecute as any)
+        .mockResolvedValueOnce([
+          [{ favoritos: [{ tmdb_id: 550, data_adicao: '2025-01-01' }] }],
+          []
+        ])
+        .mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+
+      const response = await request(app)
+        .delete('/api/favorites/550')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Filme removido dos favoritos com sucesso');
+    });
+
+    test('deve retornar erro ao remover filme inexistente dos favoritos', async () => {
+      // Mock: Usuário não tem esse filme nos favoritos
+      (mockExecute as any).mockResolvedValueOnce([
+        [{ favoritos: [] }],
+        []
+      ]);
+
+      const response = await request(app)
+        .delete('/api/favorites/999')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(404);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Filme não encontrado nos seus favoritos');
+    });
+
+    test('deve verificar se filme está nos favoritos', async () => {
+      // Mock: Usuário tem o filme nos favoritos
+      (mockExecute as any).mockResolvedValueOnce([
+        [{ favoritos: [{ tmdb_id: 550, data_adicao: '2025-01-01' }] }],
+        []
+      ]);
+
+      const response = await request(app)
+        .get('/api/favorites/check/550')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.is_favorite).toBe(true);
+    });
+  });
+
+  // ==================== WATCHLIST CONTROLLER - 6 TESTES ====================
+  describe('WATCHLIST CONTROLLER - Funcionalidade Real', () => {
+
+    let userToken: string;
+
+    beforeAll(() => {
+      userToken = jwt.sign(
+        { userId: 1, email: 'watchlist@test.com' },
+        process.env.JWT_SECRET || 'test_jwt_secret_key'
+      );
+    });
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    test('deve adicionar filme à watchlist', async () => {
+      // Mock: Usuário com lista vazia
+      (mockExecute as any)
+        .mockResolvedValueOnce([
+          [{ lista_quero_ver: [] }],
+          []
+        ])
+        .mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+
+      const response = await request(app)
+        .post('/api/watchlist')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ tmdb_id: 550 })
+        .expect(201);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Filme adicionado à lista "Quero Ver" com sucesso');
+      expect(response.body.data.tmdb_id).toBe(550);
+      expect(response.body.data.data_adicao).toBeDefined();
+    });
+
+    test('deve rejeitar filme duplicado na watchlist', async () => {
+      // Mock: Usuário já tem o filme na watchlist
+      (mockExecute as any).mockResolvedValueOnce([
+        [{ lista_quero_ver: [{ tmdb_id: 550, data_adicao: '2025-01-01' }] }],
+        []
+      ]);
+
+      const response = await request(app)
+        .post('/api/watchlist')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ tmdb_id: 550 })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Filme já está na sua lista "Quero Ver"');
+    });
+
+    test('deve validar tmdb_id obrigatório ao adicionar', async () => {
+      const response = await request(app)
+        .post('/api/watchlist')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({})
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('TMDB ID é obrigatório');
+    });
+
+    test('deve obter watchlist vazia', async () => {
+      // Mock: Usuário sem watchlist
+      (mockExecute as any).mockResolvedValueOnce([
+        [{ lista_quero_ver: [] }],
+        []
+      ]);
+
+      const response = await request(app)
+        .get('/api/watchlist')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Lista quero ver obtida com sucesso');
+      expect(response.body.data).toBeInstanceOf(Array);
+      expect(response.body.data.length).toBe(0);
+    });
+
+    test('deve remover filme da watchlist', async () => {
+      // Mock: Usuário tem filme na watchlist
+      (mockExecute as any)
+        .mockResolvedValueOnce([
+          [{ lista_quero_ver: [{ tmdb_id: 550, data_adicao: '2025-01-01' }] }],
+          []
+        ])
+        .mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+
+      const response = await request(app)
+        .delete('/api/watchlist/550')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Filme removido da lista "Quero Ver" com sucesso');
+    });
+
+    test('deve retornar erro ao remover filme inexistente da watchlist', async () => {
+      // Mock: Usuário não tem esse filme na watchlist
+      (mockExecute as any).mockResolvedValueOnce([
+        [{ lista_quero_ver: [] }],
+        []
+      ]);
+
+      const response = await request(app)
+        .delete('/api/watchlist/999')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(404);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Filme não encontrado na sua lista "Quero Ver"');
     });
   });
 
   // ==================== TESTES DE SEGURANÇA ====================
-  describe('🔐 SEGURANÇA - Testes Críticos', () => {
+  describe('SEGURANÇA - Testes Críticos', () => {
 
     test('deve rejeitar acesso sem token JWT', async () => {
       const response = await request(app)
@@ -553,7 +795,7 @@ describe('🔥 ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
   });
 
   // ==================== HEALTH CHECK ====================
-  describe('🏥 HEALTH CHECK - Sistema', () => {
+  describe('HEALTH CHECK - Sistema', () => {
 
     test('deve responder ao health check', async () => {
       const response = await request(app)

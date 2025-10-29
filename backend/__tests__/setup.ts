@@ -1,14 +1,10 @@
-/// <reference types="node" />
-// Setup para testes com mocks completos - SEM BANCO DE DADOS REAL
 import { jest } from '@jest/globals';
 
-// IMPORTANTE: Configurar variáveis de ambiente ANTES de qualquer import
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_key';
 process.env.TMDB_API_KEY = process.env.TMDB_API_KEY || 'mock_tmdb_key';
 process.env.OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'mock_openai_key';
 
-// Mock completo do pool de conexões MySQL
 const mockExecute = jest.fn();
 const mockGetConnection = jest.fn();
 const mockEnd = jest.fn();
@@ -21,7 +17,6 @@ const mockPool = {
   query: mockQuery,
 };
 
-// Mock do módulo mysql2/promise ANTES de qualquer outro import
 jest.mock('mysql2/promise', () => ({
   createPool: jest.fn(() => mockPool),
   default: {
@@ -29,8 +24,6 @@ jest.mock('mysql2/promise', () => ({
   },
 }), { virtual: true });
 
-// Mock do TMDbService para evitar chamadas reais à API
-// @ts-ignore - Mock para testes
 jest.mock('../src/services/tmdbService', () => ({
   TMDbService: jest.fn().mockImplementation(() => ({
     getPopularMovies: jest.fn().mockResolvedValue([
@@ -64,8 +57,8 @@ jest.mock('../src/services/tmdbService', () => ({
     getMovieCredits: jest.fn().mockResolvedValue({ cast: [], crew: [] } as never),
     getSimilarMovies: jest.fn().mockResolvedValue([] as never),
     formatPosterURL: jest.fn((path: string | null) => path ? `https://image.tmdb.org/t/p/w500${path}` : null),
+    formatBackdropURL: jest.fn((path: string | null) => path ? `https://image.tmdb.org/t/p/w1280${path}` : null),
   })),
 }));
 
-// Exportar mockPool e funções mock para uso nos testes
 export { mockPool, mockExecute, mockGetConnection, mockEnd, mockQuery };
