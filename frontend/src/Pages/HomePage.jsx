@@ -15,30 +15,13 @@ const StarRating = ({ rating }) => {
         </div>
     );
 };
-const communityReviews = [
-    { id: 1, user: 'João S.', avatar: 'https://i.pravatar.cc/150?u=a042581f4e2906704d', rating: 5, text: 'Um dos melhores filmes de ficção científica que já vi! Visualmente deslumbrante.' },
-    { id: 2, user: 'Mariana P.', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026705d', rating: 4, text: 'A trama política é complexa e os personagens são muito bem construídos.' },
-    { id: 3, user: 'Lucas F.', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026706d', rating: 5, text: 'Uma obra-prima! A fotografia e a trilha sonora são espetaculares.' },
-    { id: 4, user: 'Ana C.', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026707d', rating: 4, text: 'Final de temporada de tirar o fôlego. Mal posso esperar pela próxima!' },
-];
-const ReviewCard = ({ review }) => (
-    <div className="bg-[#FFFFFF] p-4 rounded-lg shadow-md h-full">
-        <div className="flex items-center mb-2">
-            <img src={review.avatar} alt={review.user} className="w-10 h-10 rounded-full mr-3" />
-            <div>
-                <p className="font-bold text-[#2D3748]">{review.user}</p>
-                <StarRating rating={review.rating} />
-            </div>
-        </div>
-        <p className="text-[#A0AEC0] text-sm">{review.text}</p>
-    </div>
-);
-
 
 const HomePage = () => {
     const navigate = useNavigate();
     const [topMovies, setTopMovies] = useState([]);
     const [trendingMovies, setTrendingMovies] = useState([]);
+    const [moreMovies, setMoreMovies] = useState([]);
+    const [evenMoreMovies, setEvenMoreMovies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -53,6 +36,7 @@ const HomePage = () => {
             rating: movie.vote_average / 2,
             vote_average: movie.vote_average,
             release_date: movie.release_date,
+            nossa_stats: movie.nossa_stats
         }));
     };
 
@@ -66,7 +50,9 @@ const HomePage = () => {
                 const adaptedMovies = adaptApiData(data);
 
                 setTopMovies(adaptedMovies.slice(0, 2));
-                setTrendingMovies(adaptedMovies.slice(2, 12));
+                setTrendingMovies(adaptedMovies.slice(2, 7));
+                setMoreMovies(adaptedMovies.slice(7, 12));
+                setEvenMoreMovies(adaptedMovies.slice(12, 17));
 
             } catch (err) {
                 console.error('Erro ao carregar filmes:', err);
@@ -123,10 +109,12 @@ const HomePage = () => {
                             <h1 className="text-5xl font-bold text-[#2D3748]">Top Filmes do Momento</h1>
                         </div>
                         <div className="flex flex-col items-start sm:items-end gap-3 mt-4 sm:mt-0">
-                            <Link to="/minha-lista" className="flex items-center gap-3 bg-[#00B5AD]/20 text-[#00B5AD] font-semibold py-2 px-4 rounded-full transition hover:bg-[#00B5AD]/30">
-                                <BsBookmark />
-                                <span>Minha Lista</span>
-                            </Link>
+                            {isLoggedIn && (
+                                <Link to="/minha-lista" className="flex items-center gap-3 bg-[#00B5AD]/20 text-[#00B5AD] font-semibold py-2 px-4 rounded-full transition hover:bg-[#00B5AD]/30">
+                                    <BsBookmark />
+                                    <span>Minha Lista</span>
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </section>
@@ -136,6 +124,7 @@ const HomePage = () => {
                         {[0, 1].map((idx) => {
                             const movie = topMovies[idx];
                             const isInList = isTopMovieFavorite(movie.id);
+                            const pipoqueiroRating = movie.nossa_stats?.nota_media;
 
                             return (
                                 <div key={movie.id} className="bg-[#FFFFFF] rounded-2xl overflow-hidden relative h-72 group shadow-xl hover:shadow-2xl transition-shadow duration-300">
@@ -156,19 +145,31 @@ const HomePage = () => {
 
                                     <Link to={`/filme/${movie.id}`} className="absolute inset-0 z-10" />
 
-                                    <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
+                                    <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
                                         <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 drop-shadow-lg">{movie.title}</h3>
-                                        <div className="flex items-center space-x-3">
-                                            <StarRating rating={movie.rating} />
-                                            <span className="text-white/90 text-sm font-medium">{movie.vote_average.toFixed(1)}/10</span>
-                                        </div>
-                                        <div className="mt-4">
-                                            <Link to={`/filme/${movie.id}`} className="inline-flex items-center bg-[#00B5AD] hover:bg-[#009A93] text-white font-semibold py-2 px-6 rounded-full transition-all duration-300 hover:scale-105 shadow-lg z-30 relative">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5 mr-2">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.25l13.5 6.75-13.5 6.75V5.25z" />
-                                                </svg>
-                                                Ver Detalhes
-                                            </Link>
+                                        
+                                        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between">
+                                            <div className="flex flex-col gap-1 items-start mb-1 sm:mb-0">
+                                                <div className="flex items-center space-x-3">
+                                                    <StarRating rating={movie.rating} />
+                                                    <span className="text-white/90 text-sm font-medium drop-shadow-lg">{movie.vote_average.toFixed(1)}/10 (TMDb)</span>
+                                                </div>
+                                                {pipoqueiroRating && pipoqueiroRating > 0 && (
+                                                    <div className="flex items-center space-x-3">
+                                                        <StarRating rating={pipoqueiroRating} />
+                                                        <span className="text-white/90 text-sm font-medium drop-shadow-lg">{parseFloat(pipoqueiroRating).toFixed(1)}/5 (Pipoqueiro)</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            <div className="sm:mt-0">
+                                                <Link to={`/filme/${movie.id}`} className="inline-flex items-center bg-[#00B5AD] hover:bg-[#009A93] text-white font-semibold py-2 px-6 rounded-full transition-all duration-300 hover:scale-105 shadow-lg z-30 relative">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5 mr-2">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.25l13.5 6.75-13.5 6.75V5.25z" />
+                                                    </svg>
+                                                    Ver Detalhes
+                                                </Link>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -190,7 +191,8 @@ const HomePage = () => {
                                         ...movie,
                                         poster_url: movie.image,
                                         vote_average: movie.vote_average || 0,
-                                        release_date: movie.release_date || new Date().toISOString()
+                                        release_date: movie.release_date || new Date().toISOString(),
+                                        nossa_stats: movie.nossa_stats
                                     }}
                                 />
                             ))}
@@ -198,14 +200,48 @@ const HomePage = () => {
                     )}
                 </section>
 
-                <section>
-                    <h2 className="text-3xl font-bold text-[#2D3748] mb-4">Críticas Recentes da Comunidade</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {communityReviews.map(review => (
-                            <ReviewCard key={review.id} review={review} />
-                        ))}
-                    </div>
+                <section className="mb-12">
+                    {loading ? (
+                        <MovieGridSkeleton />
+                    ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                            {moreMovies.map(movie => (
+                                <MovieCard
+                                    key={movie.id}
+                                    movie={{
+                                        ...movie,
+                                        poster_url: movie.image,
+                                        vote_average: movie.vote_average || 0,
+                                        release_date: movie.release_date || new Date().toISOString(),
+                                        nossa_stats: movie.nossa_stats
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </section>
+                
+                <section className="mb-12">
+                    {loading ? (
+                        <MovieGridSkeleton />
+                    ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                            {evenMoreMovies.map(movie => (
+                                <MovieCard
+                                    key={movie.id}
+                                    movie={{
+                                        ...movie,
+                                        poster_url: movie.image,
+                                        vote_average: movie.vote_average || 0,
+                                        release_date: movie.release_date || new Date().toISOString(),
+                                        nossa_stats: movie.nossa_stats
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </section>
+
             </div>
         </div>
     );

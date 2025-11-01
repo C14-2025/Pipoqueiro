@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-// Base URL do backend (fornecida pelo Alexandre/Otávio)
+// Base URL do backend
 const api = axios.create({
   baseURL: 'http://localhost:3000/api',
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 });
 
 // Interceptor para adicionar o token de autenticação automaticamente em cada requisição
@@ -16,6 +16,25 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Interceptor de resposta para tratar erros 401 (token expirado/inválido)
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    if (error.response && error.response.status === 401) {
+      console.error('Erro 401: Token inválido. Deslogando usuário.');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.dispatchEvent(new Event('storage'));
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login?message=sessao-expirada';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Funções relacionadas a filmes
 export const movieService = {
@@ -33,7 +52,9 @@ export const movieService = {
    * Corresponde a: GET /api/movies/ranking
    */
   async getRanking(minReviews = 1) {
-    const response = await api.get('/movies/ranking', { params: { min_reviews: minReviews } });
+    const response = await api.get('/movies/ranking', {
+      params: { min_reviews: minReviews },
+    });
     return response.data.data;
   },
 
@@ -80,7 +101,7 @@ export const movieService = {
   async getSimilarMovies(tmdbId) {
     const response = await api.get(`/movies/${tmdbId}/similar`);
     return response.data.data;
-  }
+  },
 };
 
 // Funções relacionadas a autenticação e usuários
@@ -91,11 +112,9 @@ export const authService = {
    */
   async login(email, senha) {
     const response = await api.post('/users/login', { email, senha });
-    // Backend retorna { success: true, data: { token, user } }
     if (response.data.data?.token) {
       localStorage.setItem('token', response.data.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.data.user));
-      // Dispara evento para atualizar header na mesma aba
       window.dispatchEvent(new Event('storage'));
     }
     return response.data.data;
@@ -107,11 +126,9 @@ export const authService = {
    */
   async register(userData) {
     const response = await api.post('/users/registrar', userData);
-    // Backend retorna { success: true, data: { token, user } }
     if (response.data.data?.token) {
       localStorage.setItem('token', response.data.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.data.user));
-      // Dispara evento para atualizar header na mesma aba
       window.dispatchEvent(new Event('storage'));
     }
     return response.data.data;
@@ -123,7 +140,9 @@ export const authService = {
    */
   async getProfile() {
     const response = await api.get('/users/perfil');
-    // Backend retorna { success: true, data: user }
+    if (response.data.data) {
+      localStorage.setItem('user', JSON.stringify(response.data.data));
+    }
     return response.data.data;
   },
 
@@ -131,9 +150,18 @@ export const authService = {
    * Atualiza os dados do perfil do usuário logado.
    * Corresponde a: PUT /api/users/perfil
    */
-  async updateProfile(userData) {
-    const response = await api.put('/users/perfil', userData);
-    // Backend retorna { success: true, data: user }
+  async updateProfile(profileData) {
+    const response = await api.put('/users/perfil', profileData);
+    // Removemos a lógica de atualizar o localStorage daqui.
+    return response.data;
+  },
+
+  /**
+   * Busca as estatísticas do usuário (total de reviews, nota média).
+   * Corresponde a: GET /api/users/estatisticas
+   */
+  async getStats() {
+    const response = await api.get('/users/estatisticas');
     return response.data.data;
   },
 
@@ -143,7 +171,6 @@ export const authService = {
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    // Dispara evento para atualizar header na mesma aba
     window.dispatchEvent(new Event('storage'));
   },
 
@@ -160,14 +187,13 @@ export const authService = {
    */
   async deleteAccount() {
     const response = await api.delete('/users/conta');
-    // Após excluir com sucesso, remove dados locais
     if (response.data.success) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.dispatchEvent(new Event('storage'));
     }
     return response.data;
-  }
+  },
 };
 
 // Funções relacionadas a avaliações (reviews)
@@ -178,7 +204,6 @@ export const reviewService = {
    */
   async getMovieReviews(tmdbId) {
     const response = await api.get(`/reviews/filme/${tmdbId}`);
-    // Backend retorna { success: true, data: [...] }
     return response.data.data;
   },
 
@@ -188,7 +213,6 @@ export const reviewService = {
    */
   async getMyReviews() {
     const response = await api.get('/reviews/minhas');
-    // Backend retorna { success: true, data: [...] }
     return response.data.data;
   },
 
@@ -198,7 +222,6 @@ export const reviewService = {
    */
   async createReview(reviewData) {
     const response = await api.post('/reviews', reviewData);
-    // Backend retorna { success: true, data: { id } }
     return response.data.data;
   },
 
@@ -208,7 +231,6 @@ export const reviewService = {
    */
   async updateReview(reviewId, reviewData) {
     const response = await api.put(`/reviews/${reviewId}`, reviewData);
-    // Backend retorna { success: true, message }
     return response.data;
   },
 
@@ -218,7 +240,6 @@ export const reviewService = {
    */
   async deleteReview(reviewId) {
     const response = await api.delete(`/reviews/${reviewId}`);
-    // Backend retorna { success: true, message }
     return response.data;
   },
 
@@ -228,15 +249,11 @@ export const reviewService = {
    */
   async likeReview(reviewId) {
     const response = await api.post(`/reviews/${reviewId}/curtir`);
-    // Backend retorna { success: true, message }
     return response.data;
-  }
+  },
 };
 
-
-// ----------------------------------------------------------------------
-// --- ADICIONADO: Serviço de Watchlist (Quero Ver) ---
-// ----------------------------------------------------------------------
+// --- Serviço de Watchlist (Quero Ver) ---
 export const watchlistService = {
   /**
    * Obter lista "Quero Ver" do usuário.
@@ -252,7 +269,6 @@ export const watchlistService = {
    * Corresponde a: POST /api/watchlist
    */
   async addToWatchlist(tmdbId) {
-    // Envia o tmdb_id no corpo da requisição (presumindo que o backend espera isso)
     const response = await api.post('/watchlist', { tmdb_id: tmdbId });
     return response.data;
   },
@@ -264,12 +280,10 @@ export const watchlistService = {
   async removeFromWatchlist(tmdbId) {
     const response = await api.delete(`/watchlist/${tmdbId}`);
     return response.data;
-  }
+  },
 };
 
-// ----------------------------------------------------------------------
-// --- ADICIONADO: Serviço de Favorites ---
-// ----------------------------------------------------------------------
+// --- Serviço de Favorites ---
 export const favoritesService = {
   /**
    * Obter lista de favoritos.
@@ -305,9 +319,8 @@ export const favoritesService = {
   async checkIfFavorite(tmdbId) {
     const response = await api.get(`/favorites/check/${tmdbId}`);
     return response.data.data;
-  }
+  },
 };
-
 
 // Funções do sistema (ex: verificar saúde da API)
 export const systemService = {
@@ -318,7 +331,7 @@ export const systemService = {
   async checkHealth() {
     const response = await api.get('/health');
     return response.data;
-  }
+  },
 };
 
 export default api;
