@@ -13,6 +13,7 @@ const MovieCard = ({ movie }) => {
 
     const releaseYear = new Date(movie.release_date).getFullYear();
     const ourRating = Math.round(movie.vote_average / 2);
+    const pipoqueiroRating = movie.nossa_stats?.nota_media;
 
     const handleToggleFavorites = (e) => {
         e.preventDefault();
@@ -79,10 +80,12 @@ const MovieCard = ({ movie }) => {
                 </Link>
             </div>
 
-            <div className="p-4 space-y-3">
-                <h3 className="font-bold text-[#2D3748] text-sm leading-tight line-clamp-2 group-hover:text-[#00B5AD] transition-colors duration-300">
-                    {movie.title}
-                </h3>
+            <div className="p-4">
+                <Link to={`/filme/${movie.id}`}>
+                    <h3 className="font-bold text-[#2D3748] text-sm leading-tight line-clamp-2 group-hover:text-[#00B5AD] transition-colors duration-300 mb-3">
+                        {movie.title}
+                    </h3>
+                </Link>
 
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
@@ -94,6 +97,17 @@ const MovieCard = ({ movie }) => {
                             </span>
                         </div>
                     </div>
+                    {pipoqueiroRating && pipoqueiroRating > 0 && (
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs text-[#FF8C42] font-medium">Pipoqueiro</span>
+                            <div className="flex items-center space-x-1">
+                                <StarRating rating={Math.round(pipoqueiroRating)} />
+                                <span className="text-xs text-[#A0AEC0] ml-1">
+                                    {parseFloat(pipoqueiroRating).toFixed(1)}
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

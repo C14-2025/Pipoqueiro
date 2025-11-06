@@ -7,54 +7,90 @@ const MoviesListPage = () => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [viewType, setViewType] = useState('popular'); // 'popular' ou 'ranking'
+  const [viewType, setViewType] = useState('popular');
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasNextPage, setHasNextPage] = useState(true);
 
-  useEffect(() => {
-    const fetchMovies = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        let response;
-        
-        if (viewType === 'ranking') {
-          try {
-            response = await movieService.getRanking(1); // Mínimo de 1 review
-          } catch (rankingError) {
-            // Se o ranking falhar (sem reviews), retorna lista vazia
-            response = [];
-          }
-        } else {
-          response = await movieService.getPopular();
+  const fetchMovies = async (pageNum, isNewSearch = false) => {
+    if (isNewSearch) {
+      setLoading(true);
+      setMovies([]);
+    } else {
+      setLoadingMore(true);
+    }
+    setError(null);
+
+    try {
+      let response;
+      let newMovies = [];
+      let apiHasNextPage = false;
+      const isRankingView = viewType === 'ranking';
+
+      if (isRankingView) {
+        setHasNextPage(false);
+        if (pageNum > 1) {
+          setLoadingMore(false);
+          return;
         }
-        
-        // A API retorna os filmes diretamente no array response
-        const transformedMovies = response?.map((movie, index) => ({
+        try {
+          response = await movieService.getRanking(1);
+          newMovies = response || [];
+        } catch (rankingError) {
+          newMovies = [];
+        }
+      } else {
+        response = await movieService.getPopular(pageNum);
+        newMovies = response || [];
+        apiHasNextPage = newMovies.length === 20;
+        setHasNextPage(apiHasNextPage);
+      }
+
+      const transformedMovies = newMovies.map((movie, index) => {
+        const isRanking = viewType === 'ranking';
+
+        return {
           id: movie.id,
-          rank: movie.rank || index + 1,
+          rank: movie.rank || (isNewSearch ? index + 1 : movies.length + index + 1),
           title: movie.title,
-          year: new Date(movie.release_date).getFullYear(),
-          duration: movie.runtime ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` : 'N/A',
-          rating: movie.nossa_stats?.nota_media || movie.vote_average || 0,
+          year: movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A',
+          infoLine: isRanking && movie.runtime
+            ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m`
+            : '',
+          rating: isRanking
+            ? movie.nossa_stats?.nota_media || 0
+            : movie.vote_average || 0,
+          ratingSource: isRanking ? 'Pipoqueiro' : 'TMDB',
           popularity: movie.popularity,
           poster: movie.poster_url || (movie.poster_path ? `https://image.tmdb.org/t/p/w200${movie.poster_path}` : '/placeholder-movie.jpg'),
           reviewCount: movie.nossa_stats?.total_avaliacoes || 0
-        })) || [];
-        
-        setMovies(transformedMovies);
-      } catch (err) {
-        console.error('Erro ao buscar filmes:', err);
-        if (viewType === 'popular') {
-          setError('Erro ao carregar a lista de filmes. Tente novamente mais tarde.');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+        };
+      });
 
-    fetchMovies();
+      setMovies(prevMovies => isNewSearch ? transformedMovies : [...prevMovies, ...transformedMovies]);
+      
+    } catch (err) {
+      console.error('Erro ao buscar filmes:', err);
+      if (viewType === 'popular' || isNewSearch) {
+        setError('Erro ao carregar a lista de filmes. Tente novamente mais tarde.');
+      }
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    setPage(1);
+    fetchMovies(1, true);
   }, [viewType]);
 
-  // Criar variável para verificar se deve mostrar mensagem de ranking vazio
+  const handleLoadMore = () => {
+    const newPage = page + 1;
+    setPage(newPage);
+    fetchMovies(newPage, false);
+  };
+
   const isRankingEmpty = viewType === 'ranking' && movies.length === 0 && !loading;
 
   if (loading) {
@@ -79,8 +115,8 @@ const MoviesListPage = () => {
           <div className="flex justify-center items-center min-h-[400px]">
             <div className="text-center">
               <p className="text-red-500 text-lg mb-4">{error}</p>
-              <button 
-                onClick={() => window.location.reload()} 
+              <button
+                onClick={() => fetchMovies(1, true)}
                 className="bg-[#00B5AD] text-white px-6 py-2 rounded-lg hover:bg-[#008B85] transition-colors"
               >
                 Tentar Novamente
@@ -101,7 +137,7 @@ const MoviesListPage = () => {
             {viewType === 'ranking' ? 'Ranking da Comunidade' : 'Filmes Populares'}
           </h1>
           <p className="text-[#A0AEC0] mt-1">
-            {viewType === 'ranking' 
+            {viewType === 'ranking'
               ? 'Os filmes mais bem avaliados pela comunidade Pipoqueiro.'
               : 'Os filmes mais populares do momento.'
             }
@@ -112,21 +148,21 @@ const MoviesListPage = () => {
           <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
             <div className="flex items-center gap-4 text-sm">
               <span className="text-[#A0AEC0] font-semibold">Visualizar:</span>
-              <button 
+              <button
                 onClick={() => setViewType('popular')}
                 className={`font-semibold transition-colors cursor-pointer px-3 py-1 rounded-md ${
-                  viewType === 'popular' 
-                    ? 'text-white bg-[#00B5AD]' 
+                  viewType === 'popular'
+                    ? 'text-white bg-[#00B5AD]'
                     : 'text-[#2D3748] hover:text-[#00B5AD] hover:bg-gray-100'
                 }`}
               >
                 Populares
               </button>
-              <button 
+              <button
                 onClick={() => setViewType('ranking')}
                 className={`font-semibold transition-colors cursor-pointer px-3 py-1 rounded-md ${
-                  viewType === 'ranking' 
-                    ? 'text-white bg-[#00B5AD]' 
+                  viewType === 'ranking'
+                    ? 'text-white bg-[#00B5AD]'
                     : 'text-[#2D3748] hover:text-[#00B5AD] hover:bg-gray-100'
                 }`}
               >
@@ -150,8 +186,8 @@ const MoviesListPage = () => {
                 <p className="text-[#A0AEC0] mb-4">
                   Seja o primeiro a avaliar filmes e criar o ranking da comunidade!
                 </p>
-                <button 
-                  onClick={() => setViewType('popular')} 
+                <button
+                  onClick={() => setViewType('popular')}
                   className="bg-[#00B5AD] text-white px-6 py-2 rounded-lg hover:bg-[#008B85] transition-colors"
                 >
                   Ver Filmes Populares
@@ -159,15 +195,15 @@ const MoviesListPage = () => {
               </div>
             ) : (
               movies.map((movie) => (
-                <div key={movie.id} className="flex items-center gap-4 border-b border-gray-200 pb-4 last:border-b-0">
-                  <img src={movie.poster} alt={movie.title} className="w-16 h-auto rounded-md" />
+                <div key={`${movie.id}-${movie.rank}`} className="flex items-center gap-4 border-b border-gray-200 pb-4 last:border-b-0">
+                  <img src={movie.poster} alt={movie.title} className="w-16 h-auto rounded-md object-cover" />
                   <div className="flex-grow">
                     <Link to={`/filme/${movie.id}`} className="hover:underline">
                       <h2 className="text-xl font-bold text-[#2D3748]">{movie.rank}. {movie.title}</h2>
                     </Link>
                     <div className="flex items-center gap-3 text-sm text-[#A0AEC0] mt-1">
                       <span>{movie.year}</span>
-                      <span>{movie.duration}</span>
+                      <span>{movie.infoLine}</span>
                       {viewType === 'ranking' && movie.reviewCount > 0 && (
                         <span className="text-[#00B5AD] font-medium">
                           {movie.reviewCount} review{movie.reviewCount !== 1 ? 's' : ''}
@@ -175,14 +211,46 @@ const MoviesListPage = () => {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-lg font-semibold">
-                    <span className="text-yellow-500">&#9733;</span>
-                    <span>{parseFloat(movie.rating).toFixed(1)}</span>
+                  <div className="flex flex-col items-end">
+                    <div className="flex items-center gap-1 text-lg font-semibold">
+                      <span className="text-yellow-500">&#9733;</span>
+                      <span>{parseFloat(movie.rating).toFixed(1)}</span>
+                    </div>
+                    <span 
+                      className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                        movie.ratingSource === 'Pipoqueiro' 
+                        ? 'bg-orange-100 text-[#FF8C42]' 
+                        : 'bg-blue-100 text-blue-600'
+                      }`}
+                    >
+                      {movie.ratingSource}
+                    </span>
                   </div>
                 </div>
               ))
             )}
           </div>
+          
+          {viewType === 'popular' && hasNextPage && !loadingMore && movies.length > 0 && (
+            <div className="text-center mt-8">
+              <button
+                onClick={handleLoadMore}
+                className="bg-[#00B5AD] text-white px-6 py-3 rounded-lg hover:bg-[#008B85] transition-colors font-semibold shadow-md"
+              >
+                Carregar Mais Filmes
+              </button>
+            </div>
+          )}
+          
+          {loadingMore && (
+            <div className="text-center mt-8">
+              <div className="flex justify-center items-center">
+                <LoadingSpinner size="md" />
+                <p className="text-[#A0AEC0] text-sm ml-2">Carregando...</p>
+              </div>
+            </div>
+          )}
+
         </div>
         
       </div>
