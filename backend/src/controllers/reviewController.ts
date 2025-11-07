@@ -1,60 +1,80 @@
+// src/controllers/reviewController.ts
+
 import { Request, Response } from 'express';
-import pool from '../config/database';
+import { supabase } from '../config/database'; // Ajuste o caminho
 import { AvaliacaoInput } from '../types';
-import { logSuccess, logError, logDatabase } from '../middleware/logger';
+import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger';
 
 export class ReviewController {
-  private validateRating(nota: number): boolean {
-    return nota >= 1 && nota <= 5;
-  }
 
   async criarReview(req: Request, res: Response) {
     try {
+      logInfo('⭐ INICIANDO CRIAÇÃO DE REVIEW');
+
       const { tmdb_id, nota, titulo_review, comentario, spoiler = false }: AvaliacaoInput = req.body;
       const usuario_id = (req as any).user.userId;
 
+      logInfo('Dados da review recebidos', {
+        usuario_id, tmdb_id, nota, titulo_review, temComentario: !!comentario, spoiler
+      });
+
       if (!tmdb_id || !nota) {
+        logError('Campos obrigatórios não fornecidos para review');
         return res.status(400).json({
           success: false,
           message: 'TMDB ID e nota são obrigatórios'
         });
       }
 
-      if (!this.validateRating(nota)) {
+      if (nota < 1 || nota > 5) {
+        logError('Nota fora do intervalo válido', { nota });
         return res.status(400).json({
           success: false,
           message: 'Nota deve estar entre 1 e 5'
         });
       }
 
-      logDatabase(
-        'INSERT INTO avaliacoes (usuario_id, tmdb_id, nota, titulo_review, comentario, spoiler) VALUES (?, ?, ?, ?, ?, ?)',
-        [usuario_id, tmdb_id, nota, titulo_review || null, comentario || null, spoiler]
-      );
+      const reviewData = {
+        usuario_id,
+        tmdb_id,
+        nota,
+        titulo_review: titulo_review || null,
+        comentario: comentario || null,
+        spoiler: spoiler || false,
+      };
 
-      const [result] = await pool.execute(
-        `INSERT INTO avaliacoes (usuario_id, tmdb_id, nota, titulo_review, comentario, spoiler)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [usuario_id, tmdb_id, nota, titulo_review || null, comentario || null, spoiler]
-      );
+      logInfo('Inserindo review no banco de dados Supabase');
+      logDatabase('supabase.from("avaliacoes").insert()', [reviewData]); // Corrigido para array
 
-      const reviewId = (result as any).insertId;
-      logSuccess(`Review criada: ID ${reviewId} para filme ${tmdb_id}`);
+      const { data, error } = await supabase
+        .from('avaliacoes')
+        .insert(reviewData)
+        .select('id')
+        .single();
+
+      if (error) {
+        if (error.code === '23505') {
+          logError('Tentativa de criar review duplicada');
+          return res.status(400).json({
+            success: false,
+            message: 'Você já avaliou este filme'
+          });
+        }
+        logError('❌ ERRO AO CRIAR REVIEW NO SUPABASE:', error);
+        throw error;
+      }
+
+      const reviewId = data.id;
+      logSuccess('🎉 REVIEW CRIADA COM SUCESSO!', { reviewId, usuario_id, tmdb_id, nota });
 
       res.status(201).json({
         success: true,
         message: 'Review criada com sucesso',
         data: { id: reviewId }
       });
-    } catch (error: any) {
-      if (error.code === 'ER_DUP_ENTRY') {
-        return res.status(400).json({
-          success: false,
-          message: 'Você já avaliou este filme'
-        });
-      }
 
-      logError('Erro ao criar review:', error);
+    } catch (error: any) {
+      logError('❌ ERRO AO CRIAR REVIEW:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -67,30 +87,33 @@ export class ReviewController {
       const { tmdb_id } = req.params;
       const { spoiler = 'false' } = req.query;
 
-      let query = `
-        SELECT a.*, u.nome, u.foto_perfil
-        FROM avaliacoes a
-        JOIN usuarios u ON a.usuario_id = u.id
-        WHERE a.tmdb_id = ?
-      `;
+      logDatabase('supabase.from("avaliacoes").select(JOIN ...)', [tmdb_id, spoiler]); // Corrigido
 
-      const params: any[] = [tmdb_id];
+      let query = supabase
+        .from('avaliacoes')
+        .select(`
+          *,
+          usuarios ( nome, foto_perfil )
+        `)
+        .eq('tmdb_id', tmdb_id);
 
       if (spoiler === 'false') {
-        query += ' AND a.spoiler = FALSE';
+        query = query.eq('spoiler', false);
       }
 
-      query += ' ORDER BY a.created_at DESC';
+      query = query.order('created_at', { ascending: false });
 
-      const [rows] = await pool.execute(query, params);
+      const { data, error } = await query;
+      if (error) throw error;
 
       res.json({
         success: true,
         message: 'Reviews obtidas com sucesso',
-        data: rows
+        data: data
       });
+
     } catch (error) {
-      logError('Erro ao obter reviews:', error);
+      console.error('Erro ao obter reviews:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -102,18 +125,24 @@ export class ReviewController {
     try {
       const usuario_id = (req as any).user.userId;
 
-      const [rows] = await pool.execute(
-        `SELECT * FROM avaliacoes WHERE usuario_id = ? ORDER BY created_at DESC`,
-        [usuario_id]
-      );
+      logDatabase('supabase.from("avaliacoes").select(my_reviews)', [usuario_id]); // Corrigido
+
+      const { data, error } = await supabase
+        .from('avaliacoes')
+        .select('*')
+        .eq('usuario_id', usuario_id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
 
       res.json({
         success: true,
         message: 'Reviews obtidas com sucesso',
-        data: rows
+        data: data
       });
+
     } catch (error) {
-      logError('Erro ao obter minhas reviews:', error);
+      console.error('Erro ao obter minhas reviews:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -127,39 +156,45 @@ export class ReviewController {
       const { nota, titulo_review, comentario, spoiler } = req.body;
       const usuario_id = (req as any).user.userId;
 
-      if (nota && !this.validateRating(nota)) {
+      if (nota && (nota < 1 || nota > 5)) {
         return res.status(400).json({
           success: false,
           message: 'Nota deve estar entre 1 e 5'
         });
       }
 
-      const [result] = await pool.execute(
-        `UPDATE avaliacoes
-         SET nota = COALESCE(?, nota),
-             titulo_review = COALESCE(?, titulo_review),
-             comentario = COALESCE(?, comentario),
-             spoiler = COALESCE(?, spoiler),
-             updated_at = CURRENT_TIMESTAMP
-         WHERE id = ? AND usuario_id = ?`,
-        [nota || null, titulo_review || null, comentario || null, spoiler !== undefined ? spoiler : null, id, usuario_id]
-      );
+      const updates: any = {};
+      if (nota !== undefined) updates.nota = nota;
+      if (titulo_review !== undefined) updates.titulo_review = titulo_review;
+      if (comentario !== undefined) updates.comentario = comentario;
+      if (spoiler !== undefined) updates.spoiler = spoiler;
+      updates.updated_at = new Date().toISOString();
 
-      if ((result as any).affectedRows === 0) {
+      logDatabase('supabase.from("avaliacoes").update()', [id, usuario_id, updates]); // Corrigido
+
+      const { data, error } = await supabase
+        .from('avaliacoes')
+        .update(updates)
+        .eq('id', id)
+        .eq('usuario_id', usuario_id)
+        .select('id');
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
         return res.status(404).json({
           success: false,
           message: 'Review não encontrada ou você não tem permissão'
         });
       }
 
-      logSuccess(`Review ${id} atualizada`);
-
       res.json({
         success: true,
         message: 'Review atualizada com sucesso'
       });
+
     } catch (error) {
-      logError('Erro ao atualizar review:', error);
+      console.error('Erro ao atualizar review:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -172,26 +207,31 @@ export class ReviewController {
       const { id } = req.params;
       const usuario_id = (req as any).user.userId;
 
-      const [result] = await pool.execute(
-        'DELETE FROM avaliacoes WHERE id = ? AND usuario_id = ?',
-        [id, usuario_id]
-      );
+      logDatabase('supabase.from("avaliacoes").delete()', [id, usuario_id]); // Corrigido
 
-      if ((result as any).affectedRows === 0) {
+      const { data, error } = await supabase
+        .from('avaliacoes')
+        .delete()
+        .eq('id', id)
+        .eq('usuario_id', usuario_id)
+        .select('id');
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
         return res.status(404).json({
           success: false,
           message: 'Review não encontrada ou você não tem permissão'
         });
       }
 
-      logSuccess(`Review ${id} excluída`);
-
       res.json({
         success: true,
         message: 'Review excluída com sucesso'
       });
+
     } catch (error) {
-      logError('Erro ao excluir review:', error);
+      console.error('Erro ao excluir review:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -203,12 +243,14 @@ export class ReviewController {
     try {
       const { id } = req.params;
 
-      const [result] = await pool.execute(
-        'UPDATE avaliacoes SET curtidas = curtidas + 1 WHERE id = ?',
-        [id]
-      );
+      logDatabase('supabase.rpc("increment_review_likes")', [id]); // Corrigido
 
-      if ((result as any).affectedRows === 0) {
+      const { data, error } = await supabase
+        .rpc('increment_review_likes', { p_review_id: parseInt(id) });
+
+      if (error) throw error;
+
+      if (data === null) {
         return res.status(404).json({
           success: false,
           message: 'Review não encontrada'
@@ -217,14 +259,16 @@ export class ReviewController {
 
       res.json({
         success: true,
-        message: 'Review curtida com sucesso'
+        message: 'Review curtida com sucesso',
+        data: { novas_curtidas: data }
       });
+
     } catch (error) {
-      logError('Erro ao curtir review:', error);
+      console.error('Erro ao curtir review:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
       });
     }
   }
-}
+} // Fim da classe

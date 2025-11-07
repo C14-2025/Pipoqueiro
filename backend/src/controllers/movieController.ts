@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { TMDbService } from '../services/tmdbService';
-import pool from '../config/database';
+import { supabase } from '../config/database';
 import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger';
 
 export class MovieController {
@@ -10,24 +10,39 @@ export class MovieController {
   async getPopular(req: Request, res: Response) {
     try {
       const page = parseInt(req.query.page as string) || 1;
+      // 1. Busca filmes no TMDB
       const tmdbMovies = await this.tmdbService.getPopularMovies(page);
-      
-      // Para cada filme, buscar nossas estatísticas
+
+      // 2. Para cada filme, busca estatísticas no Supabase
       const moviesWithStats = await Promise.all(
         tmdbMovies.map(async (movie: any) => {
-          const [stats] = await pool.execute(
-            `SELECT 
-              COUNT(*) as total_reviews,
-              AVG(nota) as nota_media,
-              COUNT(CASE WHEN nota >= 4 THEN 1 END) as reviews_positivas
-             FROM avaliacoes WHERE tmdb_id = ?`,
-            [movie.id]
-          );
 
+          // Usa a função RPC 'get_movie_details_stats' que você criou
+          const { data: statsData, error } = await supabase
+            .rpc('get_movie_details_stats', { p_tmdb_id: movie.id });
+
+          if (error) {
+            logError(`Erro RPC get_movie_details_stats (popular) para tmdb_id ${movie.id}`, error);
+            return {
+              ...movie,
+              poster_url: this.tmdbService.formatPosterURL(movie.poster_path),
+              nossa_stats: { total_reviews: 0, nota_media: null, reviews_positivas: 0 }
+            };
+          }
+
+          const stats = (statsData && statsData.length > 0)
+            ? statsData[0]
+            : { total_reviews: 0, nota_media: null, reviews_positivas: 0 };
+
+          // 3. Combina os dados do TMDB com os dados do Supabase
           return {
             ...movie,
             poster_url: this.tmdbService.formatPosterURL(movie.poster_path),
-            nossa_stats: (stats as any[])[0]
+            nossa_stats: {
+              total_reviews: stats.total_reviews,
+              nota_media: stats.nota_media,
+              reviews_positivas: stats.reviews_positivas
+            }
           };
         })
       );
@@ -48,11 +63,12 @@ export class MovieController {
   }
 
   // GET /api/movies/:tmdbId/videos
+  // (Não mexe com o Supabase, apenas TMDB)
   async getVideos(req: Request, res: Response) {
     try {
       const tmdbId = parseInt(req.params.tmdbId);
       const videos = await this.tmdbService.getMovieVideos(tmdbId);
-      
+
       res.json({
         success: true,
         message: 'Vídeos obtidos com sucesso',
@@ -68,11 +84,12 @@ export class MovieController {
   }
 
   // GET /api/movies/:tmdbId/credits
+  // (Não mexe com o Supabase, apenas TMDB)
   async getCredits(req: Request, res: Response) {
     try {
       const tmdbId = parseInt(req.params.tmdbId);
       const credits = await this.tmdbService.getMovieCredits(tmdbId);
-      
+
       res.json({
         success: true,
         message: 'Créditos obtidos com sucesso',
@@ -88,17 +105,16 @@ export class MovieController {
   }
 
   // GET /api/movies/:tmdbId/similar
+  // (Não mexe com o Supabase, apenas TMDB)
   async getSimilar(req: Request, res: Response) {
     try {
       const tmdbId = parseInt(req.params.tmdbId);
       const page = parseInt(req.query.page as string) || 1;
       const similar = await this.tmdbService.getSimilarMovies(tmdbId, page);
 
-      // Filtra e ordena por melhor avaliação e popularidade
       const filteredAndSorted = similar
         .filter((movie: any) => movie.vote_average >= 6.0 && movie.vote_count >= 100)
         .sort((a: any, b: any) => {
-          // Ordena por vote_average * popularidade
           const scoreA = a.vote_average * Math.log(a.vote_count + 1);
           const scoreB = b.vote_average * Math.log(b.vote_count + 1);
           return scoreB - scoreA;
@@ -122,7 +138,7 @@ export class MovieController {
   async search(req: Request, res: Response) {
     try {
       const { query, page = 1 } = req.query;
-      
+
       if (!query) {
         return res.status(400).json({
           success: false,
@@ -130,22 +146,35 @@ export class MovieController {
         });
       }
 
+      // 1. Busca filmes no TMDB
       const tmdbMovies = await this.tmdbService.searchMovies(query as string, parseInt(page as string));
-      
+
+      // 2. Para cada filme, busca estatísticas no Supabase
       const moviesWithStats = await Promise.all(
         tmdbMovies.map(async (movie: any) => {
-          const [stats] = await pool.execute(
-            `SELECT 
-              COUNT(*) as total_reviews,
-              AVG(nota) as nota_media
-             FROM avaliacoes WHERE tmdb_id = ?`,
-            [movie.id]
-          );
 
+          // Usa a função RPC 'get_movie_search_stats' que você criou
+          const { data: statsData, error } = await supabase
+            .rpc('get_movie_search_stats', { p_tmdb_id: movie.id });
+
+          if (error) {
+            logError(`Erro RPC get_movie_search_stats para tmdb_id ${movie.id}`, error);
+            return {
+              ...movie,
+              poster_url: this.tmdbService.formatPosterURL(movie.poster_path),
+              nossa_stats: { total_reviews: 0, nota_media: null }
+            };
+          }
+
+          const stats = (statsData && statsData.length > 0)
+            ? statsData[0]
+            : { total_reviews: 0, nota_media: null };
+
+          // 3. Combina os dados
           return {
             ...movie,
             poster_url: this.tmdbService.formatPosterURL(movie.poster_path),
-            nossa_stats: (stats as any[])[0]
+            nossa_stats: stats
           };
         })
       );
@@ -169,40 +198,51 @@ export class MovieController {
   async getDetails(req: Request, res: Response) {
     try {
       const { tmdbId } = req.params;
-      
+
+      // 1. Busca detalhes do filme no TMDB
       const movieDetails = await this.tmdbService.getMovieDetails(parseInt(tmdbId));
-      
-      // Buscar reviews do filme
-      const [reviews] = await pool.execute(
-        `SELECT a.*, u.nome, u.foto_perfil 
-         FROM avaliacoes a 
-         JOIN usuarios u ON a.usuario_id = u.id 
-         WHERE a.tmdb_id = ? 
-         ORDER BY a.created_at DESC`,
-        [tmdbId]
-      );
 
-      // Buscar estatísticas
-      const [stats] = await pool.execute(
-        `SELECT 
-          COUNT(*) as total_reviews,
-          AVG(nota) as nota_media,
-          COUNT(CASE WHEN nota >= 4 THEN 1 END) as reviews_positivas,
-          COUNT(CASE WHEN spoiler = TRUE THEN 1 END) as reviews_com_spoiler
-         FROM avaliacoes WHERE tmdb_id = ?`,
-        [tmdbId]
-      );
+      // 2. Busca reviews do filme no Supabase (com JOIN em 'usuarios')
+      // Isto funciona por causa da Foreign Key `avaliacoes.usuario_id -> usuarios.id`
+      const { data: reviews, error: reviewsError } = await supabase
+        .from('avaliacoes')
+        .select(`
+          *,
+          usuarios ( nome, foto_perfil )
+        `) // Pega 'nome' e 'foto_perfil' da tabela 'usuarios'
+        .eq('tmdb_id', tmdbId)
+        .order('created_at', { ascending: false }); // Ordena pela coluna 'created_at'
 
+      if (reviewsError) {
+        logError(`Erro ao buscar reviews (join) para tmdb_id ${tmdbId}`, reviewsError);
+        throw reviewsError;
+      }
+
+      // 3. Busca estatísticas do filme no Supabase
+      // Usa a função RPC 'get_movie_details_stats'
+      const { data: statsData, error: statsError } = await supabase
+        .rpc('get_movie_details_stats', { p_tmdb_id: parseInt(tmdbId) });
+
+      if (statsError) {
+        logError(`Erro RPC get_movie_details_stats (details) para tmdb_id ${tmdbId}`, statsError);
+        throw statsError;
+      }
+
+      const stats = (statsData && statsData.length > 0)
+        ? statsData[0]
+        : { total_reviews: 0, nota_media: null, reviews_positivas: 0, reviews_com_spoiler: 0 };
+
+      // 4. Combina tudo
       res.json({
         success: true,
         message: 'Detalhes do filme obtidos com sucesso',
         data: {
           ...movieDetails,
           poster_url: this.tmdbService.formatPosterURL(movieDetails.poster_path),
-          backdrop_url: movieDetails.backdrop_path ? 
+          backdrop_url: movieDetails.backdrop_path ?
             `https://image.tmdb.org/t/p/w1280${movieDetails.backdrop_path}` : null,
-          reviews: reviews,
-          stats: (stats as any[])[0]
+          reviews: reviews || [],
+          stats: stats
         }
       });
 
@@ -215,7 +255,7 @@ export class MovieController {
     }
   }
 
-  // GET /api/movies/ranking - Ranking dos filmes melhor avaliados pela comunidade
+  // GET /api/movies/ranking
   async getRanking(req: Request, res: Response) {
     try {
       logInfo('🏆 BUSCANDO RANKING DOS FILMES DA COMUNIDADE PIPOQUEIRO');
@@ -225,38 +265,23 @@ export class MovieController {
 
       logInfo('Parâmetros de ranking', { limit, minReviews });
 
-      // Buscar filmes com mais avaliações e melhores notas da nossa comunidade
-      logDatabase(`
-        SELECT
-          tmdb_id,
-          COUNT(*) as total_avaliacoes,
-          AVG(nota) as nota_media,
-          COUNT(CASE WHEN nota >= 4 THEN 1 END) as avaliacoes_positivas
-        FROM avaliacoes
-        GROUP BY tmdb_id
-        HAVING COUNT(*) >= ?
-        ORDER BY nota_media DESC, total_avaliacoes DESC
-        LIMIT ${limit}
-      `, [minReviews]);
+      // 1. Busca o ranking (lista de tmdb_id e stats) do Supabase
+      // Usa a função RPC 'get_movie_ranking'
+      logDatabase('Chamando RPC: get_movie_ranking', [minReviews, limit]);
+      const { data: rankingMovies, error: rankingError } = await supabase
+        .rpc('get_movie_ranking', {
+          p_min_reviews: minReviews,
+          p_limit: limit
+        });
 
-      const [rows] = await pool.execute(`
-        SELECT
-          tmdb_id,
-          COUNT(*) as total_avaliacoes,
-          AVG(nota) as nota_media,
-          COUNT(CASE WHEN nota >= 4 THEN 1 END) as avaliacoes_positivas
-        FROM avaliacoes
-        GROUP BY tmdb_id
-        HAVING COUNT(*) >= ?
-        ORDER BY nota_media DESC, total_avaliacoes DESC
-        LIMIT ${limit}
-      `, [minReviews]);
+      if (rankingError) {
+        logError('Erro RPC get_movie_ranking', rankingError);
+        throw rankingError;
+      }
 
-      const rankingMovies = rows as any[];
       logInfo(`Encontrados ${rankingMovies.length} filmes no ranking`);
 
       if (rankingMovies.length === 0) {
-        logInfo('Nenhum filme encontrado com avaliações suficientes');
         return res.json({
           success: true,
           message: 'Ranking obtido com sucesso',
@@ -264,9 +289,9 @@ export class MovieController {
         });
       }
 
-      // Para cada filme, buscar dados completos do TMDB
+      // 2. Para cada filme do ranking, busca os detalhes completos no TMDB
       const rankingWithDetails = await Promise.all(
-        rankingMovies.map(async (movieStats, index) => {
+        rankingMovies.map(async (movieStats: any, index: number) => {
           try {
             const movieDetails = await this.tmdbService.getMovieDetails(movieStats.tmdb_id);
 
@@ -276,16 +301,15 @@ export class MovieController {
               nota_media: parseFloat(movieStats.nota_media).toFixed(1)
             });
 
+            // 3. Combina os dados do TMDB com as estatísticas do Supabase
             return {
               rank: index + 1,
               tmdb_id: movieStats.tmdb_id,
-              // Dados do TMDB
-              ...movieDetails,
+              ...movieDetails, // Dados do TMDB
               poster_url: this.tmdbService.formatPosterURL(movieDetails.poster_path),
               backdrop_url: movieDetails.backdrop_path ?
                 `https://image.tmdb.org/t/p/w1280${movieDetails.backdrop_path}` : null,
-              // Estatísticas da nossa comunidade
-              nossa_stats: {
+              nossa_stats: { // Dados do Supabase (da RPC)
                 total_avaliacoes: movieStats.total_avaliacoes,
                 nota_media: parseFloat(movieStats.nota_media).toFixed(1),
                 avaliacoes_positivas: movieStats.avaliacoes_positivas,
@@ -294,6 +318,7 @@ export class MovieController {
             };
           } catch (error) {
             logError(`Erro ao buscar dados do filme ${movieStats.tmdb_id}:`, error);
+            // Objeto de fallback caso o TMDB falhe para um ID específico
             return {
               rank: index + 1,
               tmdb_id: movieStats.tmdb_id,
