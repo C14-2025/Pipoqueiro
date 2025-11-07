@@ -1,20 +1,21 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { connectDB } from './config/database';
 import userRoutes from './routes/users';
 import reviewRoutes from './routes/reviews';
 import movieRoutes from './routes/movies';
 import watchlistRoutes from './routes/watchlist';
 import favoritesRoutes from './routes/favorites';
+import { requestLogger } from './middleware/logger';
 import chatRoutes from './routes/chat';
-import { requestLogger, logSuccess, logError } from './middleware/logger';
+import { supabase } from './config/database';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middlewares (Tudo igual)
 app.use(cors({
   origin: [
     'http://localhost:5173',
@@ -23,11 +24,11 @@ app.use(cors({
   ],
   credentials: true
 }));
-
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
+// Rotas (Tudo igual)
 app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/movies', movieRoutes);
@@ -35,6 +36,7 @@ app.use('/api/watchlist', watchlistRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/chat', chatRoutes);
 
+// Rota de teste (Tudo igual)
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
@@ -43,6 +45,24 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Rota de teste do banco (Atualizada para Supabase)
+app.get('/api/test-db', async (req, res) => {
+  try {
+    // Usar a sintaxe do Supabase para testar
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('id')
+      .limit(1);
+
+    if (error) throw error;
+
+    res.json({ message: 'Conexão com Supabase bem-sucedida!', data: data });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Erro ao conectar no Supabase', details: error.message });
+  }
+});
+
+// Middleware de erro 404 (Tudo igual)
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
@@ -50,29 +70,30 @@ app.use('*', (req, res) => {
   });
 });
 
+// Middleware de tratamento de erros (Tudo igual)
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  logError('Erro não tratado:', err);
+  console.error('Erro não tratado:', err);
   res.status(500).json({
     success: false,
     message: 'Erro interno do servidor'
   });
 });
 
-const startServer = async () => {
+// Inicializar servidor (Simplificado)
+const startServer = () => {
   try {
-    await connectDB();
+    // A conexão do Supabase é gerenciada pelo cliente, não precisamos de 'await connectDB()'
     app.listen(PORT, () => {
-      logSuccess(`Servidor rodando na porta ${PORT}`);
-      logSuccess(`Health check: http://localhost:${PORT}/api/health`);
+      console.log(`🚀 Servidor rodando na porta ${PORT}`);
+      console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
+      console.log(`📡 Supabase check: http://localhost:${PORT}/api/test-db`);
     });
   } catch (error) {
-    logError('Erro ao iniciar servidor:', error);
+    console.error('❌ Erro ao iniciar servidor:', error);
     process.exit(1);
   }
 };
 
-if (process.env.NODE_ENV !== 'test') {
-  startServer();
-}
+startServer();
 
 export default app;
