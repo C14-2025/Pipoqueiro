@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FiMessageCircle, FiX, FiSend } from 'react-icons/fi';
+import { useUserLists } from '../context/UserListsContext';
 
 const ChatBot = () => {
+  const { isLoggedIn } = useUserLists();
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -29,7 +32,6 @@ const ChatBot = () => {
     const userMessage = inputMessage.trim();
     setInputMessage('');
 
-    // Adiciona mensagem do usuário
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
@@ -41,7 +43,7 @@ const ChatBot = () => {
         },
         body: JSON.stringify({
           message: userMessage,
-          userContext: {} // Aqui você pode adicionar contexto do usuário logado
+          userContext: {}
         }),
       });
 
@@ -66,9 +68,12 @@ const ChatBot = () => {
     }
   };
 
+  if (!isLoggedIn) {
+    return null;
+  }
+
   return (
     <>
-      {/* Botão flutuante */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
@@ -79,10 +84,8 @@ const ChatBot = () => {
         </button>
       )}
 
-      {/* Modal do Chat */}
       {isOpen && (
         <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border-2 border-gray-200">
-          {/* Header */}
           <div className="bg-[#00B5AD] text-white p-4 rounded-t-2xl flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="bg-white/20 p-2 rounded-full">
@@ -102,7 +105,6 @@ const ChatBot = () => {
             </button>
           </div>
 
-          {/* Mensagens */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#F4F6F8]">
             {messages.map((msg, index) => (
               <div
@@ -135,7 +137,6 @@ const ChatBot = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
           <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-200 rounded-b-2xl">
             <div className="flex items-center space-x-2">
               <input

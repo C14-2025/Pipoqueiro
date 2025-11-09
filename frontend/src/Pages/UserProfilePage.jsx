@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BsFilm, BsStarHalf, BsPencil } from 'react-icons/bs';
-import { authService, reviewService, movieService } from '../services/api';
+import { BsFilm, BsStarHalf, BsPencil, BsHeart } from 'react-icons/bs';
+import { authService, reviewService, movieService, favoritesService } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { toast } from 'react-toastify';
 
-// Lista de gêneros fixa, já que a API não fornece
 const allGenres = [
   'Ação', 'Aventura', 'Animação', 'Comédia', 'Crime', 'Documentário', 
   'Drama', 'Família', 'Fantasia', 'História', 'Terror', 'Música', 
@@ -17,6 +16,7 @@ const UserProfilePage = () => {
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [userReviews, setUserReviews] = useState([]);
+  const [userFavorites, setUserFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -40,19 +40,21 @@ const UserProfilePage = () => {
         return;
       }
 
-      const [profileData, reviewsData] = await Promise.all([
-        authService.getProfile(), // Atualiza o localStorage com a "verdade" do DB
+      const [profileData, reviewsData, favoritesData] = await Promise.all([
+        authService.getProfile(),
         reviewService.getMyReviews(),
+        favoritesService.getFavorites().catch(() => []),
       ]);
 
       setUserData(profileData);
       setUserReviews(reviewsData || []);
+      setUserFavorites(favoritesData || []);
 
       const formattedEditData = {
         ...profileData,
         generos_favoritos: profileData.generos_favoritos || [],
         data_nascimento: profileData.data_nascimento 
-          ? profileData.data_nascimento.split('T')[0] // Pega só o 'YYYY-MM-DD'
+          ? profileData.data_nascimento.split('T')[0]
           : null
       };
       setEditData(formattedEditData);
@@ -107,13 +109,11 @@ const UserProfilePage = () => {
   };
 
   const handleSaveProfile = async () => {
-    // Validação da Data de Nascimento (só se não existir)
     if (!userData.data_nascimento && !editData.data_nascimento) {
       toast.warn('Por favor, preencha sua data de nascimento.');
       return;
     }
     
-    // Valida os gêneros apenas se eles ainda não foram salvos
     if ((!userData.generos_favoritos || userData.generos_favoritos.length === 0) && 
         (!editData.generos_favoritos || editData.generos_favoritos.length < 3)) {
       toast.warn('Por favor, selecione pelo menos 3 gêneros favoritos.');
@@ -133,8 +133,6 @@ const UserProfilePage = () => {
 
       await authService.updateProfile(dataToUpdate); 
       
-      // --- CORREÇÃO DO BUG DO F5 ---
-      // Buscamos os dados REAIS do banco de dados após salvar
       await loadUserProfile();
       
       setIsEditing(false);
@@ -174,6 +172,7 @@ const UserProfilePage = () => {
     return `https://i.pravatar.cc/150?u=${seed}`;
   };
 
+  const totalFavorites = userFavorites.length;
   const totalReviews = userReviews.length;
   const averageRating =
     totalReviews > 0
@@ -247,7 +246,7 @@ const UserProfilePage = () => {
 
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className={`text-white px-4 py-2 rounded-lg hover:opacity-90 flex items-center gap-2 transition-colors ${
+            className={`text-white px-4 py-2 rounded-lg hover:opacity-90 flex items-center gap-2 transition-colors cursor-pointer ${
               isProfileIncomplete && !isEditing 
                 ? 'bg-yellow-500 hover:bg-yellow-600 animate-pulse' 
                 : 'bg-[#00B5AD] hover:bg-[#009A92]'
@@ -266,7 +265,6 @@ const UserProfilePage = () => {
           />
           <div className="flex-1">
             {isEditing ? (
-              // --- MODO DE EDIÇÃO ---
               <div className="space-y-4">
                 <input
                   type="text"
@@ -333,13 +331,12 @@ const UserProfilePage = () => {
 
                 <button
                   onClick={handleSaveProfile}
-                  className="bg-[#FF8C42] text-white px-6 py-2 rounded-lg hover:opacity-90"
+                  className="bg-[#FF8C42] text-white px-6 py-2 rounded-lg hover:opacity-90 cursor-pointer"
                 >
                   Salvar Alterações
                 </button>
               </div>
             ) : (
-              // --- MODO DE VISUALIZAÇÃO ---
               <>
                 <h1 className="text-5xl font-bold text-[#2D3748]">
                   {userData.nome}
@@ -379,7 +376,14 @@ const UserProfilePage = () => {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10 text-center">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10 text-center">
+          <div className="bg-white p-4 rounded-xl shadow-sm">
+            <BsHeart className="mx-auto text-3xl text-red-500" />
+            <p className="text-2xl font-bold text-[#2D3748] mt-2">
+              {totalFavorites}
+            </p>
+            <p className="text-[#A0AEC0] text-sm">Filmes Curtidos</p>
+          </div>
           <div className="bg-white p-4 rounded-xl shadow-sm">
             <BsFilm className="mx-auto text-3xl text-[#00B5AD]" />
             <p className="text-2xl font-bold text-[#2D3748] mt-2">
@@ -394,6 +398,45 @@ const UserProfilePage = () => {
             </p>
             <p className="text-[#A0AEC0] text-sm">Nota Média</p>
           </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm mb-6">
+          <h2 className="text-3xl font-semibold text-[#2D3748] mb-4">
+            Minhas Curtidas
+          </h2>
+          {userFavorites.length > 0 ? (
+            <div className="flex overflow-x-auto gap-4 pb-4">
+              {userFavorites.map((movie) => (
+                <Link
+                  to={`/filme/${movie.tmdb_id || movie.id}`}
+                  key={movie.tmdb_id || movie.id}
+                  className="flex-shrink-0 w-32 group"
+                >
+                  <img
+                    src={movie.poster_url || 'https://via.placeholder.com/300x450?text=No+Image'}
+                    alt={movie.title}
+                    className="w-full h-48 object-cover rounded-md shadow-sm transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <p className="text-sm font-semibold text-gray-700 mt-2 truncate group-hover:text-[#00B5AD]">
+                    {movie.title}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-6xl mb-4">❤️</div>
+              <p className="text-gray-500 text-lg">
+                Você ainda não curtiu nenhum filme.
+              </p>
+              <Link
+                to="/"
+                className="inline-block mt-4 bg-[#00B5AD] text-white px-6 py-2 rounded-lg hover:opacity-90"
+              >
+                Explorar Filmes
+              </Link>
+            </div>
+          )}
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow-sm">
@@ -480,13 +523,13 @@ const UserProfilePage = () => {
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={handleLogout}
-              className="bg-gray-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors duration-300"
+              className="bg-gray-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors duration-300 cursor-pointer"
             >
               Sair da Conta
             </button>
             <button
               onClick={() => setShowDeleteConfirmation(true)}
-              className="bg-red-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-600 transition-colors duration-300"
+              className="bg-red-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-600 transition-colors duration-300 cursor-pointer"
             >
               Apagar Conta
             </button>
@@ -513,14 +556,14 @@ const UserProfilePage = () => {
                 <button
                   onClick={() => setShowDeleteConfirmation(false)}
                   disabled={isDeleting}
-                  className="flex-1 bg-gray-300 text-gray-700 font-bold py-3 px-6 rounded-lg hover:bg-gray-400 transition-colors duration-300 disabled:opacity-50"
+                  className="flex-1 bg-gray-300 text-gray-700 font-bold py-3 px-6 rounded-lg hover:bg-gray-400 transition-colors duration-300 disabled:opacity-50 cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleDeleteAccount}
                   disabled={isDeleting}
-                  className="flex-1 bg-red-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-600 transition-colors duration-300 disabled:opacity-50"
+                  className="flex-1 bg-red-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-600 transition-colors duration-300 disabled:opacity-50 cursor-pointer"
                 >
                   {isDeleting ? 'Apagando...' : 'Sim, Apagar Conta'}
                 </button>
