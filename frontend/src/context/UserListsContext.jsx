@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { watchlistService, favoritesService, authService } from '../services/api'; 
+import { toast } from 'react-toastify';
 
 const UserListsContext = createContext();
 
@@ -54,29 +55,32 @@ export const UserListsProvider = ({ children }) => {
 
     const toggleList = async (tmdbId, isFavorite = false) => {
         if (!isLoggedIn) {
-            alert('Você precisa estar logado para adicionar filmes à sua lista!');
+            toast.warn('Você precisa estar logado para adicionar filmes à sua lista!');
             return false;
         }
 
         const tmdbIdInt = parseInt(tmdbId);
         if (isNaN(tmdbIdInt)) return false;
 
-        const [ids, setter, service] = isFavorite 
+        const [, setter, service] = isFavorite 
             ? [favoritesIds, setFavoritesIds, favoritesService]
             : [watchlistIds, setWatchlistIds, watchlistService];
         
-        const isCurrentlyInList = ids.has(tmdbIdInt);
-        
-        const newSet = new Set(ids);
-        if (isCurrentlyInList) {
-            newSet.delete(tmdbIdInt);
-        } else {
-            newSet.add(tmdbIdInt);
-        }
-        setter(newSet);
+        let isRemoving = false;
+        setter((currentIds) => {
+            const newSet = new Set(currentIds);
+            if (currentIds.has(tmdbIdInt)) {
+                newSet.delete(tmdbIdInt);
+                isRemoving = true;
+            } else {
+                newSet.add(tmdbIdInt);
+                isRemoving = false; 
+            }
+            return newSet;
+        });
 
         try {
-            if (isCurrentlyInList) {
+            if (isRemoving) {
                 await (isFavorite ? service.removeFromFavorites(tmdbIdInt) : service.removeFromWatchlist(tmdbIdInt));
             } else {
                 await (isFavorite ? service.addToFavorites(tmdbIdInt) : service.addToWatchlist(tmdbIdInt));
@@ -84,8 +88,17 @@ export const UserListsProvider = ({ children }) => {
             return true;
         } catch (error) {
             console.error(`Erro ao alternar lista (${isFavorite ? 'Favorites' : 'Watchlist'}):`, error);
-            alert(`Erro ao atualizar sua lista. Tente novamente.`);
-            setter(ids); 
+            toast.error('Erro ao atualizar sua lista. Tente novamente.');
+            
+            setter((currentIds) => {
+              const newSet = new Set(currentIds);
+              if (isRemoving) {
+                newSet.add(tmdbIdInt);
+              } else {
+                newSet.delete(tmdbIdInt);
+              }
+              return newSet;
+            });
             return false;
         }
     };
