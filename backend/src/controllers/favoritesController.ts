@@ -6,11 +6,9 @@ import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger
 export class FavoritesController {
   private tmdbService = new TMDbService()
 
-  // 🔹 GET /api/favorites — Buscar filmes favoritos do usuário
+  // GET /api/favorites
   async getFavorites(req: Request, res: Response) {
     try {
-      logInfo('⭐ BUSCANDO FILMES FAVORITOS DO USUÁRIO')
-
       const userId = (req as any).user.userId
 
       logDatabase('SELECT * FROM favoritos WHERE usuario_id = ?', [userId])
@@ -22,8 +20,6 @@ export class FavoritesController {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-
-      logInfo(`Encontrados ${favorites?.length || 0} filmes favoritos`)
 
       const favoritesWithDetails = await Promise.all(
         (favorites || []).map(async (favorite) => {
@@ -49,8 +45,6 @@ export class FavoritesController {
         })
       )
 
-      logSuccess(`🎉 Favoritos carregados com ${favoritesWithDetails.length} filmes`)
-
       res.json({
         success: true,
         message: 'Filmes favoritos obtidos com sucesso',
@@ -62,20 +56,16 @@ export class FavoritesController {
     }
   }
 
-  // 🔹 POST /api/favorites — Adicionar filme aos favoritos
+  // POST /api/favorites
   async addToFavorites(req: Request, res: Response) {
     try {
-      logInfo('💖 ADICIONANDO FILME AOS FAVORITOS')
-
       const userId = (req as any).user.userId
       const { tmdb_id, comentario_favorito } = req.body
 
       if (!tmdb_id) {
-        logError('TMDB ID não fornecido')
         return res.status(400).json({ success: false, message: 'TMDB ID é obrigatório' })
       }
 
-      // Verifica se já existe
       const { data: existing } = await supabase
         .from('favoritos')
         .select('id')
@@ -89,23 +79,18 @@ export class FavoritesController {
         })
       }
 
-      // Valida filme no TMDB
       try {
         await this.tmdbService.getMovieDetails(tmdb_id)
-        logInfo('Filme validado no TMDB')
       } catch {
         return res.status(404).json({ success: false, message: 'Filme não encontrado' })
       }
 
-      // Insere no Supabase
       const { data, error } = await supabase
         .from('favoritos')
         .insert([{ usuario_id: userId, tmdb_id, comentario_favorito: comentario_favorito || null }])
         .select()
 
       if (error) throw error
-
-      logSuccess('🎉 FILME ADICIONADO AOS FAVORITOS!', { tmdb_id })
 
       res.status(201).json({
         success: true,
@@ -118,7 +103,7 @@ export class FavoritesController {
     }
   }
 
-  // 🔹 DELETE /api/favorites/:tmdb_id — Remover filme dos favoritos
+  // DELETE /api/favorites/:tmdb_id
   async removeFromFavorites(req: Request, res: Response) {
     try {
       const userId = (req as any).user.userId
@@ -142,7 +127,7 @@ export class FavoritesController {
     }
   }
 
-  // 🔹 PUT /api/favorites/:tmdb_id — Atualizar comentário
+  // PUT /api/favorites/:tmdb_id
   async updateFavoriteComment(req: Request, res: Response) {
     try {
       const userId = (req as any).user.userId
@@ -171,7 +156,7 @@ export class FavoritesController {
     }
   }
 
-  // 🔹 GET /api/favorites/check/:tmdb_id — Verificar se filme é favorito
+  // GET /api/favorites/check/:tmdb_id
   async checkIfFavorite(req: Request, res: Response) {
     try {
       const userId = (req as any).user.userId

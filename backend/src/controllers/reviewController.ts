@@ -1,7 +1,5 @@
-// src/controllers/reviewController.ts
-
 import { Request, Response } from 'express';
-import { supabase } from '../config/database'; // Ajuste o caminho
+import { supabase } from '../config/database';
 import { AvaliacaoInput } from '../types';
 import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger';
 

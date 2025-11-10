@@ -1,5 +1,3 @@
-// src/controllers/userController.ts
-
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -7,16 +5,13 @@ import { supabase } from '../config/database';
 import { UsuarioInput, UsuarioLogin, AuthPayload } from '../types';
 import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger';
 
-// Carregue seu segredo JWT do .env
 const JWT_SECRET = process.env.JWT_SECRET || 'pipoqueiro_secret_123_fallback';
 
 export class UserController {
 
-  // Método de Registro
+  // POST /api/users/register
   async registrarUsuario(req: Request, res: Response) {
     try {
-      logInfo('🆕 INICIANDO REGISTRO DE USUÁRIO');
-
       const { nome, email, senha } = req.body;
       logInfo('Validando campos obrigatórios', { nome, email, senhaPresente: !!senha });
 
@@ -28,7 +23,6 @@ export class UserController {
         });
       }
 
-      // Verificar se email já existe
       logInfo('Verificando se email já existe', { email });
       logDatabase('supabase.from("usuarios").select("id").eq("email")', [email]);
 
@@ -49,13 +43,11 @@ export class UserController {
         });
       }
 
-      // Hash da senha
       logInfo('Gerando hash da senha');
       const salt = await bcrypt.genSalt(10);
       const senha_hash = await bcrypt.hash(senha, salt);
       logSuccess('Hash da senha gerado com sucesso');
 
-      // Inserir usuário
       const newUser = {
         nome,
         email,
@@ -80,7 +72,6 @@ export class UserController {
       const userId = createdUser.id;
       logSuccess('Usuário inserido no banco', { userId });
 
-      // Gerar JWT
       logInfo('Gerando token JWT');
       const token = jwt.sign(
         { userId, email },
@@ -108,10 +99,9 @@ export class UserController {
     }
   }
 
-  // Método de Login
+  // POST /api/users/login
   async loginUsuario(req: Request, res: Response) {
     try {
-      logInfo('🔐 INICIANDO LOGIN DE USUÁRIO');
 
       const { email, senha }: UsuarioLogin = req.body;
       logInfo('Validando credenciais', { email, senhaPresente: !!senha });
@@ -124,7 +114,6 @@ export class UserController {
         });
       }
 
-      // Buscar usuário
       logInfo('Buscando usuário no banco', { email });
       logDatabase('supabase.from("usuarios").select("*").eq("email").single()', [email]);
 
@@ -144,7 +133,6 @@ export class UserController {
 
       logInfo('Usuário encontrado', { id: user.id, nome: user.nome, email: user.email });
 
-      // Verificar senha
       logInfo('Verificando senha');
       const senhaValida = await bcrypt.compare(senha, user.senha_hash);
       logInfo('Resultado da verificação da senha', { senhaValida });
@@ -157,7 +145,6 @@ export class UserController {
         });
       }
 
-      // Gerar JWT
       logInfo('Gerando token JWT para login');
       const token = jwt.sign(
         { userId: user.id, email: user.email },
@@ -199,7 +186,7 @@ export class UserController {
     }
   }
 
-  // Método de Obter Perfil
+  // GET /api/users/profile
   async obterPerfil(req: Request, res: Response) {
     try {
       const userId = (req as any).user.userId;
@@ -234,7 +221,7 @@ export class UserController {
     }
   }
 
-  // Método de Atualizar Perfil
+  // PUT /api/users/profile
   async atualizarPerfil(req: Request, res: Response) {
     try {
       const userId = (req as any).user.userId;
@@ -277,7 +264,7 @@ export class UserController {
     }
   }
 
-  // Método de Obter Estatísticas
+  // GET /api/users/stats
   async obterEstatisticasUsuario(req: Request, res: Response) {
     try {
       const userId = (req as any).user.userId;
@@ -304,7 +291,7 @@ export class UserController {
     }
   }
 
-  // Método de Excluir Conta
+  // DELETE /api/users/account
   async excluirConta(req: Request, res: Response) {
     try {
       const userId = (req as any).user.userId;

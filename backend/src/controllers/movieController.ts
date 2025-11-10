@@ -10,14 +10,10 @@ export class MovieController {
   async getPopular(req: Request, res: Response) {
     try {
       const page = parseInt(req.query.page as string) || 1;
-      // 1. Busca filmes no TMDB
       const tmdbMovies = await this.tmdbService.getPopularMovies(page);
 
-      // 2. Para cada filme, busca estatísticas no Supabase
       const moviesWithStats = await Promise.all(
         tmdbMovies.map(async (movie: any) => {
-
-          // Usa a função RPC 'get_movie_details_stats' que você criou
           const { data: statsData, error } = await supabase
             .rpc('get_movie_details_stats', { p_tmdb_id: movie.id });
 
@@ -34,7 +30,6 @@ export class MovieController {
             ? statsData[0]
             : { total_reviews: 0, nota_media: null, reviews_positivas: 0 };
 
-          // 3. Combina os dados do TMDB com os dados do Supabase
           return {
             ...movie,
             poster_url: this.tmdbService.formatPosterURL(movie.poster_path),
@@ -63,7 +58,6 @@ export class MovieController {
   }
 
   // GET /api/movies/:tmdbId/videos
-  // (Não mexe com o Supabase, apenas TMDB)
   async getVideos(req: Request, res: Response) {
     try {
       const tmdbId = parseInt(req.params.tmdbId);
@@ -84,7 +78,6 @@ export class MovieController {
   }
 
   // GET /api/movies/:tmdbId/credits
-  // (Não mexe com o Supabase, apenas TMDB)
   async getCredits(req: Request, res: Response) {
     try {
       const tmdbId = parseInt(req.params.tmdbId);
@@ -105,7 +98,6 @@ export class MovieController {
   }
 
   // GET /api/movies/:tmdbId/similar
-  // (Não mexe com o Supabase, apenas TMDB)
   async getSimilar(req: Request, res: Response) {
     try {
       const tmdbId = parseInt(req.params.tmdbId);
@@ -146,14 +138,10 @@ export class MovieController {
         });
       }
 
-      // 1. Busca filmes no TMDB
       const tmdbMovies = await this.tmdbService.searchMovies(query as string, parseInt(page as string));
 
-      // 2. Para cada filme, busca estatísticas no Supabase
       const moviesWithStats = await Promise.all(
         tmdbMovies.map(async (movie: any) => {
-
-          // Usa a função RPC 'get_movie_search_stats' que você criou
           const { data: statsData, error } = await supabase
             .rpc('get_movie_search_stats', { p_tmdb_id: movie.id });
 
@@ -170,7 +158,6 @@ export class MovieController {
             ? statsData[0]
             : { total_reviews: 0, nota_media: null };
 
-          // 3. Combina os dados
           return {
             ...movie,
             poster_url: this.tmdbService.formatPosterURL(movie.poster_path),
@@ -199,27 +186,22 @@ export class MovieController {
     try {
       const { tmdbId } = req.params;
 
-      // 1. Busca detalhes do filme no TMDB
       const movieDetails = await this.tmdbService.getMovieDetails(parseInt(tmdbId));
 
-      // 2. Busca reviews do filme no Supabase (com JOIN em 'usuarios')
-      // Isto funciona por causa da Foreign Key `avaliacoes.usuario_id -> usuarios.id`
       const { data: reviews, error: reviewsError } = await supabase
         .from('avaliacoes')
         .select(`
           *,
           usuarios ( nome, foto_perfil )
-        `) // Pega 'nome' e 'foto_perfil' da tabela 'usuarios'
+        `)
         .eq('tmdb_id', tmdbId)
-        .order('created_at', { ascending: false }); // Ordena pela coluna 'created_at'
+        .order('created_at', { ascending: false });
 
       if (reviewsError) {
         logError(`Erro ao buscar reviews (join) para tmdb_id ${tmdbId}`, reviewsError);
         throw reviewsError;
       }
 
-      // 3. Busca estatísticas do filme no Supabase
-      // Usa a função RPC 'get_movie_details_stats'
       const { data: statsData, error: statsError } = await supabase
         .rpc('get_movie_details_stats', { p_tmdb_id: parseInt(tmdbId) });
 
@@ -232,7 +214,6 @@ export class MovieController {
         ? statsData[0]
         : { total_reviews: 0, nota_media: null, reviews_positivas: 0, reviews_com_spoiler: 0 };
 
-      // 4. Combina tudo
       res.json({
         success: true,
         message: 'Detalhes do filme obtidos com sucesso',
@@ -258,15 +239,9 @@ export class MovieController {
   // GET /api/movies/ranking
   async getRanking(req: Request, res: Response) {
     try {
-      logInfo('🏆 BUSCANDO RANKING DOS FILMES DA COMUNIDADE PIPOQUEIRO');
-
       const limit = parseInt(req.query.limit as string) || 50;
       const minReviews = parseInt(req.query.min_reviews as string) || 3;
 
-      logInfo('Parâmetros de ranking', { limit, minReviews });
-
-      // 1. Busca o ranking (lista de tmdb_id e stats) do Supabase
-      // Usa a função RPC 'get_movie_ranking'
       logDatabase('Chamando RPC: get_movie_ranking', [minReviews, limit]);
       const { data: rankingMovies, error: rankingError } = await supabase
         .rpc('get_movie_ranking', {
@@ -279,8 +254,6 @@ export class MovieController {
         throw rankingError;
       }
 
-      logInfo(`Encontrados ${rankingMovies.length} filmes no ranking`);
-
       if (rankingMovies.length === 0) {
         return res.json({
           success: true,
@@ -289,27 +262,19 @@ export class MovieController {
         });
       }
 
-      // 2. Para cada filme do ranking, busca os detalhes completos no TMDB
       const rankingWithDetails = await Promise.all(
         rankingMovies.map(async (movieStats: any, index: number) => {
           try {
             const movieDetails = await this.tmdbService.getMovieDetails(movieStats.tmdb_id);
 
-            logInfo(`Processando filme ${index + 1}/${rankingMovies.length}`, {
-              tmdb_id: movieStats.tmdb_id,
-              title: movieDetails.title,
-              nota_media: parseFloat(movieStats.nota_media).toFixed(1)
-            });
-
-            // 3. Combina os dados do TMDB com as estatísticas do Supabase
             return {
               rank: index + 1,
               tmdb_id: movieStats.tmdb_id,
-              ...movieDetails, // Dados do TMDB
+              ...movieDetails,
               poster_url: this.tmdbService.formatPosterURL(movieDetails.poster_path),
               backdrop_url: movieDetails.backdrop_path ?
                 `https://image.tmdb.org/t/p/w1280${movieDetails.backdrop_path}` : null,
-              nossa_stats: { // Dados do Supabase (da RPC)
+              nossa_stats: {
                 total_avaliacoes: movieStats.total_avaliacoes,
                 nota_media: parseFloat(movieStats.nota_media).toFixed(1),
                 avaliacoes_positivas: movieStats.avaliacoes_positivas,
@@ -318,7 +283,6 @@ export class MovieController {
             };
           } catch (error) {
             logError(`Erro ao buscar dados do filme ${movieStats.tmdb_id}:`, error);
-            // Objeto de fallback caso o TMDB falhe para um ID específico
             return {
               rank: index + 1,
               tmdb_id: movieStats.tmdb_id,

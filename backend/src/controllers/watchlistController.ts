@@ -6,43 +6,33 @@ import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger
 export class WatchlistController {
   private tmdbService = new TMDbService();
 
-  // GET /api/watchlist - Obter lista "quero ver" do usuário
+  // GET /api/watchlist
   async getWatchlist(req: Request, res: Response) {
     try {
-      logInfo('📋 BUSCANDO LISTA QUERO VER DO USUÁRIO');
-
       const userId = (req as any).user.userId;
 
       logDatabase('supabase.from("lista_quero_ver").select()...', [userId]);
 
-      // A query do Supabase para replicar a ordenação:
-      // 1. 'prioridade' DESC (coloca 'alta' primeiro, depois 'media', depois 'baixa')
-      // 2. 'data_adicao' DESC (desempate pela data)
       const { data: watchlistItems, error } = await supabase
         .from('lista_quero_ver')
         .select('*')
         .eq('usuario_id', userId)
-        .order('prioridade', { ascending: false }) // 'alta', 'media', 'baixa'
-        .order('data_adicao', { ascending: false }); // Data mais recente
+        .order('prioridade', { ascending: false })
+        .order('data_adicao', { ascending: false });
 
       if (error) throw error;
 
-      logInfo(`Encontrados ${watchlistItems.length} itens na lista quero ver`);
-
-      // Para cada item, buscar dados do TMDB (esta lógica permanece a mesma)
       const watchlistWithDetails = await Promise.all(
         watchlistItems.map(async (item) => {
           try {
             const movieDetails = await this.tmdbService.getMovieDetails(item.tmdb_id);
             return {
-              // Dados do nosso DB
               id: item.id,
               tmdb_id: item.tmdb_id,
               prioridade: item.prioridade,
               data_adicao: item.data_adicao,
               notificar_lancamento: item.notificar_lancamento,
               onde_assistir: item.onde_assistir,
-              // Dados do filme do TMDB
               ...movieDetails,
               poster_url: this.tmdbService.formatPosterURL(movieDetails.poster_path)
             };
@@ -60,8 +50,6 @@ export class WatchlistController {
         })
       );
 
-      logSuccess(`🎉 Lista quero ver carregada com ${watchlistWithDetails.length} filmes`);
-
       res.json({
         success: true,
         message: 'Lista quero ver obtida com sucesso',
@@ -77,11 +65,9 @@ export class WatchlistController {
     }
   }
 
-  // POST /api/watchlist - Adicionar filme à lista "quero ver"
+  // POST /api/watchlist
   async addToWatchlist(req: Request, res: Response) {
     try {
-      logInfo('➕ ADICIONANDO FILME À LISTA QUERO VER');
-
       const userId = (req as any).user.userId;
       const { tmdb_id, prioridade = 'media', onde_assistir, notificar_lancamento = true } = req.body;
 
@@ -94,10 +80,6 @@ export class WatchlistController {
           message: 'TMDB ID é obrigatório'
         });
       }
-
-      // Não precisamos mais verificar antes.
-      // A constraint UNIQUE (unique_user_movie_watchlist) no Supabase
-      // já nos protege. Vamos inserir e tratar o erro se ele ocorrer.
 
       const newItem = {
         usuario_id: userId,
@@ -116,7 +98,6 @@ export class WatchlistController {
         .single();
 
       if (error) {
-        // Código 23505 = Violação de constraint de unicidade
         if (error.code === '23505') {
           logError('Filme já está na lista quero ver (erro de duplicidade)');
           return res.status(400).json({
@@ -128,7 +109,6 @@ export class WatchlistController {
       }
 
       const itemId = data.id;
-      logSuccess('🎉 FILME ADICIONADO À LISTA QUERO VER!', { itemId, tmdb_id, prioridade });
 
       res.status(201).json({
         success: true,
@@ -145,11 +125,9 @@ export class WatchlistController {
     }
   }
 
-  // DELETE /api/watchlist/:tmdb_id - Remover filme da lista "quero ver"
+  // DELETE /api/watchlist/:tmdb_id
   async removeFromWatchlist(req: Request, res: Response) {
     try {
-      logInfo('🗑️ REMOVENDO FILME DA LISTA QUERO VER');
-
       const userId = (req as any).user.userId;
       const { tmdb_id } = req.params;
 
@@ -161,11 +139,10 @@ export class WatchlistController {
         .delete()
         .eq('usuario_id', userId)
         .eq('tmdb_id', tmdb_id)
-        .select('id'); // Pede para retornar o que foi deletado
+        .select('id');
 
       if (error) throw error;
 
-      // Se 'data' for nulo ou vazio, nada foi deletado (não encontrou)
       if (!data || data.length === 0) {
         logError('Filme não encontrado na lista quero ver');
         return res.status(404).json({
@@ -190,18 +167,15 @@ export class WatchlistController {
     }
   }
 
-  // PUT /api/watchlist/:tmdb_id - Atualizar prioridade/dados de um item
+  // PUT /api/watchlist/:tmdb_id
   async updateWatchlistItem(req: Request, res: Response) {
     try {
-      logInfo('✏️ ATUALIZANDO ITEM DA LISTA QUERO VER');
-
       const userId = (req as any).user.userId;
       const { tmdb_id } = req.params;
       const { prioridade, onde_assistir, notificar_lancamento } = req.body;
 
       logInfo('Atualizando item', { userId, tmdb_id, prioridade, onde_assistir, notificar_lancamento });
 
-      // Cria um objeto dinâmico apenas com os campos que foram enviados
       const updates: any = {};
       if (prioridade !== undefined) updates.prioridade = prioridade;
       if (onde_assistir !== undefined) updates.onde_assistir = onde_assistir;
@@ -214,11 +188,10 @@ export class WatchlistController {
         .update(updates)
         .eq('usuario_id', userId)
         .eq('tmdb_id', tmdb_id)
-        .select('id'); // Pede para retornar o que foi atualizado
+        .select('id');
 
       if (error) throw error;
 
-      // Se 'data' for nulo ou vazio, nada foi atualizado (não encontrou)
       if (!data || data.length === 0) {
         logError('Item não encontrado na lista quero ver');
         return res.status(404).json({
@@ -226,8 +199,6 @@ export class WatchlistController {
           message: 'Item não encontrado na sua lista "Quero Ver"'
         });
       }
-
-      logSuccess('🎉 ITEM DA LISTA QUERO VER ATUALIZADO!', { tmdb_id });
 
       res.json({
         success: true,

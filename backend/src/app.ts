@@ -15,7 +15,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middlewares (Tudo igual)
 app.use(cors({
   origin: [
     'http://localhost:5173',
@@ -28,7 +27,6 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
-// Rotas (Tudo igual)
 app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/movies', movieRoutes);
@@ -36,7 +34,6 @@ app.use('/api/watchlist', watchlistRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/chat', chatRoutes);
 
-// Rota de teste (Tudo igual)
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
@@ -45,10 +42,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Rota de teste do banco (Atualizada para Supabase)
 app.get('/api/test-db', async (req, res) => {
   try {
-    // Usar a sintaxe do Supabase para testar
     const { data, error } = await supabase
       .from('usuarios')
       .select('id')
@@ -62,7 +57,6 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-// Middleware de erro 404 (Tudo igual)
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
@@ -70,7 +64,6 @@ app.use('*', (req, res) => {
   });
 });
 
-// Middleware de tratamento de erros (Tudo igual)
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Erro não tratado:', err);
   res.status(500).json({
@@ -79,10 +72,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-// Inicializar servidor (Simplificado)
 const startServer = () => {
   try {
-    // A conexão do Supabase é gerenciada pelo cliente, não precisamos de 'await connectDB()'
     app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
       console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
