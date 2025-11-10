@@ -53,21 +53,12 @@ pipeline {
                         stage('Test Backend') {
                             steps {
                                 dir('backend') {
-                                    echo 'Iniciando testes do backend com mocks (sem MySQL)...'
-                                    withCredentials([
-                                        string(credentialsId: 'tmdb-api-key', variable: 'TMDB_API_KEY'),
-                                        string(credentialsId: 'jwt-secret', variable: 'JWT_SECRET'),
-                                        string(credentialsId: 'openai_api_key', variable: 'OPENAI_API_KEY')
-                                    ]) {
-                                        // Configurar variáveis de ambiente para testes
-                                        sh '''
-                                            export NODE_ENV=test
-                                            export JWT_SECRET="${JWT_SECRET}"
-                                            export TMDB_API_KEY="${TMDB_API_KEY}"
-                                            npm install
-                                            npm test
-                                        '''
-                                    }
+                                    echo 'Iniciando testes do backend com mocks (sem banco de dados real)...'
+                                    sh '''
+                                        export NODE_ENV=test
+                                        npm install
+                                        npm test
+                                    '''
                                     echo 'Testes do backend finalizados com sucesso!'
                                 }
                             }
