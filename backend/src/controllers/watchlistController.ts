@@ -57,7 +57,7 @@ export class WatchlistController {
       });
 
     } catch (error) {
-      logError('❌ ERRO AO BUSCAR LISTA QUERO VER:', error);
+      logError('ERRO AO BUSCAR LISTA QUERO VER:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -117,7 +117,7 @@ export class WatchlistController {
       });
 
     } catch (error: any) {
-      logError('❌ ERRO AO ADICIONAR À LISTA QUERO VER:', error);
+      logError('ERRO AO ADICIONAR À LISTA QUERO VER:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -151,7 +151,7 @@ export class WatchlistController {
         });
       }
 
-      logSuccess('🎉 FILME REMOVIDO DA LISTA QUERO VER!', { tmdb_id });
+      logSuccess('FILME REMOVIDO DA LISTA QUERO VER!', { tmdb_id });
 
       res.json({
         success: true,
@@ -159,7 +159,7 @@ export class WatchlistController {
       });
 
     } catch (error) {
-      logError('❌ ERRO AO REMOVER DA LISTA QUERO VER:', error);
+      logError('ERRO AO REMOVER DA LISTA QUERO VER:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -206,7 +206,7 @@ export class WatchlistController {
       });
 
     } catch (error) {
-      logError('❌ ERRO AO ATUALIZAR ITEM DA LISTA QUERO VER:', error);
+      logError('ERRO AO ATUALIZAR ITEM DA LISTA QUERO VER:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'

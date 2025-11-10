@@ -49,7 +49,7 @@ export class MovieController {
       });
 
     } catch (error) {
-      console.error('Erro ao obter filmes populares:', error);
+      logError('Erro ao obter filmes populares:', error);
       res.status(500).json({
         success: false,
         message: 'Erro ao buscar filmes populares'
@@ -69,7 +69,7 @@ export class MovieController {
         data: videos
       });
     } catch (error) {
-      console.error('Erro ao obter vídeos:', error);
+      logError('Erro ao obter vídeos:', error);
       res.status(500).json({
         success: false,
         message: 'Erro ao buscar vídeos do filme'
@@ -89,7 +89,7 @@ export class MovieController {
         data: credits
       });
     } catch (error) {
-      console.error('Erro ao obter créditos:', error);
+      logError('Erro ao obter créditos:', error);
       res.status(500).json({
         success: false,
         message: 'Erro ao buscar créditos do filme'
@@ -118,7 +118,7 @@ export class MovieController {
         data: filteredAndSorted
       });
     } catch (error) {
-      console.error('Erro ao obter filmes similares:', error);
+      logError('Erro ao obter filmes similares:', error);
       res.status(500).json({
         success: false,
         message: 'Erro ao buscar filmes similares'
@@ -173,7 +173,7 @@ export class MovieController {
       });
 
     } catch (error) {
-      console.error('Erro ao buscar filmes:', error);
+      logError('Erro ao buscar filmes:', error);
       res.status(500).json({
         success: false,
         message: 'Erro ao buscar filmes'
@@ -228,7 +228,7 @@ export class MovieController {
       });
 
     } catch (error) {
-      console.error('Erro ao obter detalhes:', error);
+      logError('Erro ao obter detalhes:', error);
       res.status(500).json({
         success: false,
         message: 'Erro ao buscar detalhes do filme'
@@ -314,7 +314,7 @@ export class MovieController {
       });
 
     } catch (error) {
-      logError('❌ ERRO AO BUSCAR RANKING DA COMUNIDADE:', error);
+      logError('ERRO AO BUSCAR RANKING DA COMUNIDADE:', error);
       res.status(500).json({
         success: false,
         message: 'Erro ao buscar ranking dos filmes'

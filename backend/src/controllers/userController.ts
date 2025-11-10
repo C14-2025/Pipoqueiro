@@ -79,7 +79,7 @@ export class UserController {
       );
       logSuccess('Token JWT gerado com sucesso');
 
-      logSuccess('🎉 USUÁRIO REGISTRADO COM SUCESSO!', { ...createdUser, tokenGerado: !!token });
+      logSuccess('USUÁRIO REGISTRADO COM SUCESSO!', { ...createdUser, tokenGerado: !!token });
 
       res.status(201).json({
         success: true,
@@ -91,7 +91,7 @@ export class UserController {
       });
 
     } catch (error) {
-      logError('❌ ERRO AO REGISTRAR USUÁRIO:', error);
+      logError('ERRO AO REGISTRAR USUÁRIO:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -154,7 +154,7 @@ export class UserController {
 
       const generosFavoritos = user.generos_favoritos || [];
 
-      logSuccess('🎉 LOGIN REALIZADO COM SUCESSO!', {
+      logSuccess('LOGIN REALIZADO COM SUCESSO!', {
         userId: user.id,
         nome: user.nome,
         email: user.email,
@@ -178,7 +178,7 @@ export class UserController {
       });
 
     } catch (error) {
-      logError('❌ ERRO AO FAZER LOGIN:', error);
+      logError('ERRO AO FAZER LOGIN:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -213,7 +213,7 @@ export class UserController {
       });
 
     } catch (error) {
-      console.error('Erro ao obter perfil:', error);
+      logError('Erro ao obter perfil:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -256,7 +256,7 @@ export class UserController {
       });
 
     } catch (error) {
-      console.error('Erro ao atualizar perfil:', error);
+      logError('Erro ao atualizar perfil:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -283,7 +283,7 @@ export class UserController {
       });
 
     } catch (error) {
-      console.error('Erro ao obter estatísticas:', error);
+      logError('Erro ao obter estatísticas:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -319,7 +319,7 @@ export class UserController {
       });
 
     } catch (error) {
-      console.error('Erro ao excluir conta:', error);
+      logError('Erro ao excluir conta:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'

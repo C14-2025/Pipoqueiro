@@ -6,7 +6,7 @@ import reviewRoutes from './routes/reviews';
 import movieRoutes from './routes/movies';
 import watchlistRoutes from './routes/watchlist';
 import favoritesRoutes from './routes/favorites';
-import { requestLogger } from './middleware/logger';
+import { requestLogger, logSuccess, logError } from './middleware/logger';
 import chatRoutes from './routes/chat';
 import { supabase } from './config/database';
 
@@ -65,7 +65,7 @@ app.use('*', (req, res) => {
 });
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Erro não tratado:', err);
+  logError('Erro não tratado:', err);
   res.status(500).json({
     success: false,
     message: 'Erro interno do servidor'
@@ -75,12 +75,12 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 const startServer = () => {
   try {
     app.listen(PORT, () => {
-      console.log(`🚀 Servidor rodando na porta ${PORT}`);
-      console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
-      console.log(`📡 Supabase check: http://localhost:${PORT}/api/test-db`);
+      logSuccess(`Servidor rodando na porta ${PORT}`);
+      logSuccess(`Health check: http://localhost:${PORT}/api/health`);
+      logSuccess(`Supabase check: http://localhost:${PORT}/api/test-db`);
     });
   } catch (error) {
-    console.error('❌ Erro ao iniciar servidor:', error);
+    logError('Erro ao iniciar servidor:', error);
     process.exit(1);
   }
 };

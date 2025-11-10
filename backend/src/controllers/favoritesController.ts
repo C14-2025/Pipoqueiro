@@ -51,7 +51,7 @@ export class FavoritesController {
         data: favoritesWithDetails,
       })
     } catch (error) {
-      logError('❌ ERRO AO BUSCAR FAVORITOS:', error)
+      logError('ERRO AO BUSCAR FAVORITOS:', error)
       res.status(500).json({ success: false, message: 'Erro interno do servidor' })
     }
   }
@@ -98,7 +98,7 @@ export class FavoritesController {
         data: data?.[0],
       })
     } catch (error) {
-      logError('❌ ERRO AO ADICIONAR AOS FAVORITOS:', error)
+      logError('ERRO AO ADICIONAR AOS FAVORITOS:', error)
       res.status(500).json({ success: false, message: 'Erro interno do servidor' })
     }
   }
@@ -122,7 +122,7 @@ export class FavoritesController {
 
       res.json({ success: true, message: 'Filme removido dos favoritos com sucesso' })
     } catch (error) {
-      logError('❌ ERRO AO REMOVER FAVORITO:', error)
+      logError('ERRO AO REMOVER FAVORITO:', error)
       res.status(500).json({ success: false, message: 'Erro interno do servidor' })
     }
   }
@@ -151,7 +151,7 @@ export class FavoritesController {
         message: 'Comentário do favorito atualizado com sucesso',
       })
     } catch (error) {
-      logError('❌ ERRO AO ATUALIZAR COMENTÁRIO DO FAVORITO:', error)
+      logError('ERRO AO ATUALIZAR COMENTÁRIO DO FAVORITO:', error)
       res.status(500).json({ success: false, message: 'Erro interno do servidor' })
     }
   }
@@ -173,7 +173,7 @@ export class FavoritesController {
       const isFavorite = !!(data && data.length > 0)
       res.json({ success: true, data: { is_favorite: isFavorite } })
     } catch (error) {
-      logError('❌ ERRO AO VERIFICAR FAVORITO:', error)
+      logError('ERRO AO VERIFICAR FAVORITO:', error)
       res.status(500).json({ success: false, message: 'Erro interno do servidor' })
     }
   }
