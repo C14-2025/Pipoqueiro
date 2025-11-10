@@ -5,6 +5,8 @@ process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test_jwt_secret_key';
 process.env.TMDB_API_KEY = 'mock_tmdb_key';
 process.env.OPENAI_API_KEY = 'mock_openai_key';
+process.env.SUPABASE_URL = 'https://mock.supabase.co';
+process.env.SUPABASE_KEY = 'mock_supabase_key';
 
 const mockExecute = jest.fn();
 const mockGetConnection = jest.fn();

@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'nodejs20'
+        nodejs 'nodejs22'
     }
 
     environment {
@@ -93,7 +93,8 @@ pipeline {
                         )
                         echo '📧 Email de sucesso enviado para todos os membros!'
                     } catch (Exception e) {
-                        echo "⚠️ Erro ao enviar email: ${e.message}"
+                        echo "⚠️ Email não configurado ou erro ao enviar: ${e.message}"
+                        echo "✅ Pipeline concluído com sucesso (sem notificação por email)"
                     }
                 }
             }
@@ -132,7 +133,8 @@ pipeline {
                     )
                     echo '📧 Email de falha enviado para todos os membros!'
                 } catch (Exception e) {
-                    echo "⚠️ Erro ao enviar email: ${e.message}"
+                    echo "⚠️ Email não configurado ou erro ao enviar: ${e.message}"
+                    echo "❌ Pipeline falhou (sem notificação por email)"
                 }
             }
         }
