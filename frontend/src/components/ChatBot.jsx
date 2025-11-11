@@ -24,7 +24,6 @@ const ChatBot = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Substitua sua função handleSendMessage por esta:
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -33,21 +32,14 @@ const ChatBot = () => {
 
     const userMessage = inputMessage.trim();
     setInputMessage('');
-
-    // Adiciona a nova mensagem ao estado local
     const newMessages = [...messages, { role: 'user', content: userMessage }];
     setMessages(newMessages);
     setIsLoading(true);
 
     try {
-      // 1. PEGAR O TOKEN (do localStorage)
-      // !!! MUITO IMPORTANTE !!!
-      // Se você salvou seu token com um nome diferente no localStorage
-      // (ex: 'jwt_token' ou 'user_token'), MUDE A LINHA ABAIXO.
       const token = localStorage.getItem('token');
 
       if (!token) {
-        // Se não houver token, exibe um erro
         throw new Error("Token de autenticação não encontrado. Faça o login novamente.");
       }
 
@@ -55,13 +47,10 @@ const ChatBot = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 2. ADICIONAR O CABEÇALHO DE AUTORIZAÇÃO
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          // 3. MUDAR 'message' PARA 'prompt'
           prompt: userMessage,
-          // 4. Enviar o histórico para dar contexto ao IA
           historico: messages
         }),
       });
@@ -71,13 +60,11 @@ const ChatBot = () => {
       if (response.ok && data.success && data.data.response) {
         setMessages(prev => [...prev, { role: 'assistant', content: data.data.response }]);
       } else {
-        // Se o token for inválido (expirado), o backend pode retornar 401
         if (response.status === 401) {
           setMessages(prev => [...prev, {
             role: 'assistant',
             content: 'Sua sessão expirou. Por favor, faça o login novamente.'
           }]);
-          // TODO: Deslogar o usuário
         } else {
           setMessages(prev => [...prev, {
             role: 'assistant',
