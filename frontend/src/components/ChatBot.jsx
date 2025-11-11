@@ -24,6 +24,8 @@ const ChatBot = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Substitua sua função handleSendMessage por esta:
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
 
@@ -32,36 +34,62 @@ const ChatBot = () => {
     const userMessage = inputMessage.trim();
     setInputMessage('');
 
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    // Adiciona a nova mensagem ao estado local
+    const newMessages = [...messages, { role: 'user', content: userMessage }];
+    setMessages(newMessages);
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/api/chat/chat', {
+      // 1. PEGAR O TOKEN (do localStorage)
+      // !!! MUITO IMPORTANTE !!!
+      // Se você salvou seu token com um nome diferente no localStorage
+      // (ex: 'jwt_token' ou 'user_token'), MUDE A LINHA ABAIXO.
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        // Se não houver token, exibe um erro
+        throw new Error("Token de autenticação não encontrado. Faça o login novamente.");
+      }
+
+      const response = await fetch('http://localhost:3000/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          // 2. ADICIONAR O CABEÇALHO DE AUTORIZAÇÃO
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          message: userMessage,
-          userContext: {}
+          // 3. MUDAR 'message' PARA 'prompt'
+          prompt: userMessage,
+          // 4. Enviar o histórico para dar contexto ao IA
+          historico: messages
         }),
       });
 
       const data = await response.json();
 
-      if (data.success && data.response) {
-        setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+      if (response.ok && data.success && data.data.response) {
+        setMessages(prev => [...prev, { role: 'assistant', content: data.data.response }]);
       } else {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: 'Desculpe, tive um problema ao processar sua mensagem. Tente novamente.'
-        }]);
+        // Se o token for inválido (expirado), o backend pode retornar 401
+        if (response.status === 401) {
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: 'Sua sessão expirou. Por favor, faça o login novamente.'
+          }]);
+          // TODO: Deslogar o usuário
+        } else {
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: data.message || 'Desculpe, tive um problema ao processar sua mensagem.'
+          }]);
+        }
       }
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Ops! Não consegui me conectar ao servidor. Verifique sua conexão.'
+        content: error.message || 'Ops! Não consegui me conectar ao servidor.'
       }]);
     } finally {
       setIsLoading(false);
@@ -112,11 +140,10 @@ const ChatBot = () => {
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[75%] p-3 rounded-2xl ${
-                    msg.role === 'user'
-                      ? 'bg-[#00B5AD] text-white rounded-br-none'
-                      : 'bg-white text-[#2D3748] rounded-bl-none shadow-sm'
-                  }`}
+                  className={`max-w-[75%] p-3 rounded-2xl ${msg.role === 'user'
+                    ? 'bg-[#00B5AD] text-white rounded-br-none'
+                    : 'bg-white text-[#2D3748] rounded-bl-none shadow-sm'
+                    }`}
                 >
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                 </div>
