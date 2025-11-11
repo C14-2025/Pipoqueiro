@@ -6,11 +6,9 @@ import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger
 export class FavoritesController {
   private tmdbService = new TMDbService()
 
-  // 🔹 GET /api/favorites — Buscar filmes favoritos do usuário
+  // GET /api/favorites
   async getFavorites(req: Request, res: Response) {
     try {
-      logInfo('⭐ BUSCANDO FILMES FAVORITOS DO USUÁRIO')
-
       const userId = (req as any).user.userId
 
       logDatabase('SELECT * FROM favoritos WHERE usuario_id = ?', [userId])
@@ -22,8 +20,6 @@ export class FavoritesController {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-
-      logInfo(`Encontrados ${favorites?.length || 0} filmes favoritos`)
 
       const favoritesWithDetails = await Promise.all(
         (favorites || []).map(async (favorite) => {
@@ -49,33 +45,27 @@ export class FavoritesController {
         })
       )
 
-      logSuccess(`🎉 Favoritos carregados com ${favoritesWithDetails.length} filmes`)
-
       res.json({
         success: true,
         message: 'Filmes favoritos obtidos com sucesso',
         data: favoritesWithDetails,
       })
     } catch (error) {
-      logError('❌ ERRO AO BUSCAR FAVORITOS:', error)
+      logError('ERRO AO BUSCAR FAVORITOS:', error)
       res.status(500).json({ success: false, message: 'Erro interno do servidor' })
     }
   }
 
-  // 🔹 POST /api/favorites — Adicionar filme aos favoritos
+  // POST /api/favorites
   async addToFavorites(req: Request, res: Response) {
     try {
-      logInfo('💖 ADICIONANDO FILME AOS FAVORITOS')
-
       const userId = (req as any).user.userId
       const { tmdb_id, comentario_favorito } = req.body
 
       if (!tmdb_id) {
-        logError('TMDB ID não fornecido')
         return res.status(400).json({ success: false, message: 'TMDB ID é obrigatório' })
       }
 
-      // Verifica se já existe
       const { data: existing } = await supabase
         .from('favoritos')
         .select('id')
@@ -89,15 +79,12 @@ export class FavoritesController {
         })
       }
 
-      // Valida filme no TMDB
       try {
         await this.tmdbService.getMovieDetails(tmdb_id)
-        logInfo('Filme validado no TMDB')
       } catch {
         return res.status(404).json({ success: false, message: 'Filme não encontrado' })
       }
 
-      // Insere no Supabase
       const { data, error } = await supabase
         .from('favoritos')
         .insert([{ usuario_id: userId, tmdb_id, comentario_favorito: comentario_favorito || null }])
@@ -105,20 +92,18 @@ export class FavoritesController {
 
       if (error) throw error
 
-      logSuccess('🎉 FILME ADICIONADO AOS FAVORITOS!', { tmdb_id })
-
       res.status(201).json({
         success: true,
         message: 'Filme adicionado aos favoritos com sucesso',
         data: data?.[0],
       })
     } catch (error) {
-      logError('❌ ERRO AO ADICIONAR AOS FAVORITOS:', error)
+      logError('ERRO AO ADICIONAR AOS FAVORITOS:', error)
       res.status(500).json({ success: false, message: 'Erro interno do servidor' })
     }
   }
 
-  // 🔹 DELETE /api/favorites/:tmdb_id — Remover filme dos favoritos
+  // DELETE /api/favorites/:tmdb_id
   async removeFromFavorites(req: Request, res: Response) {
     try {
       const userId = (req as any).user.userId
@@ -137,12 +122,12 @@ export class FavoritesController {
 
       res.json({ success: true, message: 'Filme removido dos favoritos com sucesso' })
     } catch (error) {
-      logError('❌ ERRO AO REMOVER FAVORITO:', error)
+      logError('ERRO AO REMOVER FAVORITO:', error)
       res.status(500).json({ success: false, message: 'Erro interno do servidor' })
     }
   }
 
-  // 🔹 PUT /api/favorites/:tmdb_id — Atualizar comentário
+  // PUT /api/favorites/:tmdb_id
   async updateFavoriteComment(req: Request, res: Response) {
     try {
       const userId = (req as any).user.userId
@@ -166,12 +151,12 @@ export class FavoritesController {
         message: 'Comentário do favorito atualizado com sucesso',
       })
     } catch (error) {
-      logError('❌ ERRO AO ATUALIZAR COMENTÁRIO DO FAVORITO:', error)
+      logError('ERRO AO ATUALIZAR COMENTÁRIO DO FAVORITO:', error)
       res.status(500).json({ success: false, message: 'Erro interno do servidor' })
     }
   }
 
-  // 🔹 GET /api/favorites/check/:tmdb_id — Verificar se filme é favorito
+  // GET /api/favorites/check/:tmdb_id
   async checkIfFavorite(req: Request, res: Response) {
     try {
       const userId = (req as any).user.userId
@@ -188,7 +173,7 @@ export class FavoritesController {
       const isFavorite = !!(data && data.length > 0)
       res.json({ success: true, data: { is_favorite: isFavorite } })
     } catch (error) {
-      logError('❌ ERRO AO VERIFICAR FAVORITO:', error)
+      logError('ERRO AO VERIFICAR FAVORITO:', error)
       res.status(500).json({ success: false, message: 'Erro interno do servidor' })
     }
   }

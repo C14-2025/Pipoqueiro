@@ -1,7 +1,5 @@
-// src/controllers/reviewController.ts
-
 import { Request, Response } from 'express';
-import { supabase } from '../config/database'; // Ajuste o caminho
+import { supabase } from '../config/database';
 import { AvaliacaoInput } from '../types';
 import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger';
 
@@ -9,7 +7,7 @@ export class ReviewController {
 
   async criarReview(req: Request, res: Response) {
     try {
-      logInfo('⭐ INICIANDO CRIAÇÃO DE REVIEW');
+      logInfo('INICIANDO CRIAÇÃO DE REVIEW');
 
       const { tmdb_id, nota, titulo_review, comentario, spoiler = false }: AvaliacaoInput = req.body;
       const usuario_id = (req as any).user.userId;
@@ -60,12 +58,12 @@ export class ReviewController {
             message: 'Você já avaliou este filme'
           });
         }
-        logError('❌ ERRO AO CRIAR REVIEW NO SUPABASE:', error);
+        logError('ERRO AO CRIAR REVIEW NO SUPABASE:', error);
         throw error;
       }
 
       const reviewId = data.id;
-      logSuccess('🎉 REVIEW CRIADA COM SUCESSO!', { reviewId, usuario_id, tmdb_id, nota });
+      logSuccess('REVIEW CRIADA COM SUCESSO!', { reviewId, usuario_id, tmdb_id, nota });
 
       res.status(201).json({
         success: true,
@@ -74,7 +72,7 @@ export class ReviewController {
       });
 
     } catch (error: any) {
-      logError('❌ ERRO AO CRIAR REVIEW:', error);
+      logError('ERRO AO CRIAR REVIEW:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -113,7 +111,7 @@ export class ReviewController {
       });
 
     } catch (error) {
-      console.error('Erro ao obter reviews:', error);
+      logError('Erro ao obter reviews:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -142,7 +140,7 @@ export class ReviewController {
       });
 
     } catch (error) {
-      console.error('Erro ao obter minhas reviews:', error);
+      logError('Erro ao obter minhas reviews:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -194,7 +192,7 @@ export class ReviewController {
       });
 
     } catch (error) {
-      console.error('Erro ao atualizar review:', error);
+      logError('Erro ao atualizar review:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -231,7 +229,7 @@ export class ReviewController {
       });
 
     } catch (error) {
-      console.error('Erro ao excluir review:', error);
+      logError('Erro ao excluir review:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -264,7 +262,7 @@ export class ReviewController {
       });
 
     } catch (error) {
-      console.error('Erro ao curtir review:', error);
+      logError('Erro ao curtir review:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
