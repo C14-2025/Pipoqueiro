@@ -2,7 +2,7 @@
  * TESTES UNITÁRIOS - BACKEND PIPOQUEIRO
  *
  * Testes com mocks completos - não requer banco de dados real.
- * Todas as queries MySQL são simuladas usando jest.fn().
+ * Todas as queries Supabase (PostgreSQL) são simuladas usando jest.fn().
  *
  * Cobertura:
  * - UserController: 10 testes (registro, login, perfil, estatísticas, CRUD)
@@ -23,7 +23,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { describe, test, expect, beforeAll, beforeEach, jest } from '@jest/globals';
 import { auth } from '../src/utils/auth';
-import { mockExecute } from './setup';
+import { mockSupabaseFrom, mockSupabaseRpc, mockSupabaseOperation } from './setup';
 
 describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
 
@@ -37,9 +37,13 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
 
     test('deve registrar usuário e retornar JWT token', async () => {
       // Mock: Email não existe no banco
-      (mockExecute as any)
-        .mockResolvedValueOnce([[], []]) // SELECT para verificar email existente
-        .mockResolvedValueOnce([{ insertId: 1 }, []]); // INSERT do novo usuário
+      mockSupabaseOperation([], null);
+
+      // Mock: INSERT do novo usuário
+      mockSupabaseOperation(
+        { id: 1, nome: 'Alexandre Teste', email: 'teste@test.com', bio: null, foto_perfil: null, generos_favoritos: null },
+        null
+      );
 
       const userData = {
         nome: 'Alexandre Teste',
@@ -65,7 +69,7 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
 
     test('deve rejeitar registro com email duplicado', async () => {
       // Mock: Email já existe no banco
-      (mockExecute as any).mockResolvedValueOnce([[{ id: 1 }], []]);
+      mockSupabaseOperation([{ id: 1 }], null);
 
       const userData = {
         nome: 'User 1',
@@ -87,18 +91,15 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
       const senhaHash = await bcrypt.hash(senha, 10);
 
       // Mock: Usuário existe no banco
-      (mockExecute as any).mockResolvedValueOnce([
-        [{
-          id: 1,
-          nome: 'Login User',
-          email: 'login@test.com',
-          senha_hash: senhaHash,
-          bio: null,
-          foto_perfil: null,
-          generos_favoritos: null,
-        }],
-        []
-      ]);
+      mockSupabaseOperation([{
+        id: 1,
+        nome: 'Login User',
+        email: 'login@test.com',
+        senha_hash: senhaHash,
+        bio: null,
+        foto_perfil: null,
+        generos_favoritos: null,
+      }], null);
 
       const response = await request(app)
         .post('/api/users/login')
@@ -116,7 +117,7 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
 
     test('deve rejeitar login com credenciais inválidas', async () => {
       // Mock: Usuário não existe
-      (mockExecute as any).mockResolvedValueOnce([[], []]);
+      mockSupabaseOperation([], null);
 
       const response = await request(app)
         .post('/api/users/login')
@@ -138,19 +139,16 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
       );
 
       // Mock: Retornar dados do usuário
-      (mockExecute as any).mockResolvedValueOnce([
-        [{
-          id: 1,
-          nome: 'Profile User',
-          email: 'profile@test.com',
-          bio: null,
-          foto_perfil: null,
-          generos_favoritos: null,
-          data_nascimento: null,
-          created_at: new Date(),
-        }],
-        []
-      ]);
+      mockSupabaseOperation([{
+        id: 1,
+        nome: 'Profile User',
+        email: 'profile@test.com',
+        bio: null,
+        foto_perfil: null,
+        generos_favoritos: null,
+        data_nascimento: null,
+        created_at: new Date(),
+      }], null);
 
       const profileResponse = await request(app)
         .get('/api/users/perfil')
@@ -171,19 +169,14 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
       );
 
       // Mock: Estatísticas de reviews
-      (mockExecute as any)
-        .mockResolvedValueOnce([
-          [{
-            total_reviews: 5,
-            nota_media: 4.2,
-            reviews_positivas: 3
-          }],
-          []
-        ])
-        .mockResolvedValueOnce([
-          [{ filmes_na_lista: 10 }],
-          []
-        ]);
+      mockSupabaseOperation([{
+        total_reviews: 5,
+        nota_media: 4.2,
+        reviews_positivas: 3
+      }], null);
+
+      // Mock: Estatísticas de watchlist
+      mockSupabaseOperation([{ filmes_na_lista: 10 }], null);
 
       const statsResponse = await request(app)
         .get('/api/users/estatisticas')
@@ -232,7 +225,7 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
       );
 
       // Mock: Update bem-sucedido
-      (mockExecute as any).mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+      mockSupabaseOperation(null, null);
 
       const response = await request(app)
         .put('/api/users/perfil')
@@ -255,7 +248,7 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
       );
 
       // Mock: Delete bem-sucedido
-      (mockExecute as any).mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+      mockSupabaseOperation(null, null);
 
       const response = await request(app)
         .delete('/api/users/conta')
@@ -285,8 +278,8 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
     });
 
     test('deve criar review de filme com dados válidos', async () => {
-      // Mock: INSERT bem-sucedido
-      (mockExecute as any).mockResolvedValueOnce([{ insertId: 1 }, []]);
+      // Mock: INSERT bem-sucedido retornando o ID
+      mockSupabaseOperation({ id: 1 }, null);
 
       const reviewData = {
         tmdb_id: 550, // Fight Club
@@ -343,20 +336,17 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
       const tmdbId = 550;
 
       // Mock: Retornar reviews do filme
-      (mockExecute as any).mockResolvedValueOnce([
-        [{
-          id: 1,
-          usuario_id: 1,
-          tmdb_id: 550,
-          nota: 5,
-          titulo_review: 'Excelente!',
-          comentario: 'Muito bom',
-          spoiler: false,
-          nome: 'Alexandre',
-          foto_perfil: null,
-        }],
-        []
-      ]);
+      mockSupabaseOperation([{
+        id: 1,
+        usuario_id: 1,
+        tmdb_id: 550,
+        nota: 5,
+        titulo_review: 'Excelente!',
+        comentario: 'Muito bom',
+        spoiler: false,
+        nome: 'Alexandre',
+        foto_perfil: null,
+      }], null);
 
       const response = await request(app)
         .get(`/api/reviews/filme/${tmdbId}`)
@@ -368,18 +358,15 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
 
     test('deve obter reviews do usuário logado', async () => {
       // Mock: Retornar reviews do usuário
-      (mockExecute as any).mockResolvedValueOnce([
-        [{
-          id: 1,
-          usuario_id: 1,
-          tmdb_id: 550,
-          nota: 5,
-          titulo_review: 'Minha review',
-          comentario: 'Gostei muito',
-          spoiler: false,
-        }],
-        []
-      ]);
+      mockSupabaseOperation([{
+        id: 1,
+        usuario_id: 1,
+        tmdb_id: 550,
+        nota: 5,
+        titulo_review: 'Minha review',
+        comentario: 'Gostei muito',
+        spoiler: false,
+      }], null);
 
       const response = await request(app)
         .get('/api/reviews/minhas')
@@ -400,7 +387,7 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
 
     test('deve atualizar review existente', async () => {
       // Mock: Update bem-sucedido
-      (mockExecute as any).mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+      mockSupabaseOperation(null, null);
 
       const response = await request(app)
         .put('/api/reviews/1')
@@ -417,8 +404,8 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
     });
 
     test('deve rejeitar atualização de review inexistente', async () => {
-      // Mock: Nenhuma linha afetada
-      (mockExecute as any).mockResolvedValueOnce([{ affectedRows: 0 }, []]);
+      // Mock: Nenhuma linha afetada (update retorna null)
+      mockSupabaseOperation(null, null);
 
       const response = await request(app)
         .put('/api/reviews/999')
@@ -432,7 +419,7 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
 
     test('deve excluir review', async () => {
       // Mock: Delete bem-sucedido
-      (mockExecute as any).mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+      mockSupabaseOperation(null, null);
 
       const response = await request(app)
         .delete('/api/reviews/1')
@@ -445,7 +432,7 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
 
     test('deve curtir review', async () => {
       // Mock: Update de curtidas bem-sucedido
-      (mockExecute as any).mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+      mockSupabaseOperation(null, null);
 
       const response = await request(app)
         .post('/api/reviews/1/curtir')
@@ -473,13 +460,11 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
     });
 
     test('deve adicionar filme aos favoritos', async () => {
-      // Mock: Usuário com lista vazia de favoritos
-      (mockExecute as any)
-        .mockResolvedValueOnce([
-          [{ favoritos: [] }],
-          []
-        ])
-        .mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+      // Mock: Verificação se já existe (retorna vazio)
+      mockSupabaseOperation([], null);
+
+      // Mock: INSERT do favorito
+      mockSupabaseOperation({ id: 1, usuario_id: 1, tmdb_id: 550 }, null);
 
       const response = await request(app)
         .post('/api/favorites')
@@ -495,10 +480,7 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
 
     test('deve rejeitar filme duplicado nos favoritos', async () => {
       // Mock: Usuário já tem o filme nos favoritos
-      (mockExecute as any).mockResolvedValueOnce([
-        [{ favoritos: [{ tmdb_id: 550, data_adicao: '2025-01-01' }] }],
-        []
-      ]);
+      mockSupabaseOperation([{ id: 1, usuario_id: 1, tmdb_id: 550 }], null);
 
       const response = await request(app)
         .post('/api/favorites')
@@ -522,11 +504,8 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
     });
 
     test('deve obter lista de favoritos vazia', async () => {
-      // Mock: Usuário sem favoritos
-      (mockExecute as any).mockResolvedValueOnce([
-        [{ favoritos: [] }],
-        []
-      ]);
+      // Mock: Retorna array vazio de favoritos
+      mockSupabaseOperation([], null);
 
       const response = await request(app)
         .get('/api/favorites')
@@ -540,13 +519,8 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
     });
 
     test('deve remover filme dos favoritos', async () => {
-      // Mock: Usuário tem filme nos favoritos
-      (mockExecute as any)
-        .mockResolvedValueOnce([
-          [{ favoritos: [{ tmdb_id: 550, data_adicao: '2025-01-01' }] }],
-          []
-        ])
-        .mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+      // Mock: DELETE bem-sucedido
+      mockSupabaseOperation(null, null);
 
       const response = await request(app)
         .delete('/api/favorites/550')
@@ -558,11 +532,8 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
     });
 
     test('deve retornar erro ao remover filme inexistente dos favoritos', async () => {
-      // Mock: Usuário não tem esse filme nos favoritos
-      (mockExecute as any).mockResolvedValueOnce([
-        [{ favoritos: [] }],
-        []
-      ]);
+      // Mock: Nenhum registro afetado pelo DELETE
+      mockSupabaseOperation(null, { code: 'PGRST116', message: 'No rows deleted' });
 
       const response = await request(app)
         .delete('/api/favorites/999')
@@ -574,11 +545,8 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
     });
 
     test('deve verificar se filme está nos favoritos', async () => {
-      // Mock: Usuário tem o filme nos favoritos
-      (mockExecute as any).mockResolvedValueOnce([
-        [{ favoritos: [{ tmdb_id: 550, data_adicao: '2025-01-01' }] }],
-        []
-      ]);
+      // Mock: Retorna um favorito com esse tmdb_id
+      mockSupabaseOperation([{ id: 1, usuario_id: 1, tmdb_id: 550, created_at: '2025-01-01' }], null);
 
       const response = await request(app)
         .get('/api/favorites/check/550')
@@ -607,13 +575,11 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
     });
 
     test('deve adicionar filme à watchlist', async () => {
-      // Mock: Usuário com lista vazia
-      (mockExecute as any)
-        .mockResolvedValueOnce([
-          [{ lista_quero_ver: [] }],
-          []
-        ])
-        .mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+      // Mock: Verificação se já existe (retorna vazio)
+      mockSupabaseOperation([], null);
+
+      // Mock: INSERT na watchlist
+      mockSupabaseOperation({ id: 1, usuario_id: 1, tmdb_id: 550 }, null);
 
       const response = await request(app)
         .post('/api/watchlist')
@@ -629,10 +595,7 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
 
     test('deve rejeitar filme duplicado na watchlist', async () => {
       // Mock: Usuário já tem o filme na watchlist
-      (mockExecute as any).mockResolvedValueOnce([
-        [{ lista_quero_ver: [{ tmdb_id: 550, data_adicao: '2025-01-01' }] }],
-        []
-      ]);
+      mockSupabaseOperation([{ id: 1, usuario_id: 1, tmdb_id: 550 }], null);
 
       const response = await request(app)
         .post('/api/watchlist')
@@ -656,11 +619,8 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
     });
 
     test('deve obter watchlist vazia', async () => {
-      // Mock: Usuário sem watchlist
-      (mockExecute as any).mockResolvedValueOnce([
-        [{ lista_quero_ver: [] }],
-        []
-      ]);
+      // Mock: Retorna array vazio de watchlist
+      mockSupabaseOperation([], null);
 
       const response = await request(app)
         .get('/api/watchlist')
@@ -674,13 +634,8 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
     });
 
     test('deve remover filme da watchlist', async () => {
-      // Mock: Usuário tem filme na watchlist
-      (mockExecute as any)
-        .mockResolvedValueOnce([
-          [{ lista_quero_ver: [{ tmdb_id: 550, data_adicao: '2025-01-01' }] }],
-          []
-        ])
-        .mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+      // Mock: DELETE bem-sucedido
+      mockSupabaseOperation(null, null);
 
       const response = await request(app)
         .delete('/api/watchlist/550')
@@ -692,11 +647,8 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
     });
 
     test('deve retornar erro ao remover filme inexistente da watchlist', async () => {
-      // Mock: Usuário não tem esse filme na watchlist
-      (mockExecute as any).mockResolvedValueOnce([
-        [{ lista_quero_ver: [] }],
-        []
-      ]);
+      // Mock: Nenhum registro afetado pelo DELETE
+      mockSupabaseOperation(null, { code: 'PGRST116', message: 'No rows deleted' });
 
       const response = await request(app)
         .delete('/api/watchlist/999')

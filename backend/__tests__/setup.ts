@@ -8,24 +8,76 @@ process.env.OPENAI_API_KEY = 'mock_openai_key';
 process.env.SUPABASE_URL = 'https://mock.supabase.co';
 process.env.SUPABASE_KEY = 'mock_supabase_key';
 
-const mockExecute = jest.fn();
-const mockGetConnection = jest.fn();
-const mockEnd = jest.fn();
-const mockQuery = jest.fn();
+// Mock do Supabase com chainable methods
+const createMockSupabaseQuery = (mockData: any = [], mockError: any = null) => {
+  const mockQuery = {
+    select: jest.fn(),
+    insert: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    eq: jest.fn(),
+    single: jest.fn(),
+    order: jest.fn(),
+    limit: jest.fn(),
+  };
 
-const mockPool = {
-  execute: mockExecute,
-  getConnection: mockGetConnection,
-  end: mockEnd,
-  query: mockQuery,
+  // IMPORTANTE: Configurar os métodos para serem chainable E retornar promises
+  // Cada método retorna `this` para permitir encadeamento
+  mockQuery.select.mockImplementation(() => mockQuery);
+  mockQuery.insert.mockImplementation(() => mockQuery);
+  mockQuery.update.mockImplementation(() => mockQuery);
+  mockQuery.delete.mockImplementation(() => mockQuery);
+  mockQuery.eq.mockImplementation(() => mockQuery);
+  mockQuery.order.mockImplementation(() => mockQuery);
+  mockQuery.limit.mockImplementation(() => mockQuery);
+
+  // single() retorna Promise com o primeiro elemento do array, ou o objeto diretamente
+  mockQuery.single.mockImplementation(() => {
+    let singleData;
+    let singleError;
+
+    if (Array.isArray(mockData)) {
+      singleData = mockData.length > 0 ? mockData[0] : null;
+      singleError = mockData.length === 0 ? { code: 'PGRST116', message: 'No rows found' } : mockError;
+    } else {
+      // Se mockData não é array, é um objeto único (como resultado de INSERT)
+      singleData = mockData;
+      singleError = mockError;
+    }
+
+    return Promise.resolve({ data: singleData, error: singleError });
+  });
+
+  // Métodos finais que retornam Promise (quando não há .single() no final)
+  // eq(), order() e limit() também podem ser finais na cadeia, então retornam Promises
+  const finalPromise = Promise.resolve({ data: mockData, error: mockError });
+
+  // Configurar para que quando await for usado diretamente (sem .single()), retorne os dados
+  mockQuery.then = finalPromise.then.bind(finalPromise);
+  mockQuery.catch = finalPromise.catch.bind(finalPromise);
+  mockQuery.finally = finalPromise.finally.bind(finalPromise);
+
+  return mockQuery;
 };
 
-jest.mock('mysql2/promise', () => ({
-  createPool: jest.fn(() => mockPool),
-  default: {
-    createPool: jest.fn(() => mockPool),
-  },
-}), { virtual: true });
+// Função auxiliar para mockar operação do Supabase
+const mockSupabaseOperation = (data: any = null, error: any = null) => {
+  const query = createMockSupabaseQuery(data, error);
+  (mockSupabaseFrom as any).mockReturnValueOnce(query);
+  return query;
+};
+
+const mockSupabaseFrom = jest.fn();
+const mockSupabaseRpc = jest.fn().mockResolvedValue({ data: null, error: null });
+
+const mockSupabaseClient = {
+  from: mockSupabaseFrom,
+  rpc: mockSupabaseRpc,
+};
+
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => mockSupabaseClient),
+}));
 
 jest.mock('../src/services/tmdbService', () => ({
   TMDbService: jest.fn().mockImplementation(() => ({
@@ -64,4 +116,10 @@ jest.mock('../src/services/tmdbService', () => ({
   })),
 }));
 
-export { mockPool, mockExecute, mockGetConnection, mockEnd, mockQuery };
+export {
+  mockSupabaseFrom,
+  mockSupabaseRpc,
+  mockSupabaseClient,
+  createMockSupabaseQuery,
+  mockSupabaseOperation
+};
