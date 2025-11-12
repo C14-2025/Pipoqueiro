@@ -1,3 +1,5 @@
+// src/controllers/watchlistController.ts
+
 import { Request, Response } from 'express';
 import { supabase } from '../config/database';
 import { TMDbService } from '../services/tmdbService';
@@ -6,50 +8,52 @@ import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger
 export class WatchlistController {
   private tmdbService = new TMDbService();
 
-  // GET /api/watchlist
+  // GET /api/watchlist - Obter lista "quero ver"
   async getWatchlist(req: Request, res: Response) {
     try {
+      logInfo('📋 BUSCANDO LISTA QUERO VER DO USUÁRIO (JSON)');
       const userId = (req as any).user.userId;
 
-      logDatabase('supabase.from("lista_quero_ver").select()...', [userId]);
+      // 1. Busca o array de IDs da coluna 'lista_quero_ver'
+      const { data: userData, error: userError } = await supabase
+        .from('usuarios')
+        .select('lista_quero_ver')
+        .eq('id', userId)
+        .single();
 
-      const { data: watchlistItems, error } = await supabase
-        .from('lista_quero_ver')
-        .select('*')
-        .eq('usuario_id', userId)
-        .order('prioridade', { ascending: false })
-        .order('data_adicao', { ascending: false });
+      if (userError || !userData) {
+        logError('Usuário não encontrado ao buscar watchlist');
+        return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
+      }
 
-      if (error) throw error;
+      const tmdbIds: number[] = userData.lista_quero_ver || [];
+      logInfo(`Encontrados ${tmdbIds.length} IDs na lista quero ver`);
 
+      if (tmdbIds.length === 0) {
+        return res.json({
+          success: true,
+          message: 'Lista quero ver obtida com sucesso',
+          data: []
+        });
+      }
+
+      // 2. Para cada ID, busca os detalhes no TMDB
       const watchlistWithDetails = await Promise.all(
-        watchlistItems.map(async (item) => {
+        tmdbIds.map(async (id) => {
           try {
-            const movieDetails = await this.tmdbService.getMovieDetails(item.tmdb_id);
+            const movieDetails = await this.tmdbService.getMovieDetails(id);
             return {
-              id: item.id,
-              tmdb_id: item.tmdb_id,
-              prioridade: item.prioridade,
-              data_adicao: item.data_adicao,
-              notificar_lancamento: item.notificar_lancamento,
-              onde_assistir: item.onde_assistir,
               ...movieDetails,
               poster_url: this.tmdbService.formatPosterURL(movieDetails.poster_path)
             };
           } catch (error) {
-            logError(`Erro ao buscar dados do filme ${item.tmdb_id}:`, error);
-            return {
-              id: item.id,
-              tmdb_id: item.tmdb_id,
-              prioridade: item.prioridade,
-              data_adicao: item.data_adicao,
-              title: 'Filme não encontrado',
-              poster_url: null
-            };
+            logError(`Erro ao buscar dados do filme TMDB ID ${id}:`, error);
+            return { tmdb_id: id, title: 'Filme não encontrado', poster_url: null };
           }
         })
       );
 
+      logSuccess(`🎉 Lista quero ver carregada com ${watchlistWithDetails.length} filmes`);
       res.json({
         success: true,
         message: 'Lista quero ver obtida com sucesso',
@@ -57,160 +61,84 @@ export class WatchlistController {
       });
 
     } catch (error) {
-      logError('ERRO AO BUSCAR LISTA QUERO VER:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Erro interno do servidor'
-      });
+      logError('❌ ERRO AO BUSCAR LISTA QUERO VER:', error);
+      res.status(500).json({ success: false, message: 'Erro interno do servidor' });
     }
   }
 
-  // POST /api/watchlist
+  // POST /api/watchlist - Adicionar filme à lista
   async addToWatchlist(req: Request, res: Response) {
     try {
+      logInfo('➕ ADICIONANDO FILME À LISTA QUERO VER (JSON)');
       const userId = (req as any).user.userId;
-      const { tmdb_id, prioridade = 'media', onde_assistir, notificar_lancamento = true } = req.body;
-
-      logInfo('Dados recebidos', { userId, tmdb_id, prioridade, onde_assistir, notificar_lancamento });
+      const { tmdb_id } = req.body;
 
       if (!tmdb_id) {
         logError('TMDB ID não fornecido');
-        return res.status(400).json({
-          success: false,
-          message: 'TMDB ID é obrigatório'
-        });
+        return res.status(400).json({ success: false, message: 'TMDB ID é obrigatório' });
       }
 
-      const newItem = {
-        usuario_id: userId,
-        tmdb_id,
-        prioridade,
-        onde_assistir: onde_assistir || null,
-        notificar_lancamento
-      };
+      logDatabase('supabase.rpc(add_to_watchlist)', [userId, tmdb_id]);
 
-      logDatabase('supabase.from("lista_quero_ver").insert()', [newItem]);
-
-      const { data, error } = await supabase
-        .from('lista_quero_ver')
-        .insert(newItem)
-        .select('id')
-        .single();
+      // Chama a função RPC para adicionar o ID ao array JSON
+      const { data, error } = await supabase.rpc('add_to_watchlist', {
+        p_user_id: userId,
+        p_tmdb_id: tmdb_id
+      });
 
       if (error) {
-        if (error.code === '23505') {
-          logError('Filme já está na lista quero ver (erro de duplicidade)');
-          return res.status(400).json({
-            success: false,
-            message: 'Filme já está na sua lista "Quero Ver"'
-          });
-        }
+        logError('Erro ao chamar RPC add_to_watchlist', error);
         throw error;
       }
 
-      const itemId = data.id;
-
+      logSuccess('🎉 FILME ADICIONADO À LISTA QUERO VER!', { tmdb_id });
       res.status(201).json({
         success: true,
         message: 'Filme adicionado à lista "Quero Ver" com sucesso',
-        data: { id: itemId }
+        data: { nova_lista: data } // Retorna a lista atualizada
       });
 
     } catch (error: any) {
-      logError('ERRO AO ADICIONAR À LISTA QUERO VER:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Erro interno do servidor'
-      });
+      logError('❌ ERRO AO ADICIONAR À LISTA QUERO VER:', error);
+      res.status(500).json({ success: false, message: 'Erro interno do servidor' });
     }
   }
 
-  // DELETE /api/watchlist/:tmdb_id
+  // DELETE /api/watchlist/:tmdb_id - Remover filme da lista
   async removeFromWatchlist(req: Request, res: Response) {
     try {
+      logInfo('🗑️ REMOVENDO FILME DA LISTA QUERO VER (JSON)');
       const userId = (req as any).user.userId;
       const { tmdb_id } = req.params;
 
-      logInfo('Removendo filme', { userId, tmdb_id });
-      logDatabase('supabase.from("lista_quero_ver").delete()', [userId, tmdb_id]);
-
-      const { data, error } = await supabase
-        .from('lista_quero_ver')
-        .delete()
-        .eq('usuario_id', userId)
-        .eq('tmdb_id', tmdb_id)
-        .select('id');
-
-      if (error) throw error;
-
-      if (!data || data.length === 0) {
-        logError('Filme não encontrado na lista quero ver');
-        return res.status(404).json({
-          success: false,
-          message: 'Filme não encontrado na sua lista "Quero Ver"'
-        });
+      if (!tmdb_id) {
+        logError('TMDB ID não fornecido');
+        return res.status(400).json({ success: false, message: 'TMDB ID é obrigatório' });
       }
 
-      logSuccess('FILME REMOVIDO DA LISTA QUERO VER!', { tmdb_id });
+      logDatabase('supabase.rpc(remove_from_watchlist)', [userId, tmdb_id]);
 
+      // Chama a função RPC para remover o ID do array JSON
+      const { data, error } = await supabase.rpc('remove_from_watchlist', {
+        p_user_id: userId,
+        p_tmdb_id: parseInt(tmdb_id, 10)
+      });
+
+      if (error) {
+        logError('Erro ao chamar RPC remove_from_watchlist', error);
+        throw error;
+      }
+
+      logSuccess('🎉 FILME REMOVIDO DA LISTA QUERO VER!', { tmdb_id });
       res.json({
         success: true,
-        message: 'Filme removido da lista "Quero Ver" com sucesso'
+        message: 'Filme removido da lista "Quero Ver" com sucesso',
+        data: { nova_lista: data } // Retorna a lista atualizada
       });
 
     } catch (error) {
-      logError('ERRO AO REMOVER DA LISTA QUERO VER:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Erro interno do servidor'
-      });
-    }
-  }
-
-  // PUT /api/watchlist/:tmdb_id
-  async updateWatchlistItem(req: Request, res: Response) {
-    try {
-      const userId = (req as any).user.userId;
-      const { tmdb_id } = req.params;
-      const { prioridade, onde_assistir, notificar_lancamento } = req.body;
-
-      logInfo('Atualizando item', { userId, tmdb_id, prioridade, onde_assistir, notificar_lancamento });
-
-      const updates: any = {};
-      if (prioridade !== undefined) updates.prioridade = prioridade;
-      if (onde_assistir !== undefined) updates.onde_assistir = onde_assistir;
-      if (notificar_lancamento !== undefined) updates.notificar_lancamento = notificar_lancamento;
-
-      logDatabase('supabase.from("lista_quero_ver").update()', updates);
-
-      const { data, error } = await supabase
-        .from('lista_quero_ver')
-        .update(updates)
-        .eq('usuario_id', userId)
-        .eq('tmdb_id', tmdb_id)
-        .select('id');
-
-      if (error) throw error;
-
-      if (!data || data.length === 0) {
-        logError('Item não encontrado na lista quero ver');
-        return res.status(404).json({
-          success: false,
-          message: 'Item não encontrado na sua lista "Quero Ver"'
-        });
-      }
-
-      res.json({
-        success: true,
-        message: 'Item da lista "Quero Ver" atualizado com sucesso'
-      });
-
-    } catch (error) {
-      logError('ERRO AO ATUALIZAR ITEM DA LISTA QUERO VER:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Erro interno do servidor'
-      });
+      logError('❌ ERRO AO REMOVER DA LISTA QUERO VER:', error);
+      res.status(500).json({ success: false, message: 'Erro interno do servidor' });
     }
   }
 }

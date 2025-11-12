@@ -14,7 +14,5 @@ router.post('/', auth, favoritesController.addToFavorites.bind(favoritesControll
 // Remover filme dos favoritos (autenticado)
 router.delete('/:tmdb_id', auth, favoritesController.removeFromFavorites.bind(favoritesController));
 
-// Verificar se filme está nos favoritos (autenticado)
-router.get('/check/:tmdb_id', auth, favoritesController.checkIfFavorite.bind(favoritesController));
 
 export default router;
