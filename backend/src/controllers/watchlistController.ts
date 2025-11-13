@@ -37,13 +37,13 @@ export class WatchlistController {
         });
       }
 
-      // 2. Para cada ID, busca os detalhes no TMDB
       const watchlistWithDetails = await Promise.all(
         tmdbIds.map(async (id) => {
           try {
             const movieDetails = await this.tmdbService.getMovieDetails(id);
             return {
-              ...movieDetails,
+              tmdb_id: id,
+              title: movieDetails.title,
               poster_url: this.tmdbService.formatPosterURL(movieDetails.poster_path)
             };
           } catch (error) {

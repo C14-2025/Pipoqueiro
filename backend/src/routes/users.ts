@@ -191,54 +191,7 @@ router.get('/perfil', auth, userController.obterPerfil.bind(userController));
  */
 router.put('/perfil', auth, userController.atualizarPerfil.bind(userController));
 
-/**
- * @swagger
- * /api/users/estatisticas:
- *   get:
- *     summary: Obter estatísticas do usuário
- *     tags: [Usuários]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Estatísticas obtidas com sucesso
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     reviews:
- *                       type: object
- *                       properties:
- *                         total_reviews:
- *                           type: integer
- *                           example: 15
- *                         nota_media:
- *                           type: number
- *                           example: 4.2
- *                         reviews_positivas:
- *                           type: integer
- *                           example: 12
- *                     watchlist:
- *                       type: object
- *                       properties:
- *                         filmes_na_lista:
- *                           type: integer
- *                           example: 25
- *       401:
- *         description: Não autenticado
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.get('/estatisticas', auth, userController.obterEstatisticasUsuario.bind(userController));
+// Rota /estatisticas removida - não utilizada pelo frontend
 
 /**
  * @swagger

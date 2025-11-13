@@ -75,21 +75,33 @@ export class TMDbService {
     return movies.map(movie => this.normalizeMovieRating(movie));
   }
 
-  // Buscar vídeos do filme
   async getMovieVideos(tmdbId: number) {
     try {
       const response = await this.api.get(`/movie/${tmdbId}/videos`);
-      return response.data.results;
+
+      return response.data.results?.map((video: any) => ({
+        type: video.type,
+        site: video.site,
+        key: video.key,
+        name: video.name
+      })) || [];
     } catch (error) {
       throw new Error('Erro ao buscar vídeos do filme');
     }
   }
 
-  // Buscar créditos do filme (elenco e equipe)
   async getMovieCredits(tmdbId: number) {
     try {
       const response = await this.api.get(`/movie/${tmdbId}/credits`);
-      return response.data;
+
+      return {
+        cast: response.data.cast?.map((actor: any) => ({
+          id: actor.id,
+          name: actor.name,
+          character: actor.character,
+          profile_path: actor.profile_path
+        })) || []
+      };
     } catch (error) {
       throw new Error('Erro ao buscar créditos do filme');
     }

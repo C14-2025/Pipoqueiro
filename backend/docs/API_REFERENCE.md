@@ -133,29 +133,6 @@ Content-Type: application/json
 }
 ```
 
-### Estatísticas do Usuário (Requer Auth)
-```http
-GET /users/estatisticas
-Authorization: Bearer {token}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Estatísticas obtidas com sucesso",
-  "data": {
-    "reviews": {
-      "total_reviews": 15,
-      "nota_media": 4.2,
-      "reviews_positivas": 12
-    },
-    "watchlist": {
-      "filmes_na_lista": 8
-    }
-  }
-}
-```
-
 ### Excluir Conta (Requer Auth)
 ```http
 DELETE /users/conta
@@ -217,16 +194,15 @@ GET /reviews/filme/{tmdb_id}
     {
       "id": 1,
       "usuario_id": 1,
-      "tmdb_id": 550,
       "nota": 5,
       "titulo_review": "Obra-prima!",
       "comentario": "Filme incrível...",
       "spoiler": false,
-      "curtidas": 12,
       "created_at": "2025-01-01T00:00:00.000Z",
-      "updated_at": "2025-01-01T00:00:00.000Z",
-      "nome": "João Silva",
-      "foto_perfil": "https://avatar.com/joao.jpg"
+      "usuarios": {
+        "nome": "João Silva",
+        "foto_perfil": "https://avatar.com/joao.jpg"
+      }
     }
   ]
 }
@@ -245,26 +221,25 @@ Authorization: Bearer {token}
   "data": [
     {
       "id": 1,
-      "usuario_id": 1,
       "tmdb_id": 550,
       "nota": 5,
       "titulo_review": "Minha review",
       "comentario": "Gostei muito",
       "spoiler": false,
-      "curtidas": 5,
-      "created_at": "2025-01-01T00:00:00.000Z",
-      "updated_at": "2025-01-01T00:00:00.000Z"
+      "created_at": "2025-01-01T00:00:00.000Z"
     }
   ]
 }
 ```
 
-### Atualizar Review (Requer Auth)
+### Atualizar Review (Requer Auth) 🚧
 ```http
 PUT /reviews/{id}
 Authorization: Bearer {token}
 Content-Type: application/json
 ```
+**Status:** Implementada no backend, aguardando implementação no frontend
+
 **Body:**
 ```json
 {
@@ -282,11 +257,13 @@ Content-Type: application/json
 }
 ```
 
-### Excluir Review (Requer Auth)
+### Excluir Review (Requer Auth) 🚧
 ```http
 DELETE /reviews/{id}
 Authorization: Bearer {token}
 ```
+**Status:** Implementada no backend, aguardando implementação no frontend
+
 **Response:**
 ```json
 {
@@ -295,10 +272,12 @@ Authorization: Bearer {token}
 }
 ```
 
-### Curtir Review
+### Curtir Review 🚧
 ```http
 POST /reviews/{id}/curtir
 ```
+**Status:** Implementada no backend, aguardando implementação no frontend
+
 **Response:**
 ```json
 {
@@ -324,19 +303,8 @@ Authorization: Bearer {token}
   "data": [
     {
       "tmdb_id": 550,
-      "data_adicao": "2025-01-01",
-      "id": 550,
       "title": "Clube da Luta",
-      "overview": "Um funcionário...",
-      "poster_path": "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
-      "backdrop_path": "/fCayJrkfRaCRCTh8GqN30f8oyQF.jpg",
-      "release_date": "1999-10-15",
-      "vote_average": 8.4,
-      "vote_count": 26280,
-      "runtime": 139,
-      "genres": [{"id": 18, "name": "Drama"}],
-      "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
-      "backdrop_url": "https://image.tmdb.org/t/p/w1280/fCayJrkfRaCRCTh8GqN30f8oyQF.jpg"
+      "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg"
     }
   ]
 }
@@ -360,8 +328,7 @@ Content-Type: application/json
   "success": true,
   "message": "Filme adicionado à lista \"Quero Ver\" com sucesso",
   "data": {
-    "tmdb_id": 550,
-    "data_adicao": "2025-01-01"
+    "nova_lista": [550]
   }
 }
 ```
@@ -392,23 +359,12 @@ Authorization: Bearer {token}
 ```json
 {
   "success": true,
-  "message": "Filmes favoritos obtidos com sucesso",
+  "message": "Lista de favoritos obtida com sucesso",
   "data": [
     {
       "tmdb_id": 550,
-      "data_adicao": "2025-01-01",
-      "id": 550,
       "title": "Clube da Luta",
-      "overview": "Um funcionário...",
-      "poster_path": "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
-      "backdrop_path": "/fCayJrkfRaCRCTh8GqN30f8oyQF.jpg",
-      "release_date": "1999-10-15",
-      "vote_average": 8.4,
-      "vote_count": 26280,
-      "runtime": 139,
-      "genres": [{"id": 18, "name": "Drama"}],
-      "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
-      "backdrop_url": "https://image.tmdb.org/t/p/w1280/fCayJrkfRaCRCTh8GqN30f8oyQF.jpg"
+      "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg"
     }
   ]
 }
@@ -432,8 +388,7 @@ Content-Type: application/json
   "success": true,
   "message": "Filme adicionado aos favoritos com sucesso",
   "data": {
-    "tmdb_id": 550,
-    "data_adicao": "2025-01-01"
+    "nova_lista": [550]
   }
 }
 ```
@@ -486,17 +441,12 @@ GET /movies/popular?page=1
     {
       "id": 550,
       "title": "Clube da Luta",
-      "overview": "Um funcionário...",
-      "poster_path": "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
       "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
-      "backdrop_url": "https://image.tmdb.org/t/p/w1280/...",
+      "vote_average": 4.2,
       "release_date": "1999-10-15",
-      "vote_average": 8.4,
-      "vote_count": 26280,
       "nossa_stats": {
-        "total_reviews": 5,
         "nota_media": 4.6,
-        "reviews_positivas": 4
+        "total_avaliacoes": 5
       }
     }
   ]
@@ -519,19 +469,16 @@ GET /movies/ranking?limit=50&min_reviews=3
   "data": [
     {
       "rank": 1,
-      "tmdb_id": 550,
+      "id": 550,
       "title": "Clube da Luta",
       "overview": "Um funcionário...",
       "poster_url": "https://image.tmdb.org/t/p/w500/...",
-      "backdrop_url": "https://image.tmdb.org/t/p/w1280/...",
       "release_date": "1999-10-15",
       "runtime": 139,
-      "vote_average": 8.4,
+      "vote_average": 4.2,
       "nossa_stats": {
         "total_avaliacoes": 25,
-        "nota_media": "4.8",
-        "avaliacoes_positivas": 23,
-        "percentual_positivo": 92
+        "nota_media": "4.8"
       }
     }
   ],
@@ -560,14 +507,9 @@ GET /movies/search?query={termo}&page=1
     {
       "id": 550,
       "title": "Clube da Luta",
-      "overview": "Um funcionário...",
       "poster_url": "https://image.tmdb.org/t/p/w500/...",
-      "release_date": "1999-10-15",
-      "vote_average": 8.4,
-      "nossa_stats": {
-        "total_reviews": 5,
-        "nota_media": 4.6
-      }
+      "vote_average": 4.2,
+      "release_date": "1999-10-15"
     }
   ]
 }
@@ -593,7 +535,7 @@ GET /movies/{tmdb_id}
     "release_date": "1999-10-15",
     "runtime": 139,
     "genres": [{"id": 18, "name": "Drama"}],
-    "vote_average": 8.4,
+    "vote_average": 4.2,
     "vote_count": 26280,
     "reviews": [
       {
@@ -603,16 +545,15 @@ GET /movies/{tmdb_id}
         "titulo_review": "Obra-prima!",
         "comentario": "Filme incrível...",
         "spoiler": false,
-        "curtidas": 12,
-        "nome": "João Silva",
-        "foto_perfil": "https://..."
+        "created_at": "2025-01-01T00:00:00.000Z",
+        "usuarios": {
+          "nome": "João Silva",
+          "foto_perfil": "https://avatar.com/joao.jpg"
+        }
       }
     ],
     "stats": {
-      "total_reviews": 5,
-      "nota_media": 4.6,
-      "reviews_positivas": 4,
-      "reviews_com_spoiler": 1
+      "nota_media": 4.6
     }
   }
 }
@@ -629,11 +570,10 @@ GET /movies/{tmdb_id}/videos
   "message": "Vídeos obtidos com sucesso",
   "data": [
     {
-      "id": "dQw4w9WgXcQ",
-      "key": "dQw4w9WgXcQ",
-      "name": "Official Trailer",
+      "type": "Trailer",
       "site": "YouTube",
-      "type": "Trailer"
+      "key": "dQw4w9WgXcQ",
+      "name": "Official Trailer"
     }
   ]
 }
@@ -656,13 +596,6 @@ GET /movies/{tmdb_id}/credits
         "character": "Tyler Durden",
         "profile_path": "/..."
       }
-    ],
-    "crew": [
-      {
-        "id": 7467,
-        "name": "David Fincher",
-        "job": "Director"
-      }
     ]
   }
 }
@@ -681,12 +614,9 @@ GET /movies/{tmdb_id}/similar
     {
       "id": 680,
       "title": "Pulp Fiction",
-      "poster_url": "https://image.tmdb.org/t/p/w500/...",
-      "vote_average": 8.5,
-      "nossa_stats": {
-        "total_reviews": 8,
-        "nota_media": 4.7
-      }
+      "poster_path": "/...",
+      "vote_average": 4.25,
+      "release_date": "1994-10-14"
     }
   ]
 }
