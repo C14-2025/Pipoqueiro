@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { watchlistService, favoritesService, authService } from '../services/api'; 
+import { watchlistService, favoritesService, authService } from '../services/api';
 import { toast } from 'react-toastify';
 
 const UserListsContext = createContext();
@@ -7,8 +7,8 @@ const UserListsContext = createContext();
 export const useUserLists = () => useContext(UserListsContext);
 
 export const UserListsProvider = ({ children }) => {
-    const [watchlistIds, setWatchlistIds] = useState(new Set()); 
-    const [favoritesIds, setFavoritesIds] = useState(new Set()); 
+    const [watchlistIds, setWatchlistIds] = useState(new Set());
+    const [favoritesIds, setFavoritesIds] = useState(new Set());
     const [loading, setLoading] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(authService.isAuthenticated());
 
@@ -62,19 +62,18 @@ export const UserListsProvider = ({ children }) => {
         const tmdbIdInt = parseInt(tmdbId);
         if (isNaN(tmdbIdInt)) return false;
 
-        const [, setter, service] = isFavorite 
+        const [currentIds, setter, service] = isFavorite 
             ? [favoritesIds, setFavoritesIds, favoritesService]
             : [watchlistIds, setWatchlistIds, watchlistService];
         
-        let isRemoving = false;
-        setter((currentIds) => {
-            const newSet = new Set(currentIds);
-            if (currentIds.has(tmdbIdInt)) {
+        const isRemoving = currentIds.has(tmdbIdInt);
+
+        setter((prevIds) => {
+            const newSet = new Set(prevIds);
+            if (isRemoving) {
                 newSet.delete(tmdbIdInt);
-                isRemoving = true;
             } else {
                 newSet.add(tmdbIdInt);
-                isRemoving = false; 
             }
             return newSet;
         });
@@ -90,14 +89,14 @@ export const UserListsProvider = ({ children }) => {
             console.error(`Erro ao alternar lista (${isFavorite ? 'Favorites' : 'Watchlist'}):`, error);
             toast.error('Erro ao atualizar sua lista. Tente novamente.');
             
-            setter((currentIds) => {
-              const newSet = new Set(currentIds);
-              if (isRemoving) {
-                newSet.add(tmdbIdInt);
-              } else {
-                newSet.delete(tmdbIdInt);
-              }
-              return newSet;
+            setter((prevIds) => {
+                const newSet = new Set(prevIds);
+                if (isRemoving) {
+                    newSet.add(tmdbIdInt);
+                } else {
+                    newSet.delete(tmdbIdInt);
+                }
+                return newSet;
             });
             return false;
         }

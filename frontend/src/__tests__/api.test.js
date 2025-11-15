@@ -67,15 +67,16 @@ describe('API Services', () => {
     expect(profile).toEqual(mockUser);
   });
   
+  // CORRIGIDO AQUI
   it('deve atualizar o perfil do usuário', async () => {
     const userData = { name: 'Usuário Atualizado' };
-    const mockUser = { id: 1, name: 'Usuário Atualizado' };
-    axios.put.mockResolvedValueOnce({ data: { data: mockUser } });
+    const mockResponse = { success: true, message: 'Perfil atualizado com sucesso' };
+    axios.put.mockResolvedValueOnce({ data: mockResponse });
     
     const result = await authService.updateProfile(userData);
 
     expect(axios.put).toHaveBeenCalledWith('/users/perfil', userData);
-    expect(result).toEqual(mockUser);
+    expect(result).toEqual(mockResponse);
   });
 
   it('deve realizar o logout do usuário', () => {
@@ -86,13 +87,14 @@ describe('API Services', () => {
 
   // --- Testes de ReviewService ---
   
+  // CORRIGIDO AQUI
   it('deve buscar as avaliações de um filme', async () => {
     const mockReviews = [{ id: 1, comment: 'Ótimo!' }];
     axios.get.mockResolvedValueOnce({ data: { data: mockReviews } });
     
     const reviews = await reviewService.getMovieReviews(123);
 
-    expect(axios.get).toHaveBeenCalledWith('/reviews/filme/123');
+    expect(axios.get).toHaveBeenCalledWith('/reviews/filme/123', { params: { spoiler: false } });
     expect(reviews).toEqual(mockReviews);
   });
   
