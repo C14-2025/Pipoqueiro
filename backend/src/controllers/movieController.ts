@@ -19,21 +19,24 @@ export class MovieController {
 
           if (error) {
             logError(`Erro RPC get_movie_details_stats (popular) para tmdb_id ${movie.id}`, error);
+            return {
+              ...movie,
+              poster_url: this.tmdbService.formatPosterURL(movie.poster_path),
+              nossa_stats: { total_reviews: 0, nota_media: null, reviews_positivas: 0 }
+            };
           }
 
           const stats = (statsData && statsData.length > 0)
             ? statsData[0]
-            : { total_reviews: 0, nota_media: null };
+            : { total_reviews: 0, nota_media: null, reviews_positivas: 0 };
 
           return {
-            id: movie.id,
-            title: movie.title,
+            ...movie,
             poster_url: this.tmdbService.formatPosterURL(movie.poster_path),
-            vote_average: movie.vote_average,
-            release_date: movie.release_date,
             nossa_stats: {
+              total_reviews: stats.total_reviews,
               nota_media: stats.nota_media,
-              total_avaliacoes: stats.total_reviews || 0
+              reviews_positivas: stats.reviews_positivas
             }
           };
         })
@@ -107,14 +110,7 @@ export class MovieController {
           const scoreA = a.vote_average * Math.log(a.vote_count + 1);
           const scoreB = b.vote_average * Math.log(b.vote_count + 1);
           return scoreB - scoreA;
-        })
-        .map((movie: any) => ({
-          id: movie.id,
-          title: movie.title,
-          poster_path: movie.poster_path,
-          vote_average: movie.vote_average,
-          release_date: movie.release_date
-        }));
+        });
 
       res.json({
         success: true,
@@ -144,13 +140,31 @@ export class MovieController {
 
       const tmdbMovies = await this.tmdbService.searchMovies(query as string, parseInt(page as string));
 
-      const moviesWithStats = tmdbMovies.map((movie: any) => ({
-        id: movie.id,
-        title: movie.title,
-        poster_url: this.tmdbService.formatPosterURL(movie.poster_path),
-        vote_average: movie.vote_average,
-        release_date: movie.release_date
-      }));
+      const moviesWithStats = await Promise.all(
+        tmdbMovies.map(async (movie: any) => {
+          const { data: statsData, error } = await supabase
+            .rpc('get_movie_search_stats', { p_tmdb_id: movie.id });
+
+          if (error) {
+            logError(`Erro RPC get_movie_search_stats para tmdb_id ${movie.id}`, error);
+            return {
+              ...movie,
+              poster_url: this.tmdbService.formatPosterURL(movie.poster_path),
+              nossa_stats: { total_reviews: 0, nota_media: null }
+            };
+          }
+
+          const stats = (statsData && statsData.length > 0)
+            ? statsData[0]
+            : { total_reviews: 0, nota_media: null };
+
+          return {
+            ...movie,
+            poster_url: this.tmdbService.formatPosterURL(movie.poster_path),
+            nossa_stats: stats
+          };
+        })
+      );
 
       res.json({
         success: true,
@@ -209,9 +223,7 @@ export class MovieController {
           backdrop_url: movieDetails.backdrop_path ?
             `https://image.tmdb.org/t/p/w1280${movieDetails.backdrop_path}` : null,
           reviews: reviews || [],
-          stats: {
-            nota_media: stats.nota_media
-          }
+          stats: stats
         }
       });
 
@@ -257,24 +269,31 @@ export class MovieController {
 
             return {
               rank: index + 1,
-              id: movieStats.tmdb_id,
+              tmdb_id: movieStats.tmdb_id,
               ...movieDetails,
               poster_url: this.tmdbService.formatPosterURL(movieDetails.poster_path),
+              backdrop_url: movieDetails.backdrop_path ?
+                `https://image.tmdb.org/t/p/w1280${movieDetails.backdrop_path}` : null,
               nossa_stats: {
                 total_avaliacoes: movieStats.total_avaliacoes,
-                nota_media: parseFloat(movieStats.nota_media).toFixed(1)
+                nota_media: parseFloat(movieStats.nota_media).toFixed(1),
+                avaliacoes_positivas: movieStats.avaliacoes_positivas,
+                percentual_positivo: Math.round((movieStats.avaliacoes_positivas / movieStats.total_avaliacoes) * 100)
               }
             };
           } catch (error) {
             logError(`Erro ao buscar dados do filme ${movieStats.tmdb_id}:`, error);
             return {
               rank: index + 1,
-              id: movieStats.tmdb_id,
+              tmdb_id: movieStats.tmdb_id,
               title: 'Filme não encontrado',
               poster_url: null,
+              backdrop_url: null,
               nossa_stats: {
                 total_avaliacoes: movieStats.total_avaliacoes,
-                nota_media: parseFloat(movieStats.nota_media).toFixed(1)
+                nota_media: parseFloat(movieStats.nota_media).toFixed(1),
+                avaliacoes_positivas: movieStats.avaliacoes_positivas,
+                percentual_positivo: Math.round((movieStats.avaliacoes_positivas / movieStats.total_avaliacoes) * 100)
               }
             };
           }

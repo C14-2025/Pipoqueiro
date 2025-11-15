@@ -90,13 +90,7 @@ export class ReviewController {
       let query = supabase
         .from('avaliacoes')
         .select(`
-          id,
-          usuario_id,
-          nota,
-          titulo_review,
-          comentario,
-          spoiler,
-          created_at,
+          *,
           usuarios ( nome, foto_perfil )
         `)
         .eq('tmdb_id', tmdb_id);
@@ -133,7 +127,7 @@ export class ReviewController {
 
       const { data, error } = await supabase
         .from('avaliacoes')
-        .select('id, tmdb_id, nota, titulo_review, comentario, spoiler, created_at')
+        .select('*')
         .eq('usuario_id', usuario_id)
         .order('created_at', { ascending: false });
 
