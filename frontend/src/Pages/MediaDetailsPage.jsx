@@ -3,7 +3,17 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { movieService, reviewService, authService } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import MovieCard from '../components/MovieCard';
-import { BsStarFill, BsStar, BsBookmarkPlus, BsHeart, BsHeartFill, BsBookmarkFill, BsPlayFill } from 'react-icons/bs';
+import {
+  BsStarFill,
+  BsStar,
+  BsBookmarkPlus,
+  BsHeart,
+  BsHeartFill,
+  BsBookmarkFill,
+  BsPlayFill,
+  BsTrash,
+  BsPencilSquare,
+} from 'react-icons/bs';
 import { useUserLists } from '../context/UserListsContext';
 import { toast } from 'react-toastify';
 
@@ -44,8 +54,15 @@ const StarRating = ({ rating }) => (
   </div>
 );
 
-const ReviewCard = ({ review }) => {
+const ReviewCard = ({ review, user, onReviewUpdate }) => {
   const [showSpoiler, setShowSpoiler] = useState(!review.spoiler);
+  const isOwner = user && review.usuario_id === user.id;
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedRating, setEditedRating] = useState(review.nota);
+  const [editedText, setEditedText] = useState(review.comentario);
+  const [editedSpoiler, setEditedSpoiler] = useState(review.spoiler);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getAvatarUrl = (name) => {
     const seed = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -54,6 +71,41 @@ const ReviewCard = ({ review }) => {
 
   const userName = review.usuarios?.nome || review.usuario_nome || review.nome || 'Anônimo';
   const userRating = review.nota || review.rating || 0;
+
+  // MODIFICADO AQUI: Deleta direto sem confirmação
+  const handleDelete = async () => {
+    try {
+      await reviewService.deleteReview(review.id);
+      toast.success('Review excluída com sucesso!');
+      if (onReviewUpdate) onReviewUpdate();
+    } catch (error) {
+      toast.error('Erro ao excluir a review. Tente novamente.');
+      console.error("Erro ao deletar review:", error);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!editedRating || !editedText.trim()) {
+      toast.warn('Por favor, adicione uma nota e um comentário.');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const reviewData = {
+        nota: editedRating,
+        comentario: editedText,
+        spoiler: editedSpoiler,
+      };
+      await reviewService.updateReview(review.id, reviewData);
+      toast.success('Review atualizada com sucesso!');
+      setIsEditing(false);
+      if (onReviewUpdate) onReviewUpdate();
+    } catch (error) {
+      toast.error('Erro ao atualizar a review. Tente novamente.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-lg">
@@ -65,56 +117,140 @@ const ReviewCard = ({ review }) => {
         />
         <div className="flex-1">
           <h4 className="font-bold text-[#2D3748]">{userName}</h4>
-          <StarRating rating={userRating} />
+          {!isEditing && <StarRating rating={userRating} />}
         </div>
-        <div className="text-right">
-          <div className="text-xl font-bold text-[#00B5AD]">
-            {userRating}/5
-          </div>
-        </div>
-      </div>
-      {review.titulo_review && (
-        <h5 className="font-bold text-[#2D3748] mt-3 mb-1">{review.titulo_review}</h5>
-      )}
-      
-      <div className="relative">
-        <p 
-          className={`text-[#A0AEC0] text-sm leading-relaxed transition-all duration-300 ${
-            showSpoiler ? 'filter-none' : 'filter blur-md'
-          }`}
-        >
-          {review.comentario || review.text}
-        </p>
 
-        {review.spoiler && !showSpoiler && (
-          <div 
-            className="absolute inset-0 flex items-center justify-center rounded-lg cursor-pointer"
-            onClick={() => setShowSpoiler(true)}
-          >
-            <button className="bg-[#FF8C42] text-white font-bold py-2 px-4 rounded-full shadow-lg hover:opacity-90 transition-opacity flex items-center gap-2 cursor-pointer">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-              </svg>
-              Mostrar Spoiler
+        {isOwner && !isEditing && (
+          <div className="flex gap-3 mx-4">
+            <button
+              onClick={() => setIsEditing(true)}
+              title="Editar Review"
+              className="text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
+            >
+              <BsPencilSquare className="w-5 h-5" />
             </button>
+            <button
+              onClick={handleDelete}
+              title="Apagar Review"
+              className="text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+            >
+              <BsTrash className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
+        {!isEditing && (
+          <div className="text-right">
+            <div className="text-xl font-bold text-[#00B5AD]">
+              {userRating}/5
+            </div>
           </div>
         )}
       </div>
 
-      {review.spoiler ? (
-        <div className="mt-3 text-xs text-yellow-700 bg-yellow-100 px-2 py-1 rounded-full inline-block">
-          ⚠️ Contém spoilers
-          {showSpoiler && (
-            <button 
-              onClick={() => setShowSpoiler(false)} 
-              className="ml-2 text-yellow-800 hover:text-yellow-900 font-semibold cursor-pointer"
+      {isEditing ? (
+        <div className="mt-4 space-y-3">
+          <div>
+            <label className="block text-sm font-semibold text-[#2D3748] mb-1">
+              Sua nota:
+            </label>
+            <InteractiveStarRating
+              rating={editedRating}
+              onRatingChange={setEditedRating}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor={`edit-text-${review.id}`}
+              className="block text-sm font-semibold text-[#2D3748] mb-1"
             >
-              (Esconder)
+              Comentário:
+            </label>
+            <textarea
+              id={`edit-text-${review.id}`}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B5AD] bg-[#F4F6F8] transition"
+              rows="3"
+              value={editedText}
+              onChange={(e) => setEditedText(e.target.value)}
+              disabled={isSubmitting}
+            />
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id={`edit-spoiler-${review.id}`}
+              checked={editedSpoiler}
+              onChange={(e) => setEditedSpoiler(e.target.checked)}
+              disabled={isSubmitting}
+              className="h-4 w-4 text-[#FF8C42] border-gray-300 rounded focus:ring-[#FF8C42] disabled:opacity-50"
+            />
+            <label
+              htmlFor={`edit-spoiler-${review.id}`}
+              className="ml-2 text-sm font-medium text-yellow-700 cursor-pointer"
+            >
+              ⚠️ Marcar como spoiler
+            </label>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={() => setIsEditing(false)}
+              disabled={isSubmitting}
+              className="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-full hover:bg-gray-300 transition-colors disabled:opacity-50"
+            >
+              Cancelar
             </button>
-          )}
+            <button
+              onClick={handleUpdate}
+              disabled={isSubmitting || !editedRating || !editedText.trim()}
+              className="bg-[#FF8C42] text-white font-bold py-2 px-4 rounded-full hover:opacity-80 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? 'Salvando...' : 'Salvar'}
+            </button>
+          </div>
         </div>
-      ) : null}
+      ) : (
+        <>
+          {review.titulo_review && (
+            <h5 className="font-bold text-[#2D3748] mt-3 mb-1">{review.titulo_review}</h5>
+          )}
+          <div className="relative">
+            <p
+              className={`text-[#A0AEC0] text-sm leading-relaxed transition-all duration-300 ${
+                showSpoiler ? 'filter-none' : 'filter blur-md'
+              }`}
+            >
+              {review.comentario || review.text}
+            </p>
+            {review.spoiler && !showSpoiler && (
+              <div
+                className="absolute inset-0 flex items-center justify-center rounded-lg cursor-pointer"
+                onClick={() => setShowSpoiler(true)}
+              >
+                <button className="bg-[#FF8C42] text-white font-bold py-2 px-4 rounded-full shadow-lg hover:opacity-90 transition-opacity flex items-center gap-2 cursor-pointer">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                  </svg>
+                  Mostrar Spoiler
+                </button>
+              </div>
+            )}
+          </div>
+          {review.spoiler ? (
+            <div className="mt-3 text-xs text-yellow-700 bg-yellow-100 px-2 py-1 rounded-full inline-block">
+              ⚠️ Contém spoilers
+              {showSpoiler && (
+                <button
+                  onClick={() => setShowSpoiler(false)}
+                  className="ml-2 text-yellow-800 hover:text-yellow-900 font-semibold cursor-pointer"
+                >
+                  (Esconder)
+                </button>
+              )}
+            </div>
+          ) : null}
+        </>
+      )}
     </div>
   );
 };
@@ -430,7 +566,7 @@ const MediaDetailsPage = () => {
                           ✓ Você já avaliou este filme.
                         </p>
                         <p className="text-[#A0AEC0] mt-2">
-                          Sua avaliação está visível na seção "Avaliações da Comunidade" abaixo.
+                          Você pode editar ou apagar sua avaliação na seção "Avaliações da Comunidade" abaixo.
                         </p>
                       </div>
                     );
@@ -506,7 +642,12 @@ const MediaDetailsPage = () => {
                 </h2>
                 <div className="space-y-4">
                   {movie.reviews.map((review) => (
-                    <ReviewCard key={review.id} review={review} />
+                    <ReviewCard
+                      key={review.id}
+                      review={review}
+                      user={user}
+                      onReviewUpdate={() => loadMovieData(parseInt(id))}
+                    />
                   ))}
                 </div>
               </div>

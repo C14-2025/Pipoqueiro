@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
 import UserProfilePage from '../Pages/UserProfilePage';
-import { authService, reviewService } from '../services/api';
+import { authService, reviewService, favoritesService, movieService } from '../services/api';
 
 jest.mock('../services/api');
 
@@ -11,6 +11,9 @@ const mockProfileData = {
   nome: 'Jordan Santos',
   email: 'jordan.santos@exemplo.com',
   created_at: new Date().toISOString(),
+  data_nascimento: '1990-01-01T00:00:00.000Z',
+  generos_favoritos: ['ação', 'drama', 'comédia'],
+  bio: 'Esta é uma bio de teste.',
 };
 
 const mockReviewsData = [
@@ -19,18 +22,25 @@ const mockReviewsData = [
   { id: 3, tmdb_id: 157336, nota: 5, comentario: 'Obra-prima da ficção científica.', filme: { title: 'Interestelar' } },
 ];
 
+const mockMovieDetails = {
+  title: 'Filme Mockado',
+  poster_url: 'https://via.placeholder.com/90x135?text=Mock',
+};
+
 describe('Página: UserProfilePage', () => {
   
   beforeEach(() => {
     jest.clearAllMocks();
 
     authService.isAuthenticated.mockReturnValue(true);
+    
+    authService.getProfile.mockResolvedValue(mockProfileData);
+    reviewService.getMyReviews.mockResolvedValue(mockReviewsData);
+    favoritesService.getFavorites.mockResolvedValue([]); 
+    movieService.getMovieDetails.mockResolvedValue(mockMovieDetails);
   });
 
   it('deve exibir o nome e o email do usuário', async () => {
-    authService.getProfile.mockResolvedValue(mockProfileData);
-    reviewService.getMyReviews.mockResolvedValue(mockReviewsData);
-    
     render(<BrowserRouter><UserProfilePage /></BrowserRouter>);
 
     expect(await screen.findByRole('heading', { name: 'Jordan Santos' })).toBeInTheDocument();
@@ -38,9 +48,6 @@ describe('Página: UserProfilePage', () => {
   });
 
   it('deve exibir as estatísticas do usuário', async () => {
-    authService.getProfile.mockResolvedValue(mockProfileData);
-    reviewService.getMyReviews.mockResolvedValue(mockReviewsData);
-
     render(<BrowserRouter><UserProfilePage /></BrowserRouter>);
 
     const reviewsLabel = await screen.findByText('Críticas Publicadas');
@@ -52,9 +59,6 @@ describe('Página: UserProfilePage', () => {
   });
 
   it('deve renderizar a lista de avaliações do usuário', async () => {
-    authService.getProfile.mockResolvedValue(mockProfileData);
-    reviewService.getMyReviews.mockResolvedValue(mockReviewsData);
-
     render(<BrowserRouter><UserProfilePage /></BrowserRouter>);
 
     expect(await screen.findByText(/Final controverso, mas a jornada foi épica./i)).toBeInTheDocument();
