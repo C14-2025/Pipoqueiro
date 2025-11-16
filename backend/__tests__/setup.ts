@@ -1,21 +1,17 @@
-/// <reference types="node" />
+// @ts-nocheck
 import { jest } from '@jest/globals';
-import dotenv from 'dotenv';
-import path from 'path';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 
-// Carrega variáveis de ambiente do .env.test se existir, senão usa valores mock
 const envTestPath = path.resolve(__dirname, '../.env.test');
 try {
   dotenv.config({ path: envTestPath });
-  console.log('✅ Variáveis carregadas de .env.test');
+  console.log('[TEST] Variables loaded from .env.test');
 } catch (error) {
-  console.log('⚠️ .env.test não encontrado, usando valores mock hardcoded');
+  console.log('[TEST] .env.test not found, using hardcoded mock values');
 }
 
-// Define NODE_ENV como test (sobrescreve qualquer valor do .env.test)
 process.env.NODE_ENV = 'test';
-
-// Garante que variáveis obrigatórias existem (fallback para valores mock)
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_key';
 process.env.TMDB_API_KEY = process.env.TMDB_API_KEY || 'mock_tmdb_key';
 process.env.OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'mock_openai_key';
@@ -23,9 +19,11 @@ process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://mock.supabase.co
 process.env.SUPABASE_KEY = process.env.SUPABASE_KEY || 'mock_supabase_key';
 process.env.PORT = process.env.PORT || '3000';
 
-// Mock do Supabase com chainable methods
-const createMockSupabaseQuery = (mockData: any = [], mockError: any = null) => {
-  const mockQuery = {
+const mockSupabaseFrom: any = jest.fn();
+const mockSupabaseRpc: any = jest.fn().mockResolvedValue({ data: null, error: null });
+
+const createMockSupabaseQuery = (mockData: any = [], mockError: any = null): any => {
+  const mockQuery: any = {
     select: jest.fn(),
     insert: jest.fn(),
     update: jest.fn(),
@@ -36,8 +34,6 @@ const createMockSupabaseQuery = (mockData: any = [], mockError: any = null) => {
     limit: jest.fn(),
   };
 
-  // IMPORTANTE: Configurar os métodos para serem chainable E retornar promises
-  // Cada método retorna `this` para permitir encadeamento
   mockQuery.select.mockImplementation(() => mockQuery);
   mockQuery.insert.mockImplementation(() => mockQuery);
   mockQuery.update.mockImplementation(() => mockQuery);
@@ -46,7 +42,6 @@ const createMockSupabaseQuery = (mockData: any = [], mockError: any = null) => {
   mockQuery.order.mockImplementation(() => mockQuery);
   mockQuery.limit.mockImplementation(() => mockQuery);
 
-  // single() retorna Promise com o primeiro elemento do array, ou o objeto diretamente
   mockQuery.single.mockImplementation(() => {
     let singleData;
     let singleError;
@@ -55,7 +50,6 @@ const createMockSupabaseQuery = (mockData: any = [], mockError: any = null) => {
       singleData = mockData.length > 0 ? mockData[0] : null;
       singleError = mockData.length === 0 ? { code: 'PGRST116', message: 'No rows found' } : mockError;
     } else {
-      // Se mockData não é array, é um objeto único (como resultado de INSERT)
       singleData = mockData;
       singleError = mockError;
     }
@@ -63,11 +57,8 @@ const createMockSupabaseQuery = (mockData: any = [], mockError: any = null) => {
     return Promise.resolve({ data: singleData, error: singleError });
   });
 
-  // Métodos finais que retornam Promise (quando não há .single() no final)
-  // eq(), order() e limit() também podem ser finais na cadeia, então retornam Promises
   const finalPromise = Promise.resolve({ data: mockData, error: mockError });
 
-  // Configurar para que quando await for usado diretamente (sem .single()), retorne os dados
   mockQuery.then = finalPromise.then.bind(finalPromise);
   mockQuery.catch = finalPromise.catch.bind(finalPromise);
   mockQuery.finally = finalPromise.finally.bind(finalPromise);
@@ -76,22 +67,19 @@ const createMockSupabaseQuery = (mockData: any = [], mockError: any = null) => {
 };
 
 // Função auxiliar para mockar operação do Supabase
-const mockSupabaseOperation = (data: any = null, error: any = null) => {
+const mockSupabaseOperation = (data: any = null, error: any = null): any => {
   const query = createMockSupabaseQuery(data, error);
-  (mockSupabaseFrom as any).mockReturnValueOnce(query);
+  mockSupabaseFrom.mockReturnValueOnce(query);
   return query;
 };
 
-const mockSupabaseFrom = jest.fn();
-const mockSupabaseRpc = jest.fn().mockResolvedValue({ data: null, error: null });
-
-const mockSupabaseClient = {
+const mockSupabaseClient: any = {
   from: mockSupabaseFrom,
   rpc: mockSupabaseRpc,
 };
 
 jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => mockSupabaseClient),
+  createClient: jest.fn(() => mockSupabaseClient) as any,
 }));
 
 jest.mock('../src/services/tmdbService', () => ({
