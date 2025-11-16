@@ -1,12 +1,27 @@
 /// <reference types="node" />
 import { jest } from '@jest/globals';
+import dotenv from 'dotenv';
+import path from 'path';
 
+// Carrega variáveis de ambiente do .env.test se existir, senão usa valores mock
+const envTestPath = path.resolve(__dirname, '../.env.test');
+try {
+  dotenv.config({ path: envTestPath });
+  console.log('✅ Variáveis carregadas de .env.test');
+} catch (error) {
+  console.log('⚠️ .env.test não encontrado, usando valores mock hardcoded');
+}
+
+// Define NODE_ENV como test (sobrescreve qualquer valor do .env.test)
 process.env.NODE_ENV = 'test';
-process.env.JWT_SECRET = 'test_jwt_secret_key';
-process.env.TMDB_API_KEY = 'mock_tmdb_key';
-process.env.OPENAI_API_KEY = 'mock_openai_key';
-process.env.SUPABASE_URL = 'https://mock.supabase.co';
-process.env.SUPABASE_KEY = 'mock_supabase_key';
+
+// Garante que variáveis obrigatórias existem (fallback para valores mock)
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_key';
+process.env.TMDB_API_KEY = process.env.TMDB_API_KEY || 'mock_tmdb_key';
+process.env.OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'mock_openai_key';
+process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://mock.supabase.co';
+process.env.SUPABASE_KEY = process.env.SUPABASE_KEY || 'mock_supabase_key';
+process.env.PORT = process.env.PORT || '3000';
 
 // Mock do Supabase com chainable methods
 const createMockSupabaseQuery = (mockData: any = [], mockError: any = null) => {

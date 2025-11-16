@@ -12,15 +12,23 @@ pipeline {
 
     stages {
 
-        stage('Build') {
+        stage('Build e Test') {
             parallel {
                 stage('Frontend') {
                     stages {
+                        stage('Install Frontend') {
+                            steps {
+                                dir('frontend') {
+                                    echo 'Instalando dependencias do frontend...'
+                                    sh 'npm ci --prefer-offline --no-audit'
+                                    echo 'Dependencias instaladas!'
+                                }
+                            }
+                        }
                         stage('Build Frontend') {
                             steps {
                                 dir('frontend') {
                                     echo 'Iniciando build do frontend...'
-                                    sh 'npm install'
                                     sh 'npm run build'
                                     echo 'Build do frontend finalizado com sucesso!'
                                 }
@@ -30,7 +38,6 @@ pipeline {
                             steps {
                                 dir('frontend') {
                                     echo 'Iniciando testes do frontend...'
-                                    sh 'npm install'
                                     sh 'npm test'
                                     echo 'Testes do frontend finalizados com sucesso!'
                                 }
@@ -40,11 +47,19 @@ pipeline {
                 }
                 stage('Backend') {
                     stages {
+                        stage('Install Backend') {
+                            steps {
+                                dir('backend') {
+                                    echo 'Instalando dependencias do backend...'
+                                    sh 'npm ci --prefer-offline --no-audit'
+                                    echo 'Dependencias instaladas!'
+                                }
+                            }
+                        }
                         stage('Build Backend') {
                             steps {
                                 dir('backend') {
                                     echo 'Iniciando build do backend...'
-                                    sh 'npm install'
                                     sh 'npm run build'
                                     echo 'Build do backend finalizado com sucesso!'
                                 }
@@ -55,8 +70,11 @@ pipeline {
                                 dir('backend') {
                                     echo 'Iniciando testes do backend com mocks (sem banco de dados real)...'
                                     sh '''
+                                        # Usa .env.test automaticamente (testes usam mocks)
+                                        cp .env.test .env 2>/dev/null || true
+
+                                        # Define NODE_ENV e roda testes
                                         export NODE_ENV=test
-                                        npm install
                                         npm test
                                     '''
                                     echo 'Testes do backend finalizados com sucesso!'
@@ -68,34 +86,34 @@ pipeline {
             }
         }
 
-        stage('Notificação por Email') {
+        stage('Notificacao Simulada') {
             steps {
                 script {
-                    try {
-                        mail (
-                            subject: "✅ Pipeline Pipoqueiro - Build #${BUILD_NUMBER} Sucesso",
-                            body: """
-                                Pipeline Executado com Sucesso!
-
-                                Projeto: ${JOB_NAME}
-                                Build: #${BUILD_NUMBER}
-                                Branch: ${GIT_BRANCH}
-                                Duração: ${currentBuild.durationString}
-                                Status: SUCCESS
-
-                                Resumo:
-                                - Frontend: Build e testes concluídos
-                                - Backend: Build e testes concluídos
-
-                                Ver detalhes: ${BUILD_URL}
-                            """,
-                            to: "${TEAM_EMAILS}"
-                        )
-                        echo '📧 Email de sucesso enviado para todos os membros!'
-                    } catch (Exception e) {
-                        echo "⚠️ Email não configurado ou erro ao enviar: ${e.message}"
-                        echo "✅ Pipeline concluído com sucesso (sem notificação por email)"
-                    }
+                    echo '=========================================='
+                    echo 'SIMULACAO DE NOTIFICACAO POR EMAIL'
+                    echo '=========================================='
+                    echo ''
+                    echo "Para: ${TEAM_EMAILS}"
+                    echo "Assunto: Pipeline Pipoqueiro - Build #${BUILD_NUMBER} Sucesso"
+                    echo ''
+                    echo '--- Corpo do Email ---'
+                    echo 'Pipeline Executado com Sucesso!'
+                    echo ''
+                    echo "Projeto: ${JOB_NAME}"
+                    echo "Build: #${BUILD_NUMBER}"
+                    echo "Branch: ${env.GIT_BRANCH ?: 'N/A'}"
+                    echo "Duracao: ${currentBuild.durationString}"
+                    echo 'Status: SUCCESS'
+                    echo ''
+                    echo 'Resumo:'
+                    echo '- Frontend: Build e testes concluidos'
+                    echo '- Backend: Build e testes concluidos'
+                    echo ''
+                    echo "Ver detalhes: ${BUILD_URL}"
+                    echo '--- Fim do Email ---'
+                    echo ''
+                    echo 'Email simulado com sucesso (nao enviado de fato)'
+                    echo '=========================================='
                 }
             }
         }
@@ -103,39 +121,42 @@ pipeline {
 
     post {
         always {
+            echo '=========================================='
             echo 'Pipeline finalizado!'
+            echo '=========================================='
         }
         success {
-            echo '✅ Build e testes concluídos com sucesso!'
+            echo 'Build e testes concluidos com sucesso!'
         }
         failure {
-            echo '❌ Build ou testes falharam. Verifique os logs.'
+            echo 'Build ou testes falharam. Verifique os logs.'
             script {
-                try {
-                    mail (
-                        subject: "❌ Pipeline Pipoqueiro - Build #${BUILD_NUMBER} Falhou",
-                        body: """
-                            Pipeline Falhou!
-
-                            Projeto: ${JOB_NAME}
-                            Build: #${BUILD_NUMBER}
-                            Branch: ${GIT_BRANCH}
-                            Duração: ${currentBuild.durationString}
-                            Status: FAILURE
-
-                            Ação Necessária:
-                            O build ou os testes falharam. Por favor, verifique os logs para mais detalhes.
-
-                            Ver Logs: ${BUILD_URL}
-                            Console Output: ${BUILD_URL}console
-                        """,
-                        to: "${TEAM_EMAILS}"
-                    )
-                    echo '📧 Email de falha enviado para todos os membros!'
-                } catch (Exception e) {
-                    echo "⚠️ Email não configurado ou erro ao enviar: ${e.message}"
-                    echo "❌ Pipeline falhou (sem notificação por email)"
-                }
+                echo ''
+                echo '=========================================='
+                echo 'SIMULACAO DE EMAIL DE FALHA'
+                echo '=========================================='
+                echo ''
+                echo "Para: ${TEAM_EMAILS}"
+                echo "Assunto: Pipeline Pipoqueiro - Build #${BUILD_NUMBER} Falhou"
+                echo ''
+                echo '--- Corpo do Email ---'
+                echo 'Pipeline Falhou!'
+                echo ''
+                echo "Projeto: ${JOB_NAME}"
+                echo "Build: #${BUILD_NUMBER}"
+                echo "Branch: ${env.GIT_BRANCH ?: 'N/A'}"
+                echo "Duracao: ${currentBuild.durationString}"
+                echo 'Status: FAILURE'
+                echo ''
+                echo 'Acao Necessaria:'
+                echo 'O build ou os testes falharam. Por favor, verifique os logs para mais detalhes.'
+                echo ''
+                echo "Ver Logs: ${BUILD_URL}"
+                echo "Console Output: ${BUILD_URL}console"
+                echo '--- Fim do Email ---'
+                echo ''
+                echo 'Email de falha simulado (nao enviado de fato)'
+                echo '=========================================='
             }
         }
     }

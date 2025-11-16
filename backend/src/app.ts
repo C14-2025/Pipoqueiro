@@ -93,6 +93,9 @@ const startServer = () => {
   }
 };
 
-startServer();
+// Só inicia o servidor se não estiver em modo de teste
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}
 
 export default app;

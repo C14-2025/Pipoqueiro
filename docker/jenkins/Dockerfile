@@ -23,7 +23,14 @@ RUN jenkins-plugin-cli --plugins \
     mailer \
     github \
     github-branch-source \
-    blueocean
+    blueocean \
+    configuration-as-code
+
+# Copiar configuracao JCasC
+COPY --chown=jenkins:jenkins jenkins.yaml /var/jenkins_home/casc_configs/jenkins.yaml
+
+# Definir variavel de ambiente para JCasC
+ENV CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/jenkins.yaml
 
 USER jenkins
 
