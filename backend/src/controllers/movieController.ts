@@ -105,7 +105,7 @@ export class MovieController {
       const similar = await this.tmdbService.getSimilarMovies(tmdbId, page);
 
       const filteredAndSorted = similar
-        .filter((movie: any) => movie.vote_average >= 6.0 && movie.vote_count >= 100)
+        .filter((movie: any) => movie.vote_average >= 3.0 && movie.vote_count >= 100)
         .sort((a: any, b: any) => {
           const scoreA = a.vote_average * Math.log(a.vote_count + 1);
           const scoreB = b.vote_average * Math.log(b.vote_count + 1);

@@ -16,7 +16,7 @@ export class TMDbService {
   async getPopularMovies(page = 1) {
     try {
       const response = await this.api.get('/movie/popular', { params: { page } });
-      return response.data.results;
+      return this.normalizeMoviesRating(response.data.results);
     } catch (error) {
       throw new Error('Erro ao buscar filmes populares');
     }
@@ -28,7 +28,7 @@ export class TMDbService {
       const response = await this.api.get('/search/movie', {
         params: { query, page }
       });
-      return response.data.results;
+      return this.normalizeMoviesRating(response.data.results);
     } catch (error) {
       throw new Error('Erro ao buscar filmes');
     }
@@ -38,7 +38,7 @@ export class TMDbService {
   async getMovieDetails(tmdbId: number) {
     try {
       const response = await this.api.get(`/movie/${tmdbId}`);
-      return response.data;
+      return this.normalizeMovieRating(response.data);
     } catch (error) {
       throw new Error('Erro ao buscar detalhes');
     }
@@ -52,6 +52,27 @@ export class TMDbService {
   formatBackdropURL(path: string | null) {
     if (!path) return null;
     return `https://image.tmdb.org/t/p/w1280${path}`;
+  }
+
+  // Converte nota do TMDB (0-10) para escala Pipoqueiro (0-5)
+  normalizeRating(tmdbRating: number): number {
+    return parseFloat((tmdbRating / 2).toFixed(1));
+  }
+
+  // Normaliza as notas de um filme
+  normalizeMovieRating(movie: any) {
+    if (movie.vote_average !== undefined) {
+      return {
+        ...movie,
+        vote_average: this.normalizeRating(movie.vote_average)
+      };
+    }
+    return movie;
+  }
+
+  // Normaliza as notas de uma lista de filmes
+  normalizeMoviesRating(movies: any[]) {
+    return movies.map(movie => this.normalizeMovieRating(movie));
   }
 
   // Buscar vídeos do filme
@@ -80,7 +101,7 @@ export class TMDbService {
       const response = await this.api.get(`/movie/${tmdbId}/similar`, {
         params: { page }
       });
-      return response.data.results;
+      return this.normalizeMoviesRating(response.data.results);
     } catch (error) {
       throw new Error('Erro ao buscar filmes similares');
     }

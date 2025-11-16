@@ -1,0 +1,13 @@
+jenkins:
+  systemMessage: "Jenkins do Pipoqueiro - Pre-configurado automaticamente"
+
+tool:
+  nodejs:
+    installations:
+      - name: "nodejs22"
+        properties:
+          - installSource:
+              installers:
+                - nodeJSInstaller:
+                    id: "22.12.0"
+                    npmPackagesRefreshHours: 72

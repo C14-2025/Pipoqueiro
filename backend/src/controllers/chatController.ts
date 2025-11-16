@@ -31,8 +31,8 @@ export class ChatController {
   // POST /api/chat
   async handleChatMessage(req: Request, res: Response) {
     try {
-      logInfo('💬 NOVA MENSAGEM PARA O CHAT');
-      const { prompt, historico } = req.body; // Pega a mensagem do usuário
+      logInfo('NOVA MENSAGEM PARA O CHAT');
+      const { prompt, historico } = req.body;
       const userId = (req as any).user.userId; // ID do usuário logado
 
       if (!process.env.OPENAI_API_KEY) {
@@ -57,22 +57,22 @@ export class ChatController {
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
         {
           role: 'system',
-          content: systemPrompt, // A regra-mestra!
+          content: systemPrompt,
         },
         // TODO: Você pode adicionar o histórico da conversa aqui
-        // ...(historico || []), 
+        // ...(historico || []),
         {
           role: 'user',
-          content: prompt, // A pergunta atual do usuário
+          content: prompt,
         },
       ];
 
       // Chama a API da OpenAI
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-3.5-turbo', // Modelo rápido e eficiente
+        model: 'gpt-3.5-turbo',
         messages: messages,
-        max_tokens: 200, // Limita o tamanho da resposta
-        temperature: 0.7, // Um bom balanço de criatividade
+        max_tokens: 200,
+        temperature: 0.7,
       });
 
       const aiResponse = completion.choices[0].message?.content;
@@ -82,12 +82,12 @@ export class ChatController {
         success: true,
         message: 'Resposta gerada',
         data: {
-          response: aiResponse || 'Não consegui pensar em nada... 😅'
+          response: aiResponse || 'Não consegui pensar em nada.'
         }
       });
 
     } catch (error) {
-      logError('❌ ERRO AO PROCESSAR CHAT:', error);
+      logError('ERRO AO PROCESSAR CHAT:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao processar chat'

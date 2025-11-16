@@ -11,7 +11,7 @@ export class WatchlistController {
   // GET /api/watchlist - Obter lista "quero ver"
   async getWatchlist(req: Request, res: Response) {
     try {
-      logInfo('📋 BUSCANDO LISTA QUERO VER DO USUÁRIO (JSON)');
+      logInfo('BUSCANDO LISTA QUERO VER DO USUÁRIO');
       const userId = (req as any).user.userId;
 
       // 1. Busca o array de IDs da coluna 'lista_quero_ver'
@@ -53,7 +53,7 @@ export class WatchlistController {
         })
       );
 
-      logSuccess(`🎉 Lista quero ver carregada com ${watchlistWithDetails.length} filmes`);
+      logSuccess(`Lista quero ver carregada com ${watchlistWithDetails.length} filmes`);
       res.json({
         success: true,
         message: 'Lista quero ver obtida com sucesso',
@@ -61,7 +61,7 @@ export class WatchlistController {
       });
 
     } catch (error) {
-      logError('❌ ERRO AO BUSCAR LISTA QUERO VER:', error);
+      logError('ERRO AO BUSCAR LISTA QUERO VER:', error);
       res.status(500).json({ success: false, message: 'Erro interno do servidor' });
     }
   }
@@ -69,7 +69,7 @@ export class WatchlistController {
   // POST /api/watchlist - Adicionar filme à lista
   async addToWatchlist(req: Request, res: Response) {
     try {
-      logInfo('➕ ADICIONANDO FILME À LISTA QUERO VER (JSON)');
+      logInfo('ADICIONANDO FILME À LISTA QUERO VER');
       const userId = (req as any).user.userId;
       const { tmdb_id } = req.body;
 
@@ -91,7 +91,7 @@ export class WatchlistController {
         throw error;
       }
 
-      logSuccess('🎉 FILME ADICIONADO À LISTA QUERO VER!', { tmdb_id });
+      logSuccess('FILME ADICIONADO À LISTA QUERO VER', { tmdb_id });
       res.status(201).json({
         success: true,
         message: 'Filme adicionado à lista "Quero Ver" com sucesso',
@@ -99,7 +99,7 @@ export class WatchlistController {
       });
 
     } catch (error: any) {
-      logError('❌ ERRO AO ADICIONAR À LISTA QUERO VER:', error);
+      logError('ERRO AO ADICIONAR À LISTA QUERO VER:', error);
       res.status(500).json({ success: false, message: 'Erro interno do servidor' });
     }
   }
@@ -107,7 +107,7 @@ export class WatchlistController {
   // DELETE /api/watchlist/:tmdb_id - Remover filme da lista
   async removeFromWatchlist(req: Request, res: Response) {
     try {
-      logInfo('🗑️ REMOVENDO FILME DA LISTA QUERO VER (JSON)');
+      logInfo('REMOVENDO FILME DA LISTA QUERO VER');
       const userId = (req as any).user.userId;
       const { tmdb_id } = req.params;
 
@@ -129,7 +129,7 @@ export class WatchlistController {
         throw error;
       }
 
-      logSuccess('🎉 FILME REMOVIDO DA LISTA QUERO VER!', { tmdb_id });
+      logSuccess('FILME REMOVIDO DA LISTA QUERO VER', { tmdb_id });
       res.json({
         success: true,
         message: 'Filme removido da lista "Quero Ver" com sucesso',
@@ -137,7 +137,7 @@ export class WatchlistController {
       });
 
     } catch (error) {
-      logError('❌ ERRO AO REMOVER DA LISTA QUERO VER:', error);
+      logError('ERRO AO REMOVER DA LISTA QUERO VER:', error);
       res.status(500).json({ success: false, message: 'Erro interno do servidor' });
     }
   }

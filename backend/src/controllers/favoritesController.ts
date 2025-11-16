@@ -11,7 +11,7 @@ export class FavoritesController {
   // GET /api/favorites - Obter lista de favoritos
   async getFavorites(req: Request, res: Response) {
     try {
-      logInfo('❤️ BUSCANDO FAVORITOS DO USUÁRIO (JSON)');
+      logInfo('BUSCANDO FAVORITOS DO USUÁRIO');
       const userId = (req as any).user.userId;
 
       // 1. Busca o array de IDs da coluna 'favoritos'
@@ -53,7 +53,7 @@ export class FavoritesController {
         })
       );
 
-      logSuccess(`🎉 Favoritos carregados com ${favoritesWithDetails.length} filmes`);
+      logSuccess(`Favoritos carregados com ${favoritesWithDetails.length} filmes`);
       res.json({
         success: true,
         message: 'Lista de favoritos obtida com sucesso',
@@ -61,7 +61,7 @@ export class FavoritesController {
       });
 
     } catch (error) {
-      logError('❌ ERRO AO BUSCAR FAVORITOS:', error);
+      logError('ERRO AO BUSCAR FAVORITOS:', error);
       res.status(500).json({ success: false, message: 'Erro interno do servidor' });
     }
   }
@@ -69,7 +69,7 @@ export class FavoritesController {
   // POST /api/favorites - Adicionar filme aos favoritos
   async addToFavorites(req: Request, res: Response) {
     try {
-      logInfo('❤️ ADICIONANDO FILME AOS FAVORITOS (JSON)');
+      logInfo('ADICIONANDO FILME AOS FAVORITOS');
       const userId = (req as any).user.userId;
       const { tmdb_id } = req.body;
 
@@ -91,7 +91,7 @@ export class FavoritesController {
         throw error;
       }
 
-      logSuccess('🎉 FILME ADICIONADO AOS FAVORITOS!', { tmdb_id });
+      logSuccess('FILME ADICIONADO AOS FAVORITOS', { tmdb_id });
       res.status(201).json({
         success: true,
         message: 'Filme adicionado aos favoritos com sucesso',
@@ -99,7 +99,7 @@ export class FavoritesController {
       });
 
     } catch (error: any) {
-      logError('❌ ERRO AO ADICIONAR AOS FAVORITOS:', error);
+      logError('ERRO AO ADICIONAR AOS FAVORITOS:', error);
       res.status(500).json({ success: false, message: 'Erro interno do servidor' });
     }
   }
@@ -107,7 +107,7 @@ export class FavoritesController {
   // DELETE /api/favorites/:tmdb_id - Remover filme dos favoritos
   async removeFromFavorites(req: Request, res: Response) {
     try {
-      logInfo('💔 REMOVENDO FILME DOS FAVORITOS (JSON)');
+      logInfo('REMOVENDO FILME DOS FAVORITOS');
       const userId = (req as any).user.userId;
       const { tmdb_id } = req.params;
 
@@ -129,7 +129,7 @@ export class FavoritesController {
         throw error;
       }
 
-      logSuccess('🎉 FILME REMOVIDO DOS FAVORITOS!', { tmdb_id });
+      logSuccess('FILME REMOVIDO DOS FAVORITOS', { tmdb_id });
       res.json({
         success: true,
         message: 'Filme removido dos favoritos com sucesso',
@@ -137,7 +137,7 @@ export class FavoritesController {
       });
 
     } catch (error) {
-      logError('❌ ERRO AO REMOVER DOS FAVORITOS:', error);
+      logError('ERRO AO REMOVER DOS FAVORITOS:', error);
       res.status(500).json({ success: false, message: 'Erro interno do servidor' });
     }
   }

@@ -182,3 +182,164 @@ describe('🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB', () => {
     expect(movie1.popularity).toBeGreaterThan(movie2.popularity);
   });
 });
+
+// ==================== TESTES DE ROTAS MOVIES - 7 TESTES ====================
+import request from 'supertest';
+import app from '../src/app';
+import jwt from 'jsonwebtoken';
+import { mockSupabaseRpc, mockSupabaseOperation } from './setup';
+
+describe('🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES', () => {
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('GET /api/movies/popular - deve obter filmes populares com estatísticas', async () => {
+    // Mock: RPC get_movie_details_stats retorna estatísticas
+    mockSupabaseRpc.mockResolvedValue({
+      data: [{
+        total_reviews: 10,
+        nota_media: 4.5,
+        reviews_positivas: 8
+      }],
+      error: null
+    });
+
+    const response = await request(app)
+      .get('/api/movies/popular?page=1')
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toBe('Filmes populares obtidos com sucesso');
+    expect(response.body.data).toBeInstanceOf(Array);
+    expect(response.body.data[0]).toHaveProperty('nossa_stats');
+  });
+
+  test('GET /api/movies/ranking - deve obter ranking da comunidade', async () => {
+    // Mock: RPC get_movie_ranking retorna ranking
+    mockSupabaseRpc.mockResolvedValue({
+      data: [{
+        tmdb_id: 550,
+        total_avaliacoes: 15,
+        nota_media: 4.8,
+        avaliacoes_positivas: 14
+      }],
+      error: null
+    });
+
+    const response = await request(app)
+      .get('/api/movies/ranking?limit=50&min_reviews=3')
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toContain('filmes da comunidade Pipoqueiro');
+    expect(response.body.data).toBeInstanceOf(Array);
+    expect(response.body.meta).toBeDefined();
+    expect(response.body.meta.min_reviews_required).toBe(3);
+  });
+
+  test('GET /api/movies/search - deve buscar filmes por query', async () => {
+    // Mock: RPC get_movie_search_stats retorna estatísticas
+    mockSupabaseRpc.mockResolvedValue({
+      data: [{
+        total_reviews: 5,
+        nota_media: 4.2
+      }],
+      error: null
+    });
+
+    const response = await request(app)
+      .get('/api/movies/search?query=batman&page=1')
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toBe('Busca realizada com sucesso');
+    expect(response.body.data).toBeInstanceOf(Array);
+  });
+
+  test('GET /api/movies/search - deve rejeitar busca sem query', async () => {
+    const response = await request(app)
+      .get('/api/movies/search')
+      .expect(400);
+
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toBe('Parâmetro de busca é obrigatório');
+  });
+
+  test('GET /api/movies/:tmdbId - deve obter detalhes do filme com reviews', async () => {
+    const tmdbId = 550;
+
+    // Mock: SELECT reviews com JOIN de usuários
+    mockSupabaseOperation([{
+      id: 1,
+      tmdb_id: 550,
+      nota: 5,
+      titulo_review: 'Excelente!',
+      comentario: 'Muito bom',
+      usuarios: {
+        nome: 'Otávio',
+        foto_perfil: null
+      }
+    }], null);
+
+    // Mock: RPC get_movie_details_stats
+    mockSupabaseRpc.mockResolvedValue({
+      data: [{
+        total_reviews: 10,
+        nota_media: 4.5,
+        reviews_positivas: 8,
+        reviews_com_spoiler: 2
+      }],
+      error: null
+    });
+
+    const response = await request(app)
+      .get(`/api/movies/${tmdbId}`)
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toBe('Detalhes do filme obtidos com sucesso');
+    expect(response.body.data).toHaveProperty('reviews');
+    expect(response.body.data).toHaveProperty('stats');
+    expect(response.body.data).toHaveProperty('poster_url');
+  });
+
+  test('GET /api/movies/:tmdbId/videos - deve obter vídeos/trailers do filme', async () => {
+    const tmdbId = 550;
+
+    const response = await request(app)
+      .get(`/api/movies/${tmdbId}/videos`)
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toBe('Vídeos obtidos com sucesso');
+    expect(response.body.data).toBeDefined();
+  });
+
+  test('GET /api/movies/:tmdbId/credits - deve obter elenco e equipe do filme', async () => {
+    const tmdbId = 550;
+
+    const response = await request(app)
+      .get(`/api/movies/${tmdbId}/credits`)
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toBe('Créditos obtidos com sucesso');
+    expect(response.body.data).toBeDefined();
+    expect(response.body.data).toHaveProperty('cast');
+    expect(response.body.data).toHaveProperty('crew');
+  });
+
+  test('GET /api/movies/:tmdbId/similar - deve obter filmes similares filtrados', async () => {
+    const tmdbId = 550;
+
+    const response = await request(app)
+      .get(`/api/movies/${tmdbId}/similar?page=1`)
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toBe('Filmes similares obtidos com sucesso');
+    expect(response.body.data).toBeInstanceOf(Array);
+  });
+});
