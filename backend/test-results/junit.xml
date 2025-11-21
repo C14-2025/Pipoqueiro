@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Backend Tests" tests="72" failures="0" errors="0" time="5.543">
+  <testsuite name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)" errors="0" failures="0" skipped="0" timestamp="2025-11-21T03:03:19" time="3.688" tests="36">
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve registrar usuário e retornar JWT token" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve registrar usuário e retornar JWT token" time="0.306">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve rejeitar registro com email duplicado" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve rejeitar registro com email duplicado" time="0.037">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve fazer login com credenciais válidas" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve fazer login com credenciais válidas" time="0.237">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve rejeitar login com credenciais inválidas" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve rejeitar login com credenciais inválidas" time="0.048">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve obter perfil do usuário autenticado" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve obter perfil do usuário autenticado" time="0.034">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve obter estatísticas do usuário" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve obter estatísticas do usuário" time="0.051">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve validar campos obrigatórios no registro" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve validar campos obrigatórios no registro" time="0.052">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve criptografar senha com bcrypt de forma segura" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve criptografar senha com bcrypt de forma segura" time="0.287">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve atualizar perfil do usuário" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve atualizar perfil do usuário" time="0.027">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve excluir conta do usuário" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › USER CONTROLLER - Funcionalidade Real deve excluir conta do usuário" time="0.038">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve criar review de filme com dados válidos" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve criar review de filme com dados válidos" time="0.039">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve validar nota entre 1 e 5" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve validar nota entre 1 e 5" time="0.04">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve validar campos obrigatórios na review" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve validar campos obrigatórios na review" time="0.058">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve obter reviews de um filme específico" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve obter reviews de um filme específico" time="0.036">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve obter reviews do usuário logado" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve obter reviews do usuário logado" time="0.033">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve rejeitar acesso a reviews sem token" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve rejeitar acesso a reviews sem token" time="0.032">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve atualizar review existente" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve atualizar review existente" time="0.027">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve rejeitar atualização de review inexistente" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve rejeitar atualização de review inexistente" time="0.029">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve excluir review" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve excluir review" time="0.036">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve curtir review" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › REVIEW CONTROLLER - Funcionalidade Real deve curtir review" time="0.03">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › FAVORITES CONTROLLER - Funcionalidade Real deve adicionar filme aos favoritos" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › FAVORITES CONTROLLER - Funcionalidade Real deve adicionar filme aos favoritos" time="0.035">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › FAVORITES CONTROLLER - Funcionalidade Real deve rejeitar filme duplicado nos favoritos" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › FAVORITES CONTROLLER - Funcionalidade Real deve rejeitar filme duplicado nos favoritos" time="0.038">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › FAVORITES CONTROLLER - Funcionalidade Real deve validar tmdb_id obrigatório ao adicionar" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › FAVORITES CONTROLLER - Funcionalidade Real deve validar tmdb_id obrigatório ao adicionar" time="0.031">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › FAVORITES CONTROLLER - Funcionalidade Real deve obter lista de favoritos vazia" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › FAVORITES CONTROLLER - Funcionalidade Real deve obter lista de favoritos vazia" time="0.028">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › FAVORITES CONTROLLER - Funcionalidade Real deve remover filme dos favoritos" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › FAVORITES CONTROLLER - Funcionalidade Real deve remover filme dos favoritos" time="0.032">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › FAVORITES CONTROLLER - Funcionalidade Real deve retornar erro ao remover filme inexistente dos favoritos" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › FAVORITES CONTROLLER - Funcionalidade Real deve retornar erro ao remover filme inexistente dos favoritos" time="0.042">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › WATCHLIST CONTROLLER - Funcionalidade Real deve adicionar filme à watchlist" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › WATCHLIST CONTROLLER - Funcionalidade Real deve adicionar filme à watchlist" time="0.056">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › WATCHLIST CONTROLLER - Funcionalidade Real deve rejeitar filme duplicado na watchlist" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › WATCHLIST CONTROLLER - Funcionalidade Real deve rejeitar filme duplicado na watchlist" time="0.033">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › WATCHLIST CONTROLLER - Funcionalidade Real deve validar tmdb_id obrigatório ao adicionar" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › WATCHLIST CONTROLLER - Funcionalidade Real deve validar tmdb_id obrigatório ao adicionar" time="0.034">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › WATCHLIST CONTROLLER - Funcionalidade Real deve obter watchlist vazia" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › WATCHLIST CONTROLLER - Funcionalidade Real deve obter watchlist vazia" time="0.03">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › WATCHLIST CONTROLLER - Funcionalidade Real deve remover filme da watchlist" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › WATCHLIST CONTROLLER - Funcionalidade Real deve remover filme da watchlist" time="0.034">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › WATCHLIST CONTROLLER - Funcionalidade Real deve retornar erro ao remover filme inexistente da watchlist" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › WATCHLIST CONTROLLER - Funcionalidade Real deve retornar erro ao remover filme inexistente da watchlist" time="0.043">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › SEGURANÇA - Testes Críticos deve rejeitar acesso sem token JWT" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › SEGURANÇA - Testes Críticos deve rejeitar acesso sem token JWT" time="0.029">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › SEGURANÇA - Testes Críticos deve rejeitar token JWT inválido" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › SEGURANÇA - Testes Críticos deve rejeitar token JWT inválido" time="0.033">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › SEGURANÇA - Testes Críticos deve validar e decodificar token JWT com mock do middleware" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › SEGURANÇA - Testes Críticos deve validar e decodificar token JWT com mock do middleware" time="0.004">
+    </testcase>
+    <testcase classname="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › HEALTH CHECK - Sistema deve responder ao health check" name="ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS) › HEALTH CHECK - Sistema deve responder ao health check" time="0.029">
+    </testcase>
+  </testsuite>
+  <testsuite name="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB" errors="0" failures="0" skipped="0" timestamp="2025-11-21T03:03:22" time="0.699" tests="22">
+    <testcase classname="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testFormatPosterURL - deve gerar URLs corretas para diferentes tamanhos" name="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testFormatPosterURL - deve gerar URLs corretas para diferentes tamanhos" time="0.002">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testFormatPosterURLNulo - deve fornecer placeholder para posters ausentes" name="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testFormatPosterURLNulo - deve fornecer placeholder para posters ausentes" time="0.002">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testMockMovieData - deve validar estrutura de dados mockados" name="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testMockMovieData - deve validar estrutura de dados mockados" time="0.002">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testArrayValidation - deve validar arrays de filmes mockados" name="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testArrayValidation - deve validar arrays de filmes mockados" time="0.003">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testMovieSearchLogic - deve simular lógica de busca" name="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testMovieSearchLogic - deve simular lógica de busca" time="0.002">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testPaginationLogic - deve simular lógica de paginação" name="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testPaginationLogic - deve simular lógica de paginação" time="0.001">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testMovieDetailsStructure - deve validar estrutura de detalhes" name="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testMovieDetailsStructure - deve validar estrutura de detalhes" time="0.008">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testEmptySearchResults - deve lidar com resultados vazios" name="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testEmptySearchResults - deve lidar com resultados vazios" time="0.002">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testSpecialCharacters - deve validar processamento de caracteres especiais" name="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testSpecialCharacters - deve validar processamento de caracteres especiais" time="0.002">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testRatingValidation - deve validar notas de filmes" name="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testRatingValidation - deve validar notas de filmes" time="0.001">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testDateFormatValidation - deve validar formato de datas" name="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testDateFormatValidation - deve validar formato de datas" time="0.002">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testGenreArrayValidation - deve validar arrays de gêneros" name="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testGenreArrayValidation - deve validar arrays de gêneros" time="0.002">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testURLValidation - deve validar URLs de imagens" name="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testURLValidation - deve validar URLs de imagens" time="0.002">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testPopularityScore - deve validar scores de popularidade" name="🎬 OTÁVIO - TESTES MOCKADOS DO SERVIÇO TMDB testPopularityScore - deve validar scores de popularidade" time="0.001">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/popular - deve obter filmes populares com estatísticas" name="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/popular - deve obter filmes populares com estatísticas" time="0.062">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/ranking - deve obter ranking da comunidade" name="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/ranking - deve obter ranking da comunidade" time="0.034">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/search - deve buscar filmes por query" name="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/search - deve buscar filmes por query" time="0.027">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/search - deve rejeitar busca sem query" name="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/search - deve rejeitar busca sem query" time="0.03">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/:tmdbId - deve obter detalhes do filme com reviews" name="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/:tmdbId - deve obter detalhes do filme com reviews" time="0.024">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/:tmdbId/videos - deve obter vídeos/trailers do filme" name="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/:tmdbId/videos - deve obter vídeos/trailers do filme" time="0.024">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/:tmdbId/credits - deve obter elenco e equipe do filme" name="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/:tmdbId/credits - deve obter elenco e equipe do filme" time="0.023">
+    </testcase>
+    <testcase classname="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/:tmdbId/similar - deve obter filmes similares filtrados" name="🎬 OTÁVIO - TESTES DAS ROTAS DE MOVIES GET /api/movies/:tmdbId/similar - deve obter filmes similares filtrados" time="0.031">
+    </testcase>
+  </testsuite>
+  <testsuite name="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES" errors="0" failures="0" skipped="0" timestamp="2025-11-21T03:03:23" time="0.482" tests="14">
+    <testcase classname="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE RPCS SUPABASE (POSTGRESQL FUNCTIONS) deve validar estrutura de RPC get_user_stats" name="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE RPCS SUPABASE (POSTGRESQL FUNCTIONS) deve validar estrutura de RPC get_user_stats" time="0.003">
+    </testcase>
+    <testcase classname="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE RPCS SUPABASE (POSTGRESQL FUNCTIONS) deve validar estrutura de RPC get_movie_ranking" name="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE RPCS SUPABASE (POSTGRESQL FUNCTIONS) deve validar estrutura de RPC get_movie_ranking" time="0.001">
+    </testcase>
+    <testcase classname="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE RPCS SUPABASE (POSTGRESQL FUNCTIONS) deve validar estrutura de RPC add_to_favorites (JSONB array)" name="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE RPCS SUPABASE (POSTGRESQL FUNCTIONS) deve validar estrutura de RPC add_to_favorites (JSONB array)" time="0.001">
+    </testcase>
+    <testcase classname="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE RPCS SUPABASE (POSTGRESQL FUNCTIONS) deve validar estrutura de RPC increment_review_likes" name="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE RPCS SUPABASE (POSTGRESQL FUNCTIONS) deve validar estrutura de RPC increment_review_likes" time="0.008">
+    </testcase>
+    <testcase classname="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE ESTRUTURAS DE DADOS POSTGRESQL deve validar estrutura de usuário com JSONB arrays" name="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE ESTRUTURAS DE DADOS POSTGRESQL deve validar estrutura de usuário com JSONB arrays" time="0.005">
+    </testcase>
+    <testcase classname="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE ESTRUTURAS DE DADOS POSTGRESQL deve validar estrutura de review com JOIN de usuários" name="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE ESTRUTURAS DE DADOS POSTGRESQL deve validar estrutura de review com JOIN de usuários" time="0.002">
+    </testcase>
+    <testcase classname="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE ESTRUTURAS DE DADOS POSTGRESQL deve validar estrutura de query Supabase SDK" name="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE ESTRUTURAS DE DADOS POSTGRESQL deve validar estrutura de query Supabase SDK" time="0.002">
+    </testcase>
+    <testcase classname="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › CHAT COM IA - INTEGRAÇÃO OPENAI deve validar estrutura da resposta mockada da OpenAI" name="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › CHAT COM IA - INTEGRAÇÃO OPENAI deve validar estrutura da resposta mockada da OpenAI" time="0.002">
+    </testcase>
+    <testcase classname="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › CHAT COM IA - INTEGRAÇÃO OPENAI POST /api/chat - deve rejeitar requisição sem prompt" name="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › CHAT COM IA - INTEGRAÇÃO OPENAI POST /api/chat - deve rejeitar requisição sem prompt" time="0.056">
+    </testcase>
+    <testcase classname="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › CHAT COM IA - INTEGRAÇÃO OPENAI POST /api/chat - deve rejeitar requisição sem autenticação" name="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › CHAT COM IA - INTEGRAÇÃO OPENAI POST /api/chat - deve rejeitar requisição sem autenticação" time="0.029">
+    </testcase>
+    <testcase classname="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › CHAT COM IA - INTEGRAÇÃO OPENAI deve validar mensagens do sistema prompt do Pipoqueiro" name="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › CHAT COM IA - INTEGRAÇÃO OPENAI deve validar mensagens do sistema prompt do Pipoqueiro" time="0.001">
+    </testcase>
+    <testcase classname="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE PADRÕES SUPABASE SDK deve validar padrão de SELECT com filtros encadeados" name="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE PADRÕES SUPABASE SDK deve validar padrão de SELECT com filtros encadeados" time="0.002">
+    </testcase>
+    <testcase classname="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE PADRÕES SUPABASE SDK deve validar padrão de INSERT retornando dados" name="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE PADRÕES SUPABASE SDK deve validar padrão de INSERT retornando dados" time="0.002">
+    </testcase>
+    <testcase classname="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE PADRÕES SUPABASE SDK deve validar padrão de UPDATE com filtros" name="DAVI - TESTES DE INFRAESTRUTURA SUPABASE E INTEGRAÇÕES › VALIDAÇÃO DE PADRÕES SUPABASE SDK deve validar padrão de UPDATE com filtros" time="0.002">
+    </testcase>
+  </testsuite>
+</testsuites>

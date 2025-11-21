@@ -38,7 +38,7 @@ pipeline {
                             steps {
                                 dir('frontend') {
                                     echo 'Iniciando testes do frontend...'
-                                    sh 'npm test'
+                                    sh 'npm test -- --watchAll=false'
                                     echo 'Testes do frontend finalizados com sucesso!'
                                 }
                             }
@@ -124,6 +124,37 @@ pipeline {
             echo '=========================================='
             echo 'Pipeline finalizado!'
             echo '=========================================='
+
+            // Publicar relatórios de resultados dos testes
+            script {
+                echo 'Publicando relatórios de testes...'
+            }
+
+            // Processar JUnit XML (gera gráficos de tendência)
+            junit allowEmptyResults: true, testResults: '**/test-results/*.xml'
+
+            // Publicar relatórios HTML detalhados
+            publishHTML([
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'backend',
+                reportFiles: 'test-report.html',
+                reportName: 'Backend Test Report',
+                reportTitles: 'Relatório de Testes - Backend'
+            ])
+
+            publishHTML([
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'frontend',
+                reportFiles: 'test-report.html',
+                reportName: 'Frontend Test Report',
+                reportTitles: 'Relatório de Testes - Frontend'
+            ])
+
+            echo 'Relatórios de testes publicados com sucesso!'
         }
         success {
             echo 'Build e testes concluidos com sucesso!'
