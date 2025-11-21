@@ -44,6 +44,27 @@ module.exports = {
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
 
+  // Relatórios de resultados dos testes
+  reporters: [
+    'default',
+    ['jest-html-reporter', {
+      pageTitle: 'Relatório de Testes - Backend Pipoqueiro',
+      outputPath: 'test-report.html',
+      includeFailureMsg: true,
+      includeConsoleLog: false,
+      dateFormat: 'dd/mm/yyyy HH:MM:ss',
+      sort: 'status',
+      executionTimeWarningThreshold: 5,
+    }],
+    ['jest-junit', {
+      outputDirectory: 'test-results',
+      outputName: 'junit.xml',
+      suiteName: 'Backend Tests',
+      ancestorSeparator: ' › ',
+      usePathForSuiteName: true,
+    }],
+  ],
+
   verbose: true,
 
   clearMocks: true,
