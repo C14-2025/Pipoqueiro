@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
 import SearchBar from '../components/SearchBar';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -10,6 +10,7 @@ const SearchPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const query = searchParams.get('query') || '';
 
   useEffect(() => {
@@ -50,7 +51,7 @@ const SearchPage = () => {
           <SearchBar
             onSearch={async (searchQuery) => {
               if (searchQuery) {
-                window.history.replaceState(null, '', `?query=${encodeURIComponent(searchQuery)}`);
+                navigate(`/busca?query=${encodeURIComponent(searchQuery)}`);
               }
             }}
             placeholder="Digite o nome do filme..."
