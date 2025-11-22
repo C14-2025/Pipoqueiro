@@ -476,7 +476,7 @@ const MediaDetailsPage = () => {
                 <div className="flex items-center">
                   <StarRating rating={tmdbRating} />
                   <span className="ml-3 text-gray-300 text-sm">
-                    {movie.vote_average?.toFixed(1)} / 10 (TMDb)
+                    {movie.vote_average?.toFixed(1)} / 5 (TMDb)
                   </span>
                 </div>
                 

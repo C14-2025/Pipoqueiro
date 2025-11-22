@@ -152,7 +152,7 @@ const HomePage = () => {
                                             <div className="flex flex-col gap-1 items-start mb-1 sm:mb-0">
                                                 <div className="flex items-center space-x-3">
                                                     <StarRating rating={movie.rating} />
-                                                    <span className="text-white/90 text-sm font-medium drop-shadow-lg">{movie.vote_average.toFixed(1)}/10 (TMDb)</span>
+                                                    <span className="text-white/90 text-sm font-medium drop-shadow-lg">{movie.vote_average.toFixed(1)}/5 (TMDb)</span>
                                                 </div>
                                                 {pipoqueiroRating && pipoqueiroRating > 0 && (
                                                     <div className="flex items-center space-x-3">
