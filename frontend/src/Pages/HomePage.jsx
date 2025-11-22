@@ -33,7 +33,7 @@ const HomePage = () => {
             rank: initialRank + index,
             title: movie.title,
             image: movie.poster_url,
-            rating: movie.vote_average / 2,
+            rating: movie.vote_average,
             vote_average: movie.vote_average,
             release_date: movie.release_date,
             nossa_stats: movie.nossa_stats
