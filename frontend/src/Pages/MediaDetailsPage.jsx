@@ -415,7 +415,7 @@ const MediaDetailsPage = () => {
     ? new Date(movie.release_date).getFullYear()
     : 'N/A';
   const tmdbRating = movie.vote_average
-    ? movie.vote_average / 2
+    ? movie.vote_average
     : 0;
   const pipoqueiroRating = movie.pipoqueiro_rating;
   const backdropUrl = movie.backdrop_path
