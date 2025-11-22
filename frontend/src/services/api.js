@@ -159,11 +159,6 @@ export const reviewService = {
     const response = await api.delete(`/reviews/${reviewId}`);
     return response.data;
   },
-
-  async likeReview(reviewId) {
-    const response = await api.post(`/reviews/${reviewId}/curtir`);
-    return response.data;
-  },
 };
 
 export const watchlistService = {
@@ -197,11 +192,6 @@ export const favoritesService = {
   async removeFromFavorites(tmdbId) {
     const response = await api.delete(`/favorites/${tmdbId}`);
     return response.data;
-  },
-
-  async checkIfFavorite(tmdbId) {
-    const response = await api.get(`/favorites/check/${tmdbId}`);
-    return response.data.data;
   },
 };
 

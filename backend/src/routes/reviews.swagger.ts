@@ -51,20 +51,6 @@
  *       200:
  *         description: Lista de reviews do usuário
  *
- * /api/reviews/filme/{tmdbId}:
- *   get:
- *     summary: Obter todas as reviews de um filme
- *     tags: [Reviews]
- *     parameters:
- *       - in: path
- *         name: tmdbId
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Lista de reviews do filme
- *
  * /api/reviews/{id}:
  *   put:
  *     summary: Atualizar review
@@ -114,18 +100,4 @@
  *         description: Review excluída
  *       404:
  *         description: Review não encontrada
- *
- * /api/reviews/{id}/curtir:
- *   post:
- *     summary: Curtir uma review
- *     tags: [Reviews]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Review curtida
  */

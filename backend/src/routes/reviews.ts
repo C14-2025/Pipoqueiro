@@ -10,6 +10,5 @@ router.get('/filme/:tmdb_id', reviewController.obterReviews.bind(reviewControlle
 router.get('/minhas', auth, reviewController.obterMinhasReviews.bind(reviewController));
 router.put('/:id', auth, reviewController.atualizarReview.bind(reviewController));
 router.delete('/:id', auth, reviewController.excluirReview.bind(reviewController));
-router.post('/:id/curtir', reviewController.curtirReview.bind(reviewController));
 
 export default router;
