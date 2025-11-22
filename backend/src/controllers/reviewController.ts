@@ -236,37 +236,4 @@ export class ReviewController {
       });
     }
   }
-
-  async curtirReview(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-
-      logDatabase('supabase.rpc("increment_review_likes")', [id]); // Corrigido
-
-      const { data, error } = await supabase
-        .rpc('increment_review_likes', { p_review_id: parseInt(id) });
-
-      if (error) throw error;
-
-      if (data === null) {
-        return res.status(404).json({
-          success: false,
-          message: 'Review não encontrada'
-        });
-      }
-
-      res.json({
-        success: true,
-        message: 'Review curtida com sucesso',
-        data: { novas_curtidas: data }
-      });
-
-    } catch (error) {
-      logError('Erro ao curtir review:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Erro interno do servidor'
-      });
-    }
-  }
 } // Fim da classe

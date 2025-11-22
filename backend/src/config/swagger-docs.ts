@@ -133,21 +133,6 @@
  *       404:
  *         description: Review não encontrada ou sem permissão
  *
- * /api/reviews/{id}/curtir:
- *   post:
- *     summary: Curtir uma review
- *     tags: [Reviews]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID da review
- *     responses:
- *       200:
- *         description: Review curtida com sucesso
- *
  * /api/favorites:
  *   get:
  *     summary: Obter lista de filmes favoritos do usuário
