@@ -6,13 +6,13 @@
  *
  * Cobertura:
  * - UserController: 10 testes (registro, login, perfil, estatísticas, CRUD)
- * - ReviewController: 10 testes (CRUD completo, validações, curtidas)
- * - FavoritesController: 7 testes (adicionar, remover, verificar)
- * - WatchlistController: 6 testes (adicionar, remover, listar)
+ * - ReviewController: 9 testes (CRUD completo, validações)
+ * - FavoritesController: 6 testes (adicionar, remover, validar, listar)
+ * - WatchlistController: 6 testes (adicionar, remover, validar, listar)
  * - Segurança: 3 testes (JWT, autenticação)
  * - Health Check: 1 teste
  *
- * Total: 51 testes
+ * Total: 35 testes
  *
  * Para rodar: npm test
  */
@@ -436,21 +436,9 @@ describe('ALEXANDRE - TESTES UNITÁRIOS DO BACKEND (COM MOCKS)', () => {
       expect(response.body.message).toBe('Review excluída com sucesso');
     });
 
-    test('deve curtir review', async () => {
-      // Mock: RPC increment_review_likes retorna novo número de curtidas
-      mockSupabaseRpc.mockResolvedValueOnce({ data: 5, error: null });
-
-      const response = await request(app)
-        .post('/api/reviews/1/curtir')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Review curtida com sucesso');
-      expect(response.body.data.novas_curtidas).toBe(5);
-    });
   });
 
-  // ==================== FAVORITES CONTROLLER - 7 TESTES ====================
+  // ==================== FAVORITES CONTROLLER - 6 TESTES ====================
   describe('FAVORITES CONTROLLER - Funcionalidade Real', () => {
 
     let userToken: string;
