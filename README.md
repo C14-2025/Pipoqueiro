@@ -75,9 +75,7 @@ Pipoqueiro/
 | Documento | Descrição |
 |-----------|-----------|
 | [`backend/docs/API_REFERENCE.md`](backend/docs/API_REFERENCE.md) | 📡 **Referência completa da API** |
-| [`backend/docs/FRONTEND_SETUP.md`](backend/docs/FRONTEND_SETUP.md) | 🚀 **Como configurar backend para frontend** |
 | [`backend/docs/DATABASE_SETUP.md`](backend/docs/DATABASE_SETUP.md) | 🗄️ **Setup do Supabase (PostgreSQL)** |
-| [`backend/docs/TMDB_INTEGRATION.md`](backend/docs/TMDB_INTEGRATION.md) | 🎬 **Integração com TMDb API** |
 
 ---
 
@@ -118,56 +116,6 @@ Pipoqueiro/
 - Chatbot inteligente para recomendações de filmes
 - Análise do perfil e reviews do usuário
 - Respostas personalizadas sobre cinema
-
----
-
-## 🎯 **Em Desenvolvimento**
-
-### **🔄 Backend**
-- [ ] Lista de filmes assistidos
-- [ ] Sistema de seguir outros usuários  
-- [ ] Feed de atividades
-- [ ] API de recomendações
-
-### **✅ Frontend (React + Vite)**
-
-**📄 Páginas Implementadas:**
-- **HomePage** (`/`) - Filmes populares + trending da TMDb
-- **LoginPage** (`/login`) - Autenticação de usuários
-- **SearchPage** (`/busca`) - Busca de filmes em tempo real
-- **MediaDetailsPage** (`/filme/:id`) - Detalhes completos do filme
-- **UserProfilePage** (`/perfil`) - Perfil e configurações do usuário
-- **YourListPage** (`/sua-lista`) - Lista "Quero Ver" personalizada
-- **MoviesListPage** (`/filmes`) - Catálogo completo de filmes
-
-**🎨 Design System:**
-- Interface responsiva (mobile-first)
-- Design moderno com TailwindCSS
-- Componentes reutilizáveis (Header, Footer, Cards)
-- Sistema de cores consistente
-- Navegação intuitiva com React Router
-
----
-
-## 🗄️ **Database Schema (Supabase/PostgreSQL)**
-
-### **Tabelas:**
-- **`usuarios`** - Perfis, autenticação, favoritos (JSON), watchlist (JSON)
-- **`avaliacoes`** - Reviews e notas (1-5⭐)
-
-### **PostgreSQL Functions (RPCs):**
-- **`get_user_stats(p_user_id)`** - Estatísticas do usuário
-- **`add_to_watchlist(p_user_id, p_tmdb_id)`** - Adicionar filme à lista "Quero Ver"
-- **`remove_from_watchlist(p_user_id, p_tmdb_id)`** - Remover filme da watchlist
-- **`add_to_favorites(p_user_id, p_tmdb_id)`** - Adicionar aos favoritos
-- **`remove_from_favorites(p_user_id, p_tmdb_id)`** - Remover dos favoritos
-
-### **Relacionamentos:**
-- Users → Reviews (1:N via FOREIGN KEY)
-- Filmes via `tmdb_id` (integração com TMDb API)
-- Favoritos e Watchlist armazenados como JSON em `usuarios`
-
----
 
 ## 🧪 **Como Testar**
 
@@ -218,10 +166,9 @@ curl http://localhost:3000/api/reviews/filme/550
 
 ### **Para Frontend:**
 1. Setup: `cd frontend/ && npm install && npm run dev`
-2. API Backend: `http://localhost:3000/api/*`
-3. Frontend local: `http://localhost:5173`
-4. Usar serviços em `src/services/api.js`
-5. Seguir padrões TailwindCSS existentes
+2. Frontend roda em `http://localhost:5173`
+3. API Backend: `http://localhost:3000/api/*`
+4. Seguir padrões TailwindCSS do projeto
 
 ### **Para Database:**
 1. Scripts SQL em `backend/supabaseQueries/`
