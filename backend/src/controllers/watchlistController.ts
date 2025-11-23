@@ -8,13 +8,11 @@ import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger
 export class WatchlistController {
   private tmdbService = new TMDbService();
 
-  // GET /api/watchlist - Obter lista "quero ver"
   async getWatchlist(req: Request, res: Response) {
     try {
       logInfo('BUSCANDO LISTA QUERO VER DO USUÁRIO');
       const userId = (req as any).user.userId;
 
-      // 1. Busca o array de IDs da coluna 'lista_quero_ver'
       const { data: userData, error: userError } = await supabase
         .from('usuarios')
         .select('lista_quero_ver')
@@ -37,7 +35,6 @@ export class WatchlistController {
         });
       }
 
-      // 2. Para cada ID, busca os detalhes no TMDB
       const watchlistWithDetails = await Promise.all(
         tmdbIds.map(async (id) => {
           try {
@@ -66,7 +63,6 @@ export class WatchlistController {
     }
   }
 
-  // POST /api/watchlist - Adicionar filme à lista
   async addToWatchlist(req: Request, res: Response) {
     try {
       logInfo('ADICIONANDO FILME À LISTA QUERO VER');
@@ -80,7 +76,6 @@ export class WatchlistController {
 
       logDatabase('supabase.rpc(add_to_watchlist)', [userId, tmdb_id]);
 
-      // Chama a função RPC para adicionar o ID ao array JSON
       const { data, error } = await supabase.rpc('add_to_watchlist', {
         p_user_id: userId,
         p_tmdb_id: tmdb_id
@@ -95,7 +90,7 @@ export class WatchlistController {
       res.status(201).json({
         success: true,
         message: 'Filme adicionado à lista "Quero Ver" com sucesso',
-        data: { nova_lista: data } // Retorna a lista atualizada
+        data: { nova_lista: data }
       });
 
     } catch (error: any) {
@@ -104,7 +99,6 @@ export class WatchlistController {
     }
   }
 
-  // DELETE /api/watchlist/:tmdb_id - Remover filme da lista
   async removeFromWatchlist(req: Request, res: Response) {
     try {
       logInfo('REMOVENDO FILME DA LISTA QUERO VER');
@@ -118,7 +112,6 @@ export class WatchlistController {
 
       logDatabase('supabase.rpc(remove_from_watchlist)', [userId, tmdb_id]);
 
-      // Chama a função RPC para remover o ID do array JSON
       const { data, error } = await supabase.rpc('remove_from_watchlist', {
         p_user_id: userId,
         p_tmdb_id: parseInt(tmdb_id, 10)
@@ -133,7 +126,7 @@ export class WatchlistController {
       res.json({
         success: true,
         message: 'Filme removido da lista "Quero Ver" com sucesso',
-        data: { nova_lista: data } // Retorna a lista atualizada
+        data: { nova_lista: data }
       });
 
     } catch (error) {

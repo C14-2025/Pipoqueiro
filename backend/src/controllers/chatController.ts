@@ -22,7 +22,6 @@ export class ChatController {
   private openai: OpenAI;
 
   constructor() {
-    // Puxa a chave do .env
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
@@ -53,21 +52,16 @@ export class ChatController {
 
       logInfo('Processando mensagem com OpenAI...', [userId, prompt]);
 
-      // Prepara o array de mensagens (incluindo o histórico, se houver)
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
         {
           role: 'system',
           content: systemPrompt,
         },
-        // TODO: Você pode adicionar o histórico da conversa aqui
-        // ...(historico || []),
         {
           role: 'user',
           content: prompt,
         },
       ];
-
-      // Chama a API da OpenAI
       const completion = await this.openai.chat.completions.create({
         model: 'gpt-3.5-turbo',
         messages: messages,

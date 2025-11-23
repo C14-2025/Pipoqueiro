@@ -42,7 +42,7 @@ export class ReviewController {
       };
 
       logInfo('Inserindo review no banco de dados Supabase');
-      logDatabase('supabase.from("avaliacoes").insert()', [reviewData]); // Corrigido para array
+      logDatabase('supabase.from("avaliacoes").insert()', [reviewData]);
 
       const { data, error } = await supabase
         .from('avaliacoes')
@@ -85,7 +85,7 @@ export class ReviewController {
       const { tmdb_id } = req.params;
       const { spoiler = 'false' } = req.query;
 
-      logDatabase('supabase.from("avaliacoes").select(JOIN ...)', [tmdb_id, spoiler]); // Corrigido
+      logDatabase('supabase.from("avaliacoes").select(JOIN ...)', [tmdb_id, spoiler]); 
 
       let query = supabase
         .from('avaliacoes')
@@ -123,7 +123,7 @@ export class ReviewController {
     try {
       const usuario_id = (req as any).user.userId;
 
-      logDatabase('supabase.from("avaliacoes").select(my_reviews)', [usuario_id]); // Corrigido
+      logDatabase('supabase.from("avaliacoes").select(my_reviews)', [usuario_id]); 
 
       const { data, error } = await supabase
         .from('avaliacoes')
@@ -205,7 +205,7 @@ export class ReviewController {
       const { id } = req.params;
       const usuario_id = (req as any).user.userId;
 
-      logDatabase('supabase.from("avaliacoes").delete()', [id, usuario_id]); // Corrigido
+      logDatabase('supabase.from("avaliacoes").delete()', [id, usuario_id]); 
 
       const { data, error } = await supabase
         .from('avaliacoes')
@@ -236,4 +236,4 @@ export class ReviewController {
       });
     }
   }
-} // Fim da classe
+}
