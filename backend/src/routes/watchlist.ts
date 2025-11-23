@@ -5,13 +5,13 @@ import { auth } from '../utils/auth';
 const router = Router();
 const watchlistController = new WatchlistController();
 
-// Obter lista "quero ver" do usuário (autenticado)
+// GET /api/watchlist
 router.get('/', auth, watchlistController.getWatchlist.bind(watchlistController));
 
-// Adicionar filme à lista "quero ver" (autenticado)
+// POST /api/watchlist
 router.post('/', auth, watchlistController.addToWatchlist.bind(watchlistController));
 
-// Remover filme da lista "quero ver" (autenticado)
+// DELETE /api/watchlist/:tmdb_id
 router.delete('/:tmdb_id', auth, watchlistController.removeFromWatchlist.bind(watchlistController));
 
 export default router;
