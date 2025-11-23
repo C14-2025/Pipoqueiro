@@ -295,18 +295,6 @@ Authorization: Bearer {token}
 }
 ```
 
-### Curtir Review
-```http
-POST /reviews/{id}/curtir
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Review curtida com sucesso"
-}
-```
-
 ---
 
 ## LISTA "QUERO VER" (WATCHLIST)
@@ -448,21 +436,6 @@ Authorization: Bearer {token}
 {
   "success": true,
   "message": "Filme removido dos favoritos com sucesso"
-}
-```
-
-### Verificar se é Favorito (Requer Auth)
-```http
-GET /favorites/check/{tmdb_id}
-Authorization: Bearer {token}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "is_favorite": true
-  }
 }
 ```
 
@@ -694,6 +667,35 @@ GET /movies/{tmdb_id}/similar
 
 ---
 
+## CHAT IA
+
+### Conversar com IA sobre Filmes (Requer Auth)
+```http
+POST /chat
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+**Body:**
+```json
+{
+  "message": "Me recomende filmes de ação dos anos 90"
+}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Resposta gerada com sucesso",
+  "data": {
+    "response": "Com base no seu perfil e nas suas avaliações, recomendo: Duro de Matar, Matrix, Clube da Luta..."
+  }
+}
+```
+
+**Nota:** Requer `OPENAI_API_KEY` configurada no backend.
+
+---
+
 ## AUTENTICAÇÃO
 
 ### Como usar o token:
@@ -786,6 +788,14 @@ curl http://localhost:3000/api/movies/ranking
 
 # Top 20 filmes com pelo menos 5 avaliações
 curl "http://localhost:3000/api/movies/ranking?limit=20&min_reviews=5"
+```
+
+### Conversar com IA sobre filmes:
+```bash
+curl -X POST http://localhost:3000/api/chat \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI" \
+  -d '{"message":"Me recomende filmes de terror japonês"}'
 ```
 
 ---

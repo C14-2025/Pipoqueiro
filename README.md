@@ -38,7 +38,7 @@ Pipoqueiro/
 ├── frontend/         # 🎨 Interface Web (React + Vite + TailwindCSS)
 │   ├── src/          # Componentes, páginas e serviços
 │   └── public/       # Assets estáticos
-└── database/         # 🗄️ Scripts SQL e schema MySQL
+└── backend/supabaseQueries/  # 🗄️ Scripts SQL PostgreSQL (Supabase)
 ```
 
 ---
@@ -48,10 +48,11 @@ Pipoqueiro/
 ### **Backend:**
 - **Node.js** + **TypeScript**
 - **Express.js** - Framework web
-- **MySQL** - Banco de dados
+- **Supabase (PostgreSQL)** - Banco de dados
 - **JWT** - Autenticação
 - **bcrypt** - Hash de senhas
 - **TMDb API** - Catálogo de filmes
+- **OpenAI API** - Chatbot de recomendações
 
 ### **Frontend:**
 - **React 19** + **Vite** - Build tool moderno
@@ -61,11 +62,11 @@ Pipoqueiro/
 - **React Icons** - Ícones
 
 ### **Database:**
-- **MySQL 8.0+**
+- **Supabase (PostgreSQL)**
 - **2 tabelas principais** (usuarios, avaliacoes)
-- **Campos JSON** para favoritos e watchlist
-- **2 views** para estatísticas
-- **Dados de exemplo** inclusos
+- **Campos JSON nativos** para favoritos e watchlist
+- **5 PostgreSQL Functions (RPCs)** para operações complexas
+- **Integração via Supabase SDK**
 
 ---
 
@@ -75,7 +76,7 @@ Pipoqueiro/
 |-----------|-----------|
 | [`backend/docs/API_REFERENCE.md`](backend/docs/API_REFERENCE.md) | 📡 **Referência completa da API** |
 | [`backend/docs/FRONTEND_SETUP.md`](backend/docs/FRONTEND_SETUP.md) | 🚀 **Como configurar backend para frontend** |
-| [`backend/docs/DATABASE_SETUP.md`](backend/docs/DATABASE_SETUP.md) | 🗄️ **Setup do banco MySQL** |
+| [`backend/docs/DATABASE_SETUP.md`](backend/docs/DATABASE_SETUP.md) | 🗄️ **Setup do Supabase (PostgreSQL)** |
 | [`backend/docs/TMDB_INTEGRATION.md`](backend/docs/TMDB_INTEGRATION.md) | 🎬 **Integração com TMDb API** |
 
 ---
@@ -92,7 +93,6 @@ Pipoqueiro/
 - Sistema de 1-5 estrelas
 - Reviews com títulos e comentários
 - Marcação de spoilers
-- Sistema de curtidas
 - Reviews por filme
 
 ### **✅ Listas**
@@ -101,18 +101,23 @@ Pipoqueiro/
 - Integração com TMDb para detalhes dos filmes
 - Armazenamento eficiente com campos JSON
 
-### **✅ Database**
-- Schema completo otimizado
-- Dados de exemplo (4 usuários, 10 reviews)
-- 2 views para estatísticas (estatisticas_filmes, usuarios_ativos)
-- 4 índices para performance
-- Campos JSON para favoritos e watchlist
+### **✅ Database (Supabase)**
+- Schema PostgreSQL completo e otimizado
+- 2 tabelas principais (usuarios, avaliacoes)
+- 5 PostgreSQL Functions (RPCs) para operações complexas
+- Campos JSON nativos para favoritos e watchlist
+- Integração via Supabase SDK
 
 ### **✅ Integração TMDb**
 - Catálogo completo de filmes
 - Busca em tempo real
 - Posters e metadados
 - Filmes populares e trending
+
+### **✅ Chat IA (OpenAI)**
+- Chatbot inteligente para recomendações de filmes
+- Análise do perfil e reviews do usuário
+- Respostas personalizadas sobre cinema
 
 ---
 
@@ -144,15 +149,18 @@ Pipoqueiro/
 
 ---
 
-## 🗄️ **Database Schema**
+## 🗄️ **Database Schema (Supabase/PostgreSQL)**
 
 ### **Tabelas:**
 - **`usuarios`** - Perfis, autenticação, favoritos (JSON), watchlist (JSON)
 - **`avaliacoes`** - Reviews e notas (1-5⭐)
 
-### **Views:**
-- **`estatisticas_filmes`** - Total de avaliações, nota média, reviews positivas por filme
-- **`usuarios_ativos`** - Estatísticas de atividade dos usuários
+### **PostgreSQL Functions (RPCs):**
+- **`get_user_stats(p_user_id)`** - Estatísticas do usuário
+- **`add_to_watchlist(p_user_id, p_tmdb_id)`** - Adicionar filme à lista "Quero Ver"
+- **`remove_from_watchlist(p_user_id, p_tmdb_id)`** - Remover filme da watchlist
+- **`add_to_favorites(p_user_id, p_tmdb_id)`** - Adicionar aos favoritos
+- **`remove_from_favorites(p_user_id, p_tmdb_id)`** - Remover dos favoritos
 
 ### **Relacionamentos:**
 - Users → Reviews (1:N via FOREIGN KEY)
@@ -195,7 +203,7 @@ curl http://localhost:3000/api/reviews/filme/550
 |--------|-----------------|
 | **Alexandre** | Backend (Node.js + TypeScript + APIs) |
 | **Otávio** | Backend (Node.js + TypeScript + APIs) |
-| **Daví Padula** | Database (MySQL + Schema + Dados) |
+| **Daví Padula** | Database (Supabase/PostgreSQL + Schema + Functions) |
 | **Jordan** | Frontend (React + Design System) |
 | **Antonio** | Frontend (React + Design System) |
 
@@ -216,8 +224,9 @@ curl http://localhost:3000/api/reviews/filme/550
 5. Seguir padrões TailwindCSS existentes
 
 ### **Para Database:**
-1. Scripts em `/database/`
-2. Schema documentado em [`backend/docs/DATABASE_SETUP.md`](backend/docs/DATABASE_SETUP.md)
+1. Scripts SQL em `backend/supabaseQueries/`
+2. Setup completo em [`backend/docs/DATABASE_SETUP.md`](backend/docs/DATABASE_SETUP.md)
+3. Criar projeto no Supabase e executar scripts SQL
 
 ---
 
