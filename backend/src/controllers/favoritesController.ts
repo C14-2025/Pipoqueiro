@@ -8,13 +8,11 @@ import { logInfo, logSuccess, logError, logDatabase } from '../middleware/logger
 export class FavoritesController {
   private tmdbService = new TMDbService();
 
-  // GET /api/favorites - Obter lista de favoritos
   async getFavorites(req: Request, res: Response) {
     try {
       logInfo('BUSCANDO FAVORITOS DO USUÁRIO');
       const userId = (req as any).user.userId;
 
-      // 1. Busca o array de IDs da coluna 'favoritos'
       const { data: userData, error: userError } = await supabase
         .from('usuarios')
         .select('favoritos')
@@ -37,7 +35,6 @@ export class FavoritesController {
         });
       }
 
-      // 2. Para cada ID, busca os detalhes no TMDB
       const favoritesWithDetails = await Promise.all(
         tmdbIds.map(async (id) => {
           try {
@@ -66,7 +63,6 @@ export class FavoritesController {
     }
   }
 
-  // POST /api/favorites - Adicionar filme aos favoritos
   async addToFavorites(req: Request, res: Response) {
     try {
       logInfo('ADICIONANDO FILME AOS FAVORITOS');
@@ -80,7 +76,6 @@ export class FavoritesController {
 
       logDatabase('supabase.rpc(add_to_favorites)', [userId, tmdb_id]);
 
-      // Chama a função RPC para adicionar o ID
       const { data, error } = await supabase.rpc('add_to_favorites', {
         p_user_id: userId,
         p_tmdb_id: tmdb_id
@@ -104,7 +99,6 @@ export class FavoritesController {
     }
   }
 
-  // DELETE /api/favorites/:tmdb_id - Remover filme dos favoritos
   async removeFromFavorites(req: Request, res: Response) {
     try {
       logInfo('REMOVENDO FILME DOS FAVORITOS');
@@ -118,7 +112,6 @@ export class FavoritesController {
 
       logDatabase('supabase.rpc(remove_from_favorites)', [userId, tmdb_id]);
 
-      // Chama a função RPC para remover o ID
       const { data, error } = await supabase.rpc('remove_from_favorites', {
         p_user_id: userId,
         p_tmdb_id: parseInt(tmdb_id, 10)
